@@ -24,7 +24,7 @@ There are four main friction points in the current flow:
 
 ### 1. Quick intake strip
 
-A dedicated intake strip should sit above the field editor and communicate the core promise in one glance:
+Open Add Cards from the main window with **Add / Capture** or press **A**. The dedicated intake strip should sit above the field editor and communicate the core promise in one glance:
 
 - Drop files or paste a URL
 - Keep LLM setup visible

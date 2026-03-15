@@ -245,7 +245,7 @@ class AddCards(QMainWindow):
         form = aqt.forms.addcards.Ui_Dialog()
         form.setupUi(self)
         self.form = form
-        self.setWindowTitle(tr.actions_add())
+        self.setWindowTitle(f"{tr.actions_add()} / Capture")
         self.setMinimumHeight(300)
         self.setMinimumWidth(400)
         self.setup_choosers()

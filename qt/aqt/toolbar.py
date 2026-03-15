@@ -353,9 +353,9 @@ class Toolbar:
             ),
             self.create_link(
                 "add",
-                tr.actions_add(),
+                f"{tr.actions_add()} / Capture",
                 self._addLinkHandler,
-                tip=tr.actions_shortcut_key(val="A"),
+                tip="press A to open the source-first Add Cards workspace for drag/drop files or URLs",
                 id="add",
             ),
             self.create_link(
