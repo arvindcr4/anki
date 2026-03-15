@@ -100,13 +100,19 @@ class QuickIntakeFrame(QFrame):
         self.context_label.setWordWrap(True)
         layout.addWidget(self.context_label)
 
+        llm_workspace_heading = QLabel("<b>LLM workspace</b>")
+        llm_workspace_heading.setWordWrap(True)
+        layout.addWidget(llm_workspace_heading)
+
         self.llm_status_label = QLabel("LLM status: not configured")
         self.llm_status_label.setWordWrap(True)
         layout.addWidget(self.llm_status_label)
 
-        self.last_source_label = QLabel("Last source: none yet")
-        self.last_source_label.setWordWrap(True)
-        layout.addWidget(self.last_source_label)
+        self.source_preview_label = QLabel(
+            "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
+        )
+        self.source_preview_label.setWordWrap(True)
+        layout.addWidget(self.source_preview_label)
 
         workspace_label = QLabel(
             "Preview first: choose how an LLM should turn this source into cards."
@@ -162,8 +168,8 @@ class QuickIntakeFrame(QFrame):
     def set_llm_status(self, text: str) -> None:
         self.llm_status_label.setText(text)
 
-    def set_last_source(self, text: str) -> None:
-        self.last_source_label.setText(text)
+    def set_source_preview(self, text: str) -> None:
+        self.source_preview_label.setText(text)
 
     def set_status(self, text: str) -> None:
         self.status_label.setText(text)
@@ -265,7 +271,9 @@ class AddCards(QMainWindow):
         self._last_source_summary: str | None = None
         self._update_intake_context()
         self._refresh_llm_readiness()
-        self.intake_frame.set_last_source("Last source: none yet")
+        self.intake_frame.set_source_preview(
+            "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
+        )
 
     def _update_intake_context(self) -> None:
         self.intake_frame.set_context(
@@ -288,9 +296,18 @@ class AddCards(QMainWindow):
                 "LLM status: provider not configured • preview first with Summarize, Q&A, or Cloze"
             )
 
-    def _update_last_source(self, summary: str) -> None:
-        self.intake_frame.set_last_source(f"Last source: {summary}")
+    def _update_source_preview(
+        self, summary: str, *, selected_action: str | None = None
+    ) -> None:
         self._refresh_llm_readiness(summary)
+        if selected_action:
+            self.intake_frame.set_source_preview(
+                f"Source preview: {summary} • selected action: {selected_action} • next step: preview output before writing"
+            )
+        else:
+            self.intake_frame.set_source_preview(
+                f"Source preview: {summary} • next step: preview Summarize, Q&A, or Cloze"
+            )
 
     def _normalize_tag(self, text: str) -> str:
         cleaned = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -349,7 +366,7 @@ class AddCards(QMainWindow):
         if len(labels) > 3:
             summary += ", …"
         plural = "" if len(labels) == 1 else "s"
-        self._update_last_source(summary)
+        self._update_source_preview(summary)
         self._update_intake_status(
             f"Added {len(labels)} {source_kind}{plural} to the current note • tags: capture::inbox • {deck_tag} • {type_tag} • source::{source_kind}::*"
         )
@@ -397,6 +414,7 @@ class AddCards(QMainWindow):
         self.intake_frame.set_llm_status(
             f"LLM status: ready for {action} on {target} once provider is configured"
         )
+        self._update_source_preview(target, selected_action=action)
         showInfo(
             f"Preview first: {action} should be the next step after capture.\n\n"
             f"When provider setup lands, {action} will generate a preview from {target} before writing anything into note fields.",

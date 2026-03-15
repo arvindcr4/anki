@@ -110,3 +110,16 @@ This keeps the system flexible without forcing a new collection model on existin
 3. Add preview-first LLM actions instead of full auto-generation.
 4. Measure time-to-first-card from dropped source versus the current typed workflow.
 5. Consider an eventual dedicated “Learn from source” window if the add-cards prototype proves too cramped.
+
+## Source preview loop
+
+A source-first interface should expose a lightweight **Source preview** surface directly next to the LLM workspace. After a file or URL is captured, the user should immediately see which source is active and what the next step is.
+
+The ideal inline loop is:
+
+1. Capture a file or URL.
+2. See a Source preview summary in the Add Cards banner.
+3. Choose Summarize, Q&A, or Cloze.
+4. Review a preview-first draft before writing into note fields.
+
+This keeps the workflow legible without forcing the learner into a separate wizard.
