@@ -228,6 +228,8 @@ class DeckBrowser:
             ).run_in_background()
         elif cmd == "browseAdded":
             self._browse_added_cards(arg)
+        elif cmd == "browseRecent":
+            self._browse_recent_cards()
         return False
 
     def set_current_deck(self, deck_id: DeckId) -> None:
@@ -245,6 +247,10 @@ class DeckBrowser:
         if group.days_ago == 0:
             return f"added:{upper_bound}"
         return f"added:{upper_bound} -added:{group.days_ago}"
+
+    def _browse_recent_cards(self) -> None:
+        browser = aqt.dialogs.open("Browser", self.mw)
+        browser.search_for("added:7", "Cards added in last 7 days")
 
     def _browse_added_cards(self, key: str) -> None:
         try:
@@ -381,13 +387,20 @@ class DeckBrowser:
     Add cards today and they'll appear here for fast date-based browsing.
   </div>
 """
+        actions = ""
+        if has_recent_cards:
+            actions = """
+  <div class="daily-cards-actions">
+    <a class="daily-cards-link daily-cards-summary-link" href=# onclick="return pycmd('browseRecent')">Browse last 7 days</a>
+  </div>
+"""
         return """
 <div class="daily-cards-panel deck-browser-card">
   <div class="deck-browser-card-label">Daily cards</div>
   <div class="daily-cards-subtitle">Browse recently created cards by date, not only by deck.</div>
   <div class="daily-cards-rollover">Day resets at {rollover_label}</div>
   <div class="daily-cards-summary">Last 7 days: <strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</div>
-{zero_state}  <div class="daily-cards-list">
+{actions}{zero_state}  <div class="daily-cards-list">
     {rows}
   </div>
 </div>
@@ -395,6 +408,7 @@ class DeckBrowser:
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
             total_cards=total_cards,
             total_notes=total_notes,
+            actions=actions,
             zero_state=zero_state,
             rows="\\n".join(rows),
         )

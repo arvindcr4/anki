@@ -29,6 +29,7 @@ This prototype follows common guidance from strong UX systems and books:
   - note count
   - a direct **Browse cards** action that opens an exact added-day search
 - If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**.
+- When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - If the whole week is empty, show a reassuring panel-level hint: **Add cards today and they'll appear here**.
 
 ## Why this helps

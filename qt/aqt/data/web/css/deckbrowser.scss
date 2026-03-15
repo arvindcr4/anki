@@ -138,6 +138,19 @@ body {
     background: color(canvas);
 }
 
+.daily-cards-actions {
+    display: flex;
+}
+
+.daily-cards-summary-link {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    padding: 0.45rem 0.75rem;
+    background: color(canvas);
+}
+
 .daily-cards-zero-state {
     border-radius: var(--border-radius-medium);
     border: 1px dashed var(--border-subtle);
