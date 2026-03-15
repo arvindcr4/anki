@@ -81,6 +81,7 @@ class RenderDeckNodeContext:
 DAY_SECS = 86_400
 HALF_DAY_SECS = 43_200
 DAY_MS = DAY_SECS * 1000
+RECENT_DAYS = 7
 
 
 def _format_rollover_hour(hour: int) -> str:
@@ -91,7 +92,7 @@ def _format_rollover_hour(hour: int) -> str:
 
 
 def _recent_daily_card_groups(
-    col: Collection, days: int = 7
+    col: Collection, days: int = RECENT_DAYS
 ) -> tuple[list[DailyCardsGroup], int]:
     now = datetime.now().astimezone()
     tz = now.tzinfo
@@ -249,8 +250,12 @@ class DeckBrowser:
         return f"added:{upper_bound} -added:{group.days_ago}"
 
     def _browse_recent_cards(self) -> None:
+        recent_days = len(self._render_data.daily_groups)
         browser = aqt.dialogs.open("Browser", self.mw)
-        browser.search_for("added:7", "Cards added in last 7 days")
+        browser.search_for(
+            f"added:{recent_days}",
+            f"Cards added in last {recent_days} days",
+        )
 
     def _browse_added_cards(self, key: str) -> None:
         try:
@@ -346,6 +351,7 @@ class DeckBrowser:
 
     def _renderDailyCards(self) -> str:
         rows: list[str] = []
+        recent_days = len(self._render_data.daily_groups)
         total_cards = sum(group.card_count for group in self._render_data.daily_groups)
         total_notes = self._render_data.recent_unique_notes
         has_recent_cards = total_cards > 0
@@ -380,36 +386,35 @@ class DeckBrowser:
                     action=action,
                 )
             )
-        zero_state = ""
-        if not has_recent_cards:
-            zero_state = """
+        panel_state = """
   <div class="daily-cards-zero-state">
     Add cards today and they'll appear here for fast date-based browsing.
   </div>
 """
-        actions = ""
         if has_recent_cards:
-            actions = """
+            panel_state = """
   <div class="daily-cards-actions">
-    <a class="daily-cards-link daily-cards-summary-link" href=# onclick="return pycmd('browseRecent')">Browse last 7 days</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-summary-link" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
   </div>
-"""
+""".format(recent_days=recent_days)
         return """
 <div class="daily-cards-panel deck-browser-card">
   <div class="deck-browser-card-label">Daily cards</div>
   <div class="daily-cards-subtitle">Browse recently created cards by date, not only by deck.</div>
-  <div class="daily-cards-rollover">Day resets at {rollover_label}</div>
-  <div class="daily-cards-summary">Last 7 days: <strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</div>
-{actions}{zero_state}  <div class="daily-cards-list">
+  <div class="daily-cards-meta">
+    <div class="daily-cards-pill daily-cards-rollover">Day resets at {rollover_label}</div>
+    <div class="daily-cards-pill daily-cards-summary">Last {recent_days} days: <strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</div>
+  </div>
+{panel_state}  <div class="daily-cards-list">
     {rows}
   </div>
 </div>
 """.format(
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
+            recent_days=recent_days,
             total_cards=total_cards,
             total_notes=total_notes,
-            actions=actions,
-            zero_state=zero_state,
+            panel_state=panel_state,
             rows="\\n".join(rows),
         )
 

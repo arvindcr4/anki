@@ -115,11 +115,22 @@ body {
     color: color(fg-subtle);
 }
 
-.daily-cards-rollover {
+.daily-cards-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.daily-cards-pill {
     display: inline-flex;
     align-self: start;
+    align-items: center;
     border-radius: 999px;
-    padding: 0.32rem 0.65rem;
+    border: 1px solid var(--border-subtle);
+    padding: 0.45rem 0.75rem;
+}
+
+.daily-cards-rollover {
     font-size: 0.82rem;
     font-weight: 600;
     color: color(fg-subtle);
@@ -127,13 +138,7 @@ body {
 }
 
 .daily-cards-summary {
-    display: inline-flex;
-    align-self: start;
     gap: 0.35rem;
-    align-items: center;
-    border-radius: 999px;
-    border: 1px solid var(--border-subtle);
-    padding: 0.45rem 0.75rem;
     font-size: 0.9rem;
     background: color(canvas);
 }
@@ -143,11 +148,6 @@ body {
 }
 
 .daily-cards-summary-link {
-    display: inline-flex;
-    align-items: center;
-    border-radius: 999px;
-    border: 1px solid var(--border-subtle);
-    padding: 0.45rem 0.75rem;
     background: color(canvas);
 }
 
