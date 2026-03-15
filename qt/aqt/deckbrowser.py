@@ -403,7 +403,10 @@ class DeckBrowser:
   <div class="daily-cards-subtitle">Browse recently created cards by date, not only by deck.</div>
   <div class="daily-cards-meta">
     <div class="daily-cards-pill daily-cards-rollover">Day resets at {rollover_label}</div>
-    <div class="daily-cards-pill daily-cards-summary">Last {recent_days} days: <strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</div>
+    <div class="daily-cards-pill daily-cards-summary">
+      <span class="daily-cards-summary-label">Last {recent_days} days</span>
+      <span class="daily-cards-summary-counts"><strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</span>
+    </div>
   </div>
 {panel_state}  <div class="daily-cards-list">
     {rows}

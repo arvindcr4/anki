@@ -34,6 +34,8 @@ checks = [
     ('daily-cards-rollover', 2, 'visual'),
     ('daily-cards-meta', 2, 'visual'),
     ('daily-cards-pill', 1, 'visual'),
+    ('daily-cards-summary-label', 1, 'visual'),
+    ('daily-cards-summary-counts', 1, 'visual'),
     ('Day resets at', 1, 'timeline'),
     ("Add cards today and they'll appear here", 2, 'timeline'),
     ('changes.note', 1, 'timeline'),
