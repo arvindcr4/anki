@@ -1,0 +1,4 @@
+- Build a right-side "LLM workspace" sheet in Add Cards with provider/model/API-key status, prompt presets, and preview-first generation before writing to fields.
+- Add a dedicated source preview pane that extracts document title / hostname / text snippets from dropped files or URLs so learners can confirm provenance before generating cards.
+- Measure and reduce steps-to-first-card with an event log benchmark that compares current Add Cards flow vs. source-first quick intake flow.
+- Introduce source collections/inboxes that batch dropped materials before converting them into multiple cards, instead of forcing everything through a single note immediately.

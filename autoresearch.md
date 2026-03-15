@@ -1,11 +1,11 @@
 # Autoresearch: LLM-era intake UX for Anki Add Cards
 
 ## Objective
-Improve Anki's Add Cards experience for the LLM era by making source capture more discoverable, lower-friction, and better organized. The target workflow is: a learner opens Add Cards, immediately sees how to drop a file or URL, sees where future LLM setup belongs, and can keep imported material neatly organized without hunting through menus.
+Improve Anki's Add Cards experience for the LLM era by making source capture more discoverable, lower-friction, and better organized. Phase 1 established a visible quick-intake strip and captured the product rationale in docs. Phase 2 is about making the flow feel more complete: the learner should see LLM readiness, current organization context, and the last captured source at a glance.
 
 ## Metrics
-- **Primary**: `llm_intake_score` (unitless, higher is better)
-- **Secondary**: `syntax_ok` (Python compile check), `research_doc_ready` (design guidance captured), `organization_support` (visible organization affordances)
+- **Primary**: `llm_intake_flow_score` (unitless, higher is better)
+- **Secondary**: `syntax_ok` (Python compile check), `research_doc_ready` (design guidance captured), `organization_support` (visible organization affordances), `llm_status_surface` (visible LLM status)
 
 ## How to Run
 `./autoresearch.sh`
@@ -14,16 +14,18 @@ The script performs a fast Python syntax check on the in-scope Python files and 
 - discoverable drop zone / quick intake surface
 - explicit file + URL capture entry points
 - visible LLM setup affordance
-- organization affordances for deck / note type / tags
+- visible LLM status / readiness surface
+- visible organization affordances for deck / note type / tags
+- visible last-source feedback after capture
 - source-aware tagging / guidance
 - design research captured in repo docs
 
 ## Files in Scope
-- `qt/aqt/addcards.py` — Add Cards window orchestration; best place for intake banner, buttons, drop zone, and organization helpers.
+- `qt/aqt/addcards.py` — Add Cards window orchestration; intake banner, buttons, drop zone, and organization helpers.
 - `qt/aqt/forms/addcards.ui` — layout shell for Add Cards; may need spacing or placement adjustments.
-- `qt/aqt/editor.py` — existing paste/URL/file insertion logic that can be reused by new quick-intake actions.
+- `qt/aqt/editor.py` — existing paste/URL/file insertion logic reused by the intake surface.
 - `docs/llm-intake-ux.md` — research-backed product notes for a simpler LLM-era learning flow.
-- `autoresearch.md` / `autoresearch.sh` — experiment context and benchmark harness.
+- `autoresearch.md` / `autoresearch.sh` / `autoresearch.ideas.md` — experiment context, benchmark harness, and backlog.
 
 ## Off Limits
 - Scheduling / FSRS logic
@@ -40,4 +42,8 @@ The script performs a fast Python syntax check on the in-scope Python files and 
 
 ## What's Been Tried
 - Session start: identified that drag/drop already exists inside the editor and on the deck browser, but the Add Cards window does not surface this capability clearly.
-- Initial hypothesis: a quick-intake surface in Add Cards can improve discoverability faster than a full LLM implementation, while a design doc can capture the larger LLM-era direction.
+- Built a quick-intake strip in `qt/aqt/addcards.py` with a discoverable drop zone, file picker, URL prompt, LLM setup entry point, and organization action.
+- Reused existing editor insertion logic (`urlToLink()` + `doPaste()`) instead of creating a second media ingestion path.
+- Added automatic `capture::inbox` and `source::...` tags so source-driven notes have immediate provenance metadata.
+- Added `docs/llm-intake-ux.md` to capture the broader product direction for a source-first, preview-first LLM workflow.
+- Current focus: make the prototype feel more complete by exposing LLM readiness and recent-source feedback directly in the banner, instead of only in helper copy.
