@@ -280,7 +280,9 @@ class AddCards(QMainWindow):
             return
 
         html_parts: list[str] = []
-        tags = ["capture::inbox"]
+        deck_tag = f"deck::{self._normalize_tag(self.deck_chooser.selected_deck_name())}"
+        type_tag = f"type::{self._normalize_tag(self.notetype_chooser.selected_notetype_name())}"
+        tags = ["capture::inbox", deck_tag, type_tag]
         labels: list[str] = []
         for source in sources:
             if source_kind == "file":
@@ -306,7 +308,7 @@ class AddCards(QMainWindow):
         plural = "" if len(labels) == 1 else "s"
         self._update_last_source(summary)
         self._update_intake_status(
-            f"Added {len(labels)} {source_kind}{plural} to the current note • tags: capture::inbox, source::{source_kind}::*"
+            f"Added {len(labels)} {source_kind}{plural} to the current note • tags: capture::inbox • {deck_tag} • {type_tag} • source::{source_kind}::*"
         )
         tooltip(f"Captured: {summary}", period=1200)
 
