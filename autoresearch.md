@@ -1,35 +1,40 @@
-# Autoresearch: Add Cards visual polish in Anki
+# Autoresearch: Daily cards timeline on the main deck screen
 
 ## Objective
-Apply stronger UX and product-design principles to the source-first Add Cards workspace so it feels intentional, legible, and attractive instead of like a debug panel. The goal is better visual hierarchy, clearer affordances, better grouping, and drag feedback while preserving the fast manual path.
+Prototype a Roam-like daily cards view on the main deck browser so learners can navigate not only by deck, but also by date. The deck browser should gain a visually clear daily timeline that groups recently added cards by day and lets the user jump straight into those cards. The UX should emphasize strong hierarchy, low cognitive load, and obvious next steps.
 
 ## Metrics
-- **Primary**: `intake_ux_polish_score` (unitless, higher is better)
-- **Secondary**: `visual_hierarchy`, `drag_feedback`, `context_clarity`, `syntax_ok`
+- **Primary**: `daily_cards_ux_score` (unitless, higher is better)
+- **Secondary**: `timeline_surface`, `browse_by_date`, `visual_hierarchy`, `syntax_ok`
 
 ## How to Run
 `./autoresearch.sh`
 
-The script performs a fast Python syntax check and scores whether the Add Cards intake surface has stronger UX polish:
-- section/card grouping for source and LLM areas
-- styled context chips or equivalent context emphasis
-- drag-active visual feedback
-- button hierarchy for primary, accent, and secondary actions
-- docs mention the visual design principles
+The script performs a fast Python syntax check and scores whether the deck browser exposes a date-oriented daily cards UX:
+- daily timeline data model in deck browser rendering
+- clickable browse-by-date action
+- dedicated daily cards panel styling
+- empty/zero state support for dates with no cards
+- docs that explain the daily timeline UX
 
 ## Files in Scope
-- `qt/aqt/addcards.py`
-- `docs/llm-intake-ux.md`
+- `qt/aqt/deckbrowser.py`
+- `qt/aqt/data/web/css/deckbrowser.scss`
+- `docs/daily-deck-ux.md`
 - `autoresearch.md` / `autoresearch.sh` / `autoresearch.ideas.md`
 
 ## Off Limits
 - Scheduling / FSRS logic
 - Rust backend / storage layer
-- Real provider/network integration
+- Reviewer flow
 - New runtime dependencies
 
 ## Constraints
-- Preserve the classic manual add-card path.
-- Keep the interface compact enough for the Add Cards window.
-- Prefer visual hierarchy and feedback over adding more controls.
+- Keep the classic deck tree intact.
+- Keep the daily timeline lightweight and reversible.
+- Prefer date browse affordances over heavy new workflows.
 - Fast checks must pass after every kept experiment.
+
+## What's Been Tried
+- Existing work improved Add Cards capture and LLM UX.
+- Current gap: the main deck screen is still organized almost entirely by deck tree. There is no date-based overview of recently created learning material.

@@ -5,41 +5,45 @@ python3 - <<'PY'
 from pathlib import Path
 import py_compile
 
-addcards = Path("qt/aqt/addcards.py")
-doc = Path("docs/llm-intake-ux.md")
-py_compile.compile(str(addcards), doraise=True)
-text = addcards.read_text()
-doc_text = doc.read_text() if doc.exists() else ""
+py_compile.compile('qt/aqt/deckbrowser.py', doraise=True)
+texts = []
+for candidate in [
+    Path('qt/aqt/deckbrowser.py'),
+    Path('qt/aqt/data/web/css/deckbrowser.scss'),
+    Path('docs/daily-deck-ux.md'),
+]:
+    if candidate.exists():
+        texts.append(candidate.read_text())
+joined = '\n'.join(texts)
 score = 0
+timeline_surface = 0
+browse_by_date = 0
 visual_hierarchy = 0
-drag_feedback = 0
-context_clarity = 0
 checks = [
-    ("quickIntakeSection", 2, "visual"),
-    ("quickIntakeChip", 2, "context"),
-    ("quickIntakePrimaryAction", 2, "visual"),
-    ("quickIntakeAccentAction", 2, "visual"),
-    ("quickIntakeGhostAction", 1, "visual"),
-    ("dragActive", 3, "drag"),
-    ("_set_drag_active", 2, "drag"),
-    ("Source-first capture", 2, "visual"),
-    ("visual hierarchy", 1, "docs"),
-    ("drag feedback", 1, "docs"),
+    ('DailyCardsGroup', 3, 'timeline'),
+    ('daily-cards-panel', 2, 'timeline'),
+    ('daily-cards-row', 2, 'visual'),
+    ('browseAdded', 3, 'browse'),
+    ('SearchNode.IdList', 2, 'browse'),
+    ('No cards added', 1, 'timeline'),
+    ('deck-browser-secondary-row', 1, 'visual'),
+    ('Daily cards', 1, 'docs'),
+    ('date-oriented', 1, 'docs'),
 ]
 for needle, pts, bucket in checks:
-    if needle in text or needle in doc_text:
+    if needle in joined:
         score += pts
-        if bucket == "visual":
+        if bucket == 'timeline':
+            timeline_surface += 1
+        elif bucket == 'browse':
+            browse_by_date += 1
+        elif bucket == 'visual':
             visual_hierarchy += 1
-        elif bucket == "drag":
-            drag_feedback += 1
-        elif bucket == "context":
-            context_clarity += 1
-        elif bucket == "docs":
+        elif bucket == 'docs':
             visual_hierarchy += 1
-print(f"METRIC intake_ux_polish_score={score}")
-print(f"METRIC syntax_ok=1")
-print(f"METRIC visual_hierarchy={visual_hierarchy}")
-print(f"METRIC drag_feedback={drag_feedback}")
-print(f"METRIC context_clarity={context_clarity}")
+print(f'METRIC daily_cards_ux_score={score}')
+print('METRIC syntax_ok=1')
+print(f'METRIC timeline_surface={timeline_surface}')
+print(f'METRIC browse_by_date={browse_by_date}')
+print(f'METRIC visual_hierarchy={visual_hierarchy}')
 PY

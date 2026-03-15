@@ -59,8 +59,138 @@ tr.drag-hover td {
 }
 
 body {
-    margin: 2em 1em 1em 1em;
+    margin: 1.5em 1em 2em 1em;
     -webkit-user-select: none;
+}
+
+.deck-browser-shell {
+    max-width: 1080px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.deck-browser-table-wrap {
+    overflow-x: auto;
+}
+
+.deck-browser-secondary-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.deck-browser-card {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--border-radius-large);
+    padding: 1rem 1.1rem;
+    background: var(--canvas-glass);
+
+    @include elevation(1, $opacity-boost: -0.08);
+}
+
+.deck-browser-card-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color(fg-subtle);
+    margin-bottom: 0.45rem;
+}
+
+.deck-browser-card-value {
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.daily-cards-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.daily-cards-subtitle {
+    font-size: 0.95rem;
+    color: color(fg-subtle);
+}
+
+.daily-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.daily-cards-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) auto auto auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.8rem 0.85rem;
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--border-subtle);
+    background: color(canvas);
+}
+
+.daily-cards-row.is-today {
+    background: color(border-subtle);
+}
+
+.daily-cards-date-group {
+    min-width: 0;
+}
+
+.daily-cards-label {
+    font-weight: 700;
+}
+
+.daily-cards-date {
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+    color: color(fg-subtle);
+}
+
+.daily-cards-metric {
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    padding: 0.35rem 0.65rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: var(--canvas-glass);
+}
+
+.daily-cards-action {
+    justify-self: end;
+}
+
+.daily-cards-link {
+    color: color(fg-link);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.daily-cards-link:hover {
+    text-decoration: underline;
+}
+
+.daily-cards-empty {
+    color: color(fg-subtle);
+    font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+    .deck-browser-secondary-row {
+        grid-template-columns: 1fr;
+    }
+
+    .daily-cards-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .daily-cards-action {
+        grid-column: 1 / -1;
+        justify-self: start;
+    }
 }
 
 .current,
@@ -153,5 +283,5 @@ tr:hover:not(.top-level-drag-row) {
 }
 
 #studiedToday {
-    margin: 2em 0;
+    margin: 0;
 }

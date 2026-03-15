@@ -1,0 +1,32 @@
+# Daily cards UX on the main deck screen
+
+## Goal
+
+The deck browser should help learners navigate by **time** as well as by **deck**. A Roam-like daily cards panel makes recent learning material feel easier to revisit, especially when a user is capturing notes from ongoing research.
+
+## UX principles
+
+This prototype follows common guidance from strong UX systems and books:
+
+1. **Recognition over recall** — users should see recent days immediately instead of remembering which deck or tag they used.
+2. **Clear information scent** — each day row should answer: what day is this, how many cards were created, and what happens if I click it?
+3. **Progressive disclosure** — the classic deck tree remains intact, while the daily timeline adds a second lightweight lens.
+4. **Visual hierarchy** — deck stats and daily cards should feel like distinct cards, not a flat wall of text.
+5. **Low cognitive load** — Today and Yesterday deserve stronger emphasis than older days.
+
+## Proposed interaction
+
+- Keep the deck tree as the primary study structure.
+- Add a **Daily cards** panel beside or below the existing summary card.
+- Show recent days in descending order.
+- For each day, show:
+  - a human label like **Today**, **Yesterday**, or weekday
+  - the date
+  - card count
+  - note count
+  - a direct **Browse** action
+- If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**.
+
+## Why this helps
+
+When users are doing research-heavy note creation, they often remember *when* they made something before they remember *which deck* they filed it into. A date-oriented surface gives them another intuitive path through the collection without replacing Anki's existing structure.

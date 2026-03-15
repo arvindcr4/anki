@@ -6,11 +6,12 @@ from __future__ import annotations
 import html
 from copy import deepcopy
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from typing import Any
 
 import aqt
 import aqt.operations
-from anki.collection import Collection, OpChanges
+from anki.collection import Collection, OpChanges, SearchNode
 from anki.decks import DeckCollapseScope, DeckId, DeckTreeNode
 from aqt import AnkiQt, gui_hooks
 from aqt.deckoptions import display_options_for_deck_id
@@ -35,6 +36,17 @@ class DeckBrowserBottomBar:
 
 
 @dataclass
+class DailyCardsGroup:
+    key: str
+    label: str
+    date_label: str
+    note_count: int
+    card_count: int
+    browse_prompt: str
+    note_ids: list[int]
+
+
+@dataclass
 class RenderData:
     """Data from collection that is required to show the page."""
 
@@ -42,6 +54,7 @@ class RenderData:
     current_deck_id: DeckId
     studied_today: str
     sched_upgrade_required: bool
+    daily_groups: list[DailyCardsGroup]
 
 
 @dataclass
@@ -52,15 +65,64 @@ class DeckBrowserContent:
     Attributes:
         tree {str} -- HTML of the deck tree section
         stats {str} -- HTML of the stats section
+        daily_cards {str} -- HTML of the daily cards timeline section
     """
 
     tree: str
     stats: str
+    daily_cards: str
 
 
 @dataclass
 class RenderDeckNodeContext:
     current_deck_id: DeckId
+
+
+def _recent_daily_card_groups(col: Collection, days: int = 7) -> list[DailyCardsGroup]:
+    now = datetime.now().astimezone()
+    tz = now.tzinfo
+    assert tz is not None
+    today = now.date()
+    groups: list[DailyCardsGroup] = []
+
+    for offset in range(days):
+        day = today - timedelta(days=offset)
+        day_start = datetime.combine(day, datetime.min.time(), tzinfo=tz)
+        next_day_start = day_start + timedelta(days=1)
+        rows = col.db.all(
+            """
+select n.id, count(c.id)
+from notes n
+join cards c on c.nid = n.id
+where n.id >= ? and n.id < ?
+group by n.id
+order by n.id desc
+""",
+            int(day_start.timestamp() * 1000),
+            int(next_day_start.timestamp() * 1000),
+        )
+        note_ids = [int(note_id) for note_id, _card_count in rows]
+        card_count = sum(int(card_total) for _note_id, card_total in rows)
+        if offset == 0:
+            label = "Today"
+        elif offset == 1:
+            label = "Yesterday"
+        else:
+            label = day.strftime("%a")
+        date_label = f"{day.strftime('%b')} {day.day}"
+        groups.append(
+            DailyCardsGroup(
+                key=str(offset),
+                label=label,
+                date_label=date_label,
+                note_count=len(note_ids),
+                card_count=card_count,
+                browse_prompt=f"Cards added on {date_label}",
+                note_ids=note_ids,
+            )
+        )
+
+    return groups
 
 
 class DeckBrowser:
@@ -72,6 +134,7 @@ class DeckBrowser:
         self.bottom = BottomBar(mw, mw.bottomWeb)
         self.scrollPos = QPoint(0, 0)
         self._refresh_needed = False
+        self._daily_card_searches: dict[str, tuple[str, str]] = {}
 
     def show(self) -> None:
         av_player.stop_and_clear_queue()
@@ -134,6 +197,8 @@ class DeckBrowser:
             set_current_deck(
                 parent=self.mw, deck_id=DeckId(int(arg))
             ).run_in_background()
+        elif cmd == "browseAdded":
+            self._browse_added_cards(arg)
         return False
 
     def set_current_deck(self, deck_id: DeckId) -> None:
@@ -141,18 +206,28 @@ class DeckBrowser:
             lambda _: self.mw.onOverview()
         ).run_in_background(initiator=self)
 
+    def _browse_added_cards(self, key: str) -> None:
+        if key not in self._daily_card_searches:
+            return
+        search, prompt = self._daily_card_searches[key]
+        browser = aqt.dialogs.open("Browser", self.mw)
+        browser.search_for(search, prompt)
+
     # HTML generation
     ##########################################################################
 
     _body = """
-<center>
+<div class="deck-browser-shell">
+<div class="deck-browser-table-wrap">
 <table cellspacing=0 cellpadding=3>
 %(tree)s
 </table>
-
-<br>
+</div>
+<div class="deck-browser-secondary-row">
 %(stats)s
-</center>
+%(daily_cards)s
+</div>
+</div>
 """
 
     def _renderPage(self, reuse: bool = False) -> None:
@@ -164,6 +239,7 @@ class DeckBrowser:
                     current_deck_id=col.decks.get_current_id(),
                     studied_today=col.studied_today(),
                     sched_upgrade_required=not col.v3_scheduler(),
+                    daily_groups=_recent_daily_card_groups(col),
                 )
 
             def success(output: RenderData) -> None:
@@ -183,6 +259,7 @@ class DeckBrowser:
         content = DeckBrowserContent(
             tree=self._renderDeckTree(data.tree),
             stats=self._renderStats(),
+            daily_cards=self._renderDailyCards(),
         )
         gui_hooks.deck_browser_will_render_content(self, content)
         self.web.stdHtml(
@@ -205,9 +282,60 @@ class DeckBrowser:
         self.web.eval("window.scrollTo(0, %d, 'instant');" % offset)
 
     def _renderStats(self) -> str:
-        return '<div id="studiedToday"><span>{}</span></div>'.format(
-            self._render_data.studied_today
-        )
+        return """
+<div id="studiedToday" class="deck-browser-card">
+  <div class="deck-browser-card-label">Studied today</div>
+  <div class="deck-browser-card-value">{}</div>
+</div>
+""".format(self._render_data.studied_today)
+
+    def _renderDailyCards(self) -> str:
+        self._daily_card_searches.clear()
+        rows: list[str] = []
+        for group in self._render_data.daily_groups:
+            row_classes = ["daily-cards-row"]
+            if group.key == "0":
+                row_classes.append("is-today")
+            if group.note_ids:
+                search = self.mw.col.build_search_string(
+                    SearchNode(nids=SearchNode.IdList(ids=group.note_ids))
+                )
+                self._daily_card_searches[group.key] = (search, group.browse_prompt)
+                action = (
+                    f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.key}\")'>Browse</a>"
+                )
+                row_classes.append("has-cards")
+            else:
+                action = '<span class="daily-cards-empty">No cards added</span>'
+            rows.append(
+                """
+<div class="{row_classes}">
+  <div class="daily-cards-date-group">
+    <div class="daily-cards-label">{label}</div>
+    <div class="daily-cards-date">{date_label}</div>
+  </div>
+  <div class="daily-cards-metric">{card_count} cards</div>
+  <div class="daily-cards-metric">{note_count} notes</div>
+  <div class="daily-cards-action">{action}</div>
+</div>
+""".format(
+                    row_classes=" ".join(row_classes),
+                    label=html.escape(group.label),
+                    date_label=html.escape(group.date_label),
+                    card_count=group.card_count,
+                    note_count=group.note_count,
+                    action=action,
+                )
+            )
+        return """
+<div class="daily-cards-panel deck-browser-card">
+  <div class="deck-browser-card-label">Daily cards</div>
+  <div class="daily-cards-subtitle">Browse recently created cards by date, not only by deck.</div>
+  <div class="daily-cards-list">
+    {rows}
+  </div>
+</div>
+""".format(rows="\\n".join(rows))
 
     def _renderDeckTree(self, top: DeckTreeNode) -> str:
         buf = """
