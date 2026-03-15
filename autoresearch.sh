@@ -30,6 +30,8 @@ checks = [
     ('Daily cards', 1, 'docs'),
     ('date-oriented', 1, 'docs'),
     ('daily-cards-summary', 2, 'visual'),
+    ('daily-cards-rollover', 2, 'visual'),
+    ('Day resets at', 1, 'timeline'),
     ("Add cards today and they'll appear here", 2, 'timeline'),
     ('changes.note', 1, 'timeline'),
     ('changes.card', 1, 'timeline'),

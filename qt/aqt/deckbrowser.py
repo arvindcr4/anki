@@ -54,6 +54,7 @@ class RenderData:
     sched_upgrade_required: bool
     daily_groups: list[DailyCardsGroup]
     recent_unique_notes: int
+    rollover_hour: int
 
 
 @dataclass
@@ -80,6 +81,13 @@ class RenderDeckNodeContext:
 DAY_SECS = 86_400
 HALF_DAY_SECS = 43_200
 DAY_MS = DAY_SECS * 1000
+
+
+def _format_rollover_hour(hour: int) -> str:
+    normalized = hour % 24
+    suffix = "AM" if normalized < 12 else "PM"
+    display_hour = normalized % 12 or 12
+    return f"{display_hour} {suffix}"
 
 
 def _recent_daily_card_groups(
@@ -280,6 +288,7 @@ class DeckBrowser:
                     sched_upgrade_required=not col.v3_scheduler(),
                     daily_groups=daily_groups,
                     recent_unique_notes=recent_unique_notes,
+                    rollover_hour=int(col.conf.get("rollover", 4)),
                 )
 
             def success(output: RenderData) -> None:
@@ -376,12 +385,14 @@ class DeckBrowser:
 <div class="daily-cards-panel deck-browser-card">
   <div class="deck-browser-card-label">Daily cards</div>
   <div class="daily-cards-subtitle">Browse recently created cards by date, not only by deck.</div>
+  <div class="daily-cards-rollover">Day resets at {rollover_label}</div>
   <div class="daily-cards-summary">Last 7 days: <strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</div>
 {zero_state}  <div class="daily-cards-list">
     {rows}
   </div>
 </div>
 """.format(
+            rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
             total_cards=total_cards,
             total_notes=total_notes,
             zero_state=zero_state,

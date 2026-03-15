@@ -20,6 +20,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Add a **Daily cards** panel beside or below the existing summary card.
 - Show recent days in descending order.
 - Add a compact **Last 7 days** summary so users instantly understand whether the panel is active and worth exploring.
+- Surface the rollover explicitly with a small hint like **Day resets at 4 AM** so users understand why late-night cards stay grouped together.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - For each day, show:
   - a human label like **Today**, **Yesterday**, or weekday
