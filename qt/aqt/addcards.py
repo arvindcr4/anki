@@ -3,7 +3,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import json
+import os
+import re
+import urllib.parse
+from collections.abc import Callable, Sequence
 
 import aqt.editor
 import aqt.forms
@@ -24,14 +28,137 @@ from aqt.utils import (
     ask_user_dialog,
     askUser,
     downArrow,
+    getFile,
     openHelp,
     restoreGeom,
     saveGeom,
     shortcut,
+    showInfo,
     showWarning,
     tooltip,
     tr,
 )
+
+
+class QuickIntakeFrame(QFrame):
+    def __init__(
+        self,
+        *,
+        on_drop: Callable[[Sequence[str], Sequence[str]], None],
+        on_choose_files: Callable[[], None],
+        on_paste_url: Callable[[], None],
+        on_llm_setup: Callable[[], None],
+        on_organize: Callable[[], None],
+    ) -> None:
+        super().__init__()
+        self._on_drop = on_drop
+        self.setAcceptDrops(True)
+        self.setFrameShape(QFrame.Shape.StyledPanel)
+        self.setObjectName("quickIntakeFrame")
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 12, 12, 12)
+        layout.setSpacing(8)
+
+        headline = QLabel("<b>Drop files or paste a URL</b>")
+        headline.setObjectName("quickIntakeHeadline")
+        layout.addWidget(headline)
+
+        body = QLabel(
+            "Capture source material into the current note, keep LLM setup visible, and add organization tags as you go."
+        )
+        body.setWordWrap(True)
+        layout.addWidget(body)
+
+        actions = QHBoxLayout()
+        actions.setSpacing(8)
+
+        choose_files = QPushButton("Choose files")
+        choose_files.setAutoDefault(False)
+        qconnect(choose_files.clicked, on_choose_files)
+        actions.addWidget(choose_files)
+
+        paste_url = QPushButton("Paste URL")
+        paste_url.setAutoDefault(False)
+        qconnect(paste_url.clicked, on_paste_url)
+        actions.addWidget(paste_url)
+
+        llm_setup = QPushButton("LLM setup")
+        llm_setup.setAutoDefault(False)
+        qconnect(llm_setup.clicked, on_llm_setup)
+        actions.addWidget(llm_setup)
+
+        organize = QPushButton("Organize note")
+        organize.setAutoDefault(False)
+        qconnect(organize.clicked, on_organize)
+        actions.addWidget(organize)
+        actions.addStretch(1)
+        layout.addLayout(actions)
+
+        self.context_label = QLabel()
+        self.context_label.setWordWrap(True)
+        layout.addWidget(self.context_label)
+
+        self.status_label = QLabel(
+            "Tip: use capture::inbox plus source:: tags so imported material stays easy to triage later."
+        )
+        self.status_label.setWordWrap(True)
+        layout.addWidget(self.status_label)
+
+        self.setStyleSheet(
+            """
+#quickIntakeFrame {
+  border: 1px dashed palette(mid);
+  border-radius: 10px;
+  background: palette(base);
+}
+#quickIntakeHeadline {
+  font-size: 15px;
+}
+"""
+        )
+
+    def set_context(self, *, deck_name: str, note_type_name: str) -> None:
+        self.context_label.setText(
+            f"Current deck: <b>{deck_name}</b> • Current note type: <b>{note_type_name}</b>"
+        )
+
+    def set_status(self, text: str) -> None:
+        self.status_label.setText(text)
+
+    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+        mime = event.mimeData()
+        if mime.hasUrls():
+            event.acceptProposedAction()
+            return
+        if mime.hasText() and re.match(r"https?://", mime.text().strip()):
+            event.acceptProposedAction()
+            return
+        super().dragEnterEvent(event)
+
+    def dropEvent(self, event: QDropEvent) -> None:
+        mime = event.mimeData()
+        files: list[str] = []
+        urls: list[str] = []
+        if mime.hasUrls():
+            for qurl in mime.urls():
+                if qurl.isLocalFile():
+                    files.append(qurl.toLocalFile())
+                else:
+                    url = qurl.toString().strip()
+                    if url:
+                        urls.append(url)
+        elif mime.hasText():
+            text = mime.text().strip()
+            if re.match(r"https?://", text):
+                urls.append(text)
+
+        if files or urls:
+            self._on_drop(files, urls)
+            event.acceptProposedAction()
+            return
+
+        super().dropEvent(event)
 
 
 class AddCards(QMainWindow):
@@ -47,6 +174,7 @@ class AddCards(QMainWindow):
         self.setMinimumHeight(300)
         self.setMinimumWidth(400)
         self.setup_choosers()
+        self.setup_intake_panel()
         self.setupEditor()
         self._load_new_note()
         self.setupButtons()
@@ -79,6 +207,138 @@ class AddCards(QMainWindow):
 
         self.editor.orig_note_id = note.id
         self.setAndFocusNote(new_note)
+
+    def setup_intake_panel(self) -> None:
+        self.intake_frame = QuickIntakeFrame(
+            on_drop=self._ingest_dropped_content,
+            on_choose_files=self._show_intake_file_picker,
+            on_paste_url=self._prompt_for_source_url,
+            on_llm_setup=self._show_llm_setup,
+            on_organize=self._organize_current_note,
+        )
+        layout = self.form.centralwidget.layout()
+        assert layout is not None
+        layout.insertWidget(1, self.intake_frame)
+        self._update_intake_context()
+
+    def _update_intake_context(self) -> None:
+        self.intake_frame.set_context(
+            deck_name=self.deck_chooser.selected_deck_name(),
+            note_type_name=self.notetype_chooser.selected_notetype_name(),
+        )
+
+    def _update_intake_status(self, message: str) -> None:
+        self.intake_frame.set_status(message)
+
+    def _normalize_tag(self, text: str) -> str:
+        cleaned = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+        return cleaned or "source"
+
+    def _append_tags(self, *tags: str) -> None:
+        note = self.editor.note
+        if not note:
+            return
+        changed = False
+        for tag in tags:
+            if tag and tag not in note.tags:
+                note.tags.append(tag)
+                changed = True
+        if changed:
+            self.editor.web.eval(f"setTags({json.dumps(note.tags)});")
+
+    def _paste_html_into_current_note(self, html: str) -> None:
+        def insert() -> None:
+            self.editor.doPaste(html, True)
+
+        if self.editor.currentField is None:
+            self.editor.currentField = 0
+            self.editor.web.evalWithCallback("focusField(0); true;", lambda _ret: insert())
+        else:
+            insert()
+
+    def _insert_source_links(self, sources: Sequence[str], *, source_kind: str) -> None:
+        if not sources:
+            return
+
+        html_parts: list[str] = []
+        tags = ["capture::inbox"]
+        labels: list[str] = []
+        for source in sources:
+            if source_kind == "file":
+                link = self.editor.urlToLink(QUrl.fromLocalFile(source).toString())
+                labels.append(os.path.basename(source))
+                stem = os.path.splitext(os.path.basename(source))[0]
+                tags.append(f"source::file::{self._normalize_tag(stem)}")
+            else:
+                normalized = QUrl.fromUserInput(source).toString()
+                link = self.editor.urlToLink(normalized)
+                parsed = urllib.parse.urlparse(normalized)
+                labels.append(parsed.netloc or normalized)
+                tags.append(
+                    f"source::web::{self._normalize_tag(parsed.netloc or normalized)}"
+                )
+            html_parts.append(link)
+
+        self._paste_html_into_current_note("<br>".join(html_parts))
+        self._append_tags(*tags)
+        summary = ", ".join(labels[:3])
+        if len(labels) > 3:
+            summary += ", …"
+        plural = "" if len(labels) == 1 else "s"
+        self._update_intake_status(
+            f"Added {len(labels)} {source_kind}{plural} to the current note • tags: capture::inbox, source::{source_kind}::*"
+        )
+        tooltip(f"Captured: {summary}", period=1200)
+
+    def _show_intake_file_picker(self) -> None:
+        result = getFile(
+            self,
+            title="Choose files to learn from",
+            cb=None,
+            key="quickIntake",
+            multi=True,
+        )
+        if not result:
+            return
+        paths = [path for path in result if path]
+        self._insert_source_links(paths, source_kind="file")
+
+    def _prompt_for_source_url(self) -> None:
+        url, ok = QInputDialog.getText(
+            self,
+            "Paste a source URL",
+            "Paste a web page, video, or document URL to capture into the current note:",
+        )
+        if ok and url.strip():
+            self._insert_source_links([url.strip()], source_kind="web")
+
+    def _show_llm_setup(self) -> None:
+        showInfo(
+            "LLM-era capture belongs here.\n\n"
+            "Prototype goals:\n"
+            "• make provider/API setup impossible to miss\n"
+            "• summarize dropped files and URLs into card drafts\n"
+            "• keep organization defaults visible while capturing\n\n"
+            "This experiment focuses on lowering capture friction first, while reserving a front-and-center surface for future LLM APIs.",
+            parent=self,
+        )
+
+    def _organize_current_note(self) -> None:
+        deck_tag = f"deck::{self._normalize_tag(self.deck_chooser.selected_deck_name())}"
+        type_tag = f"type::{self._normalize_tag(self.notetype_chooser.selected_notetype_name())}"
+        self._append_tags("capture::inbox", deck_tag, type_tag)
+        self._update_intake_status(
+            f"Applied organization tags • capture::inbox • {deck_tag} • {type_tag}"
+        )
+        tooltip("Organization tags added", period=1200)
+
+    def _ingest_dropped_content(
+        self, files: Sequence[str], urls: Sequence[str]
+    ) -> None:
+        if files:
+            self._insert_source_links(files, source_kind="file")
+        if urls:
+            self._insert_source_links(urls, source_kind="web")
 
     def setupEditor(self) -> None:
         self.editor = aqt.editor.Editor(
@@ -160,6 +420,7 @@ class AddCards(QMainWindow):
         self.editor.call_after_note_saved(self.notetype_chooser.choose_notetype)
 
     def on_deck_changed(self, deck_id: int) -> None:
+        self._update_intake_context()
         gui_hooks.add_cards_did_change_deck(deck_id)
 
     def on_notetype_change(
@@ -207,6 +468,7 @@ class AddCards(QMainWindow):
             new_note.tags = old_note.tags
 
         # and update editor state
+        self._update_intake_context()
         self.editor.note = new_note
         self.editor.loadNote(
             focusTo=min(self.editor.last_field_index or 0, len(new_note.fields) - 1)
