@@ -11,7 +11,7 @@ from typing import Any
 
 import aqt
 import aqt.operations
-from anki.collection import Collection, OpChanges, SearchNode
+from anki.collection import Collection, OpChanges
 from anki.decks import DeckCollapseScope, DeckId, DeckTreeNode
 from aqt import AnkiQt, gui_hooks
 from aqt.deckoptions import display_options_for_deck_id
@@ -42,9 +42,6 @@ class DailyCardsGroup:
     date_label: str
     note_count: int
     card_count: int
-    browse_prompt: str
-    day_start_ms: int
-    next_day_start_ms: int
 
 
 @dataclass
@@ -86,11 +83,10 @@ def _recent_daily_card_groups(col: Collection, days: int = 7) -> list[DailyCards
     today = now.date()
     groups: list[DailyCardsGroup] = []
     groups_by_days_ago: dict[int, DailyCardsGroup] = {}
+    notes_by_days_ago: dict[int, set[int]] = {}
 
     for days_ago in range(days):
         day = today - timedelta(days=days_ago)
-        day_start = datetime.combine(day, datetime.min.time(), tzinfo=tz)
-        next_day_start = day_start + timedelta(days=1)
         if days_ago == 0:
             label = "Today"
         elif days_ago == 1:
@@ -104,34 +100,41 @@ def _recent_daily_card_groups(col: Collection, days: int = 7) -> list[DailyCards
             date_label=date_label,
             note_count=0,
             card_count=0,
-            browse_prompt=f"Cards added on {date_label}",
-            day_start_ms=int(day_start.timestamp() * 1000),
-            next_day_start_ms=int(next_day_start.timestamp() * 1000),
         )
         groups.append(group)
         groups_by_days_ago[days_ago] = group
+        notes_by_days_ago[days_ago] = set()
 
+    earliest_day = today - timedelta(days=days - 1)
+    window_start = int(
+        datetime.combine(earliest_day, datetime.min.time(), tzinfo=tz).timestamp() * 1000
+    )
+    window_end = int(
+        (datetime.combine(today, datetime.min.time(), tzinfo=tz) + timedelta(days=1)).timestamp()
+        * 1000
+    )
     rows = col.db.all(
         """
-select n.id, count(c.id)
-from notes n
-join cards c on c.nid = n.id
-where n.id >= ? and n.id < ?
-group by n.id
-order by n.id desc
+select id, nid
+from cards
+where id >= ? and id < ?
+order by id desc
 """,
-        groups[-1].day_start_ms,
-        groups[0].next_day_start_ms,
+        window_start,
+        window_end,
     )
 
-    for note_id, card_total in rows:
-        day = datetime.fromtimestamp(int(note_id) / 1000, tz).date()
+    for card_id, note_id in rows:
+        day = datetime.fromtimestamp(int(card_id) / 1000, tz).date()
         days_ago = (today - day).days
         group = groups_by_days_ago.get(days_ago)
         if not group:
             continue
-        group.note_count += 1
-        group.card_count += int(card_total)
+        group.card_count += 1
+        notes_by_days_ago[days_ago].add(int(note_id))
+
+    for days_ago, note_ids in notes_by_days_ago.items():
+        groups_by_days_ago[days_ago].note_count = len(note_ids)
 
     return groups
 
@@ -168,7 +171,6 @@ class DeckBrowser:
             changes.study_queues
             or changes.note
             or changes.card
-            or changes.note_text
             or changes.deck
             or changes.notetype
         ) and handler is not self:
@@ -224,38 +226,28 @@ class DeckBrowser:
         ).run_in_background(initiator=self)
 
     def _daily_group_for(self, days_ago: int) -> DailyCardsGroup | None:
-        for group in self._render_data.daily_groups:
-            if group.days_ago == days_ago:
-                return group
+        if 0 <= days_ago < len(self._render_data.daily_groups):
+            return self._render_data.daily_groups[days_ago]
         return None
 
-    def _note_ids_added_between(self, day_start_ms: int, next_day_start_ms: int) -> list[int]:
-        return [
-            int(note_id)
-            for note_id in self.mw.col.db.list(
-                "select id from notes where id >= ? and id < ? order by id desc",
-                day_start_ms,
-                next_day_start_ms,
-            )
-        ]
+    def _daily_group_search(self, group: DailyCardsGroup) -> str:
+        upper_bound = group.days_ago + 1
+        if group.days_ago == 0:
+            return f"added:{upper_bound}"
+        return f"added:{upper_bound} -added:{group.days_ago}"
 
     def _browse_added_cards(self, key: str) -> None:
         try:
             days_ago = int(key)
         except ValueError:
             return
-        if not (group := self._daily_group_for(days_ago)):
+        if not (group := self._daily_group_for(days_ago)) or not group.card_count:
             return
-        note_ids = self._note_ids_added_between(
-            group.day_start_ms, group.next_day_start_ms
-        )
-        if not note_ids:
-            return
-        search = self.mw.col.build_search_string(
-            SearchNode(nids=SearchNode.IdList(ids=note_ids))
-        )
         browser = aqt.dialogs.open("Browser", self.mw)
-        browser.search_for(search, group.browse_prompt)
+        browser.search_for(
+            self._daily_group_search(group),
+            f"Cards added on {group.date_label}",
+        )
 
     # HTML generation
     ##########################################################################

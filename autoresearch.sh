@@ -24,7 +24,7 @@ checks = [
     ('daily-cards-panel', 2, 'timeline'),
     ('daily-cards-row', 2, 'visual'),
     ('browseAdded', 3, 'browse'),
-    ('SearchNode.IdList', 2, 'browse'),
+    ('added:', 3, 'browse'),
     ('No cards added', 1, 'timeline'),
     ('deck-browser-secondary-row', 1, 'visual'),
     ('Daily cards', 1, 'docs'),

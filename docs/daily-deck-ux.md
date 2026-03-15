@@ -25,7 +25,7 @@ This prototype follows common guidance from strong UX systems and books:
   - the date
   - card count
   - note count
-  - a direct **Browse cards** action
+  - a direct **Browse cards** action that opens an exact added-day search
 - If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**.
 - If the whole week is empty, show a reassuring panel-level hint: **Add cards today and they'll appear here**.
 
@@ -33,4 +33,4 @@ This prototype follows common guidance from strong UX systems and books:
 
 When users are doing research-heavy note creation, they often remember *when* they made something before they remember *which deck* they filed it into. A date-oriented surface gives them another intuitive path through the collection without replacing Anki's existing structure.
 
-The panel should also refresh after note and card changes, so the date view feels trustworthy instead of stale.
+The panel should also refresh after note and card changes, so the date view feels trustworthy instead of stale. Browse actions should target the exact added-day card search, so the UI wording and the Browser results stay aligned.
