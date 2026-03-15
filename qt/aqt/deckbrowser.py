@@ -6,7 +6,7 @@ from __future__ import annotations
 import html
 from copy import deepcopy
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 import aqt
@@ -77,6 +77,11 @@ class RenderDeckNodeContext:
     current_deck_id: DeckId
 
 
+DAY_SECS = 86_400
+HALF_DAY_SECS = 43_200
+DAY_MS = DAY_SECS * 1000
+
+
 def _recent_daily_card_groups(
     col: Collection, days: int = 7
 ) -> tuple[list[DailyCardsGroup], int]:
@@ -91,7 +96,7 @@ def _recent_daily_card_groups(
 
     for days_ago in range(days):
         midpoint = datetime.fromtimestamp(
-            next_day_cutoff - (86_400 * days_ago) - 43_200,
+            next_day_cutoff - (DAY_SECS * days_ago) - HALF_DAY_SECS,
             tz,
         )
         if days_ago == 0:
@@ -111,20 +116,19 @@ def _recent_daily_card_groups(
             )
         )
 
-    window_start = (next_day_cutoff - (86_400 * days)) * 1000
+    window_start = (next_day_cutoff - (DAY_SECS * days)) * 1000
     rows = col.db.all(
         """
 select id, nid
 from cards
-where id > ? and id <= ?
+where id > ?
 order by id desc
 """,
         window_start,
-        next_day_cutoff_ms,
     )
 
     for card_id, note_id in rows:
-        days_ago = int((next_day_cutoff_ms - int(card_id) - 1) // 86_400_000)
+        days_ago = max(0, int((next_day_cutoff_ms - int(card_id)) // DAY_MS))
         if not 0 <= days_ago < days:
             continue
         groups[days_ago].card_count += 1
