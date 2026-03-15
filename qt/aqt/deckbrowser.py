@@ -53,6 +53,7 @@ class RenderData:
     studied_today: str
     sched_upgrade_required: bool
     daily_groups: list[DailyCardsGroup]
+    recent_unique_notes: int
 
 
 @dataclass
@@ -76,67 +77,64 @@ class RenderDeckNodeContext:
     current_deck_id: DeckId
 
 
-def _recent_daily_card_groups(col: Collection, days: int = 7) -> list[DailyCardsGroup]:
+def _recent_daily_card_groups(
+    col: Collection, days: int = 7
+) -> tuple[list[DailyCardsGroup], int]:
     now = datetime.now().astimezone()
     tz = now.tzinfo
     assert tz is not None
-    today = now.date()
+    next_day_cutoff = col.sched.day_cutoff
+    next_day_cutoff_ms = next_day_cutoff * 1000
     groups: list[DailyCardsGroup] = []
-    groups_by_days_ago: dict[int, DailyCardsGroup] = {}
-    notes_by_days_ago: dict[int, set[int]] = {}
+    notes_by_days_ago: list[set[int]] = [set() for _ in range(days)]
+    all_recent_note_ids: set[int] = set()
 
     for days_ago in range(days):
-        day = today - timedelta(days=days_ago)
+        midpoint = datetime.fromtimestamp(
+            next_day_cutoff - (86_400 * days_ago) - 43_200,
+            tz,
+        )
         if days_ago == 0:
             label = "Today"
         elif days_ago == 1:
             label = "Yesterday"
         else:
-            label = day.strftime("%a")
-        date_label = f"{day.strftime('%b')} {day.day}"
-        group = DailyCardsGroup(
-            days_ago=days_ago,
-            label=label,
-            date_label=date_label,
-            note_count=0,
-            card_count=0,
+            label = midpoint.strftime("%a")
+        date_label = f"{midpoint.strftime('%b')} {midpoint.day}"
+        groups.append(
+            DailyCardsGroup(
+                days_ago=days_ago,
+                label=label,
+                date_label=date_label,
+                note_count=0,
+                card_count=0,
+            )
         )
-        groups.append(group)
-        groups_by_days_ago[days_ago] = group
-        notes_by_days_ago[days_ago] = set()
 
-    earliest_day = today - timedelta(days=days - 1)
-    window_start = int(
-        datetime.combine(earliest_day, datetime.min.time(), tzinfo=tz).timestamp() * 1000
-    )
-    window_end = int(
-        (datetime.combine(today, datetime.min.time(), tzinfo=tz) + timedelta(days=1)).timestamp()
-        * 1000
-    )
+    window_start = (next_day_cutoff - (86_400 * days)) * 1000
     rows = col.db.all(
         """
 select id, nid
 from cards
-where id >= ? and id < ?
+where id > ? and id <= ?
 order by id desc
 """,
         window_start,
-        window_end,
+        next_day_cutoff_ms,
     )
 
     for card_id, note_id in rows:
-        day = datetime.fromtimestamp(int(card_id) / 1000, tz).date()
-        days_ago = (today - day).days
-        group = groups_by_days_ago.get(days_ago)
-        if not group:
+        days_ago = int((next_day_cutoff_ms - int(card_id) - 1) // 86_400_000)
+        if not 0 <= days_ago < days:
             continue
-        group.card_count += 1
+        groups[days_ago].card_count += 1
         notes_by_days_ago[days_ago].add(int(note_id))
+        all_recent_note_ids.add(int(note_id))
 
-    for days_ago, note_ids in notes_by_days_ago.items():
-        groups_by_days_ago[days_ago].note_count = len(note_ids)
+    for days_ago, note_ids in enumerate(notes_by_days_ago):
+        groups[days_ago].note_count = len(note_ids)
 
-    return groups
+    return groups, len(all_recent_note_ids)
 
 
 class DeckBrowser:
@@ -270,12 +268,14 @@ class DeckBrowser:
         if not reuse:
 
             def get_data(col: Collection) -> RenderData:
+                daily_groups, recent_unique_notes = _recent_daily_card_groups(col)
                 return RenderData(
                     tree=col.sched.deck_due_tree(),
                     current_deck_id=col.decks.get_current_id(),
                     studied_today=col.studied_today(),
                     sched_upgrade_required=not col.v3_scheduler(),
-                    daily_groups=_recent_daily_card_groups(col),
+                    daily_groups=daily_groups,
+                    recent_unique_notes=recent_unique_notes,
                 )
 
             def success(output: RenderData) -> None:
@@ -328,7 +328,7 @@ class DeckBrowser:
     def _renderDailyCards(self) -> str:
         rows: list[str] = []
         total_cards = sum(group.card_count for group in self._render_data.daily_groups)
-        total_notes = sum(group.note_count for group in self._render_data.daily_groups)
+        total_notes = self._render_data.recent_unique_notes
         has_recent_cards = total_cards > 0
         for group in self._render_data.daily_groups:
             row_classes = ["daily-cards-row"]

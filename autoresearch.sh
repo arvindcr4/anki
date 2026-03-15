@@ -34,6 +34,8 @@ checks = [
     ('changes.note', 1, 'timeline'),
     ('changes.card', 1, 'timeline'),
     ('Browse cards', 1, 'browse'),
+    ('day_cutoff', 2, 'timeline'),
+    ('recent_unique_notes', 1, 'timeline'),
 ]
 for needle, pts, bucket in checks:
     if needle in joined:
