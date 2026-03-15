@@ -36,6 +36,8 @@ checks = [
     ('daily-cards-pill', 1, 'visual'),
     ('daily-cards-summary-label', 1, 'visual'),
     ('daily-cards-summary-counts', 1, 'visual'),
+    ('_count_label', 2, 'visual'),
+    ('grammatically correct', 1, 'timeline'),
     ('Day resets at', 1, 'timeline'),
     ("Add cards today and they'll appear here", 2, 'timeline'),
     ('changes.note', 1, 'timeline'),

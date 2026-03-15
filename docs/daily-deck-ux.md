@@ -23,6 +23,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Surface the rollover explicitly with a small hint like **Day resets at 4 AM** so users understand why late-night cards stay grouped together.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
+- Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - For each day, show:
   - a human label like **Today**, **Yesterday**, or weekday

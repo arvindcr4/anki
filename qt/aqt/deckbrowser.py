@@ -91,6 +91,12 @@ def _format_rollover_hour(hour: int) -> str:
     return f"{display_hour} {suffix}"
 
 
+def _count_label(count: int, singular: str, plural: str | None = None) -> str:
+    plural = plural or f"{singular}s"
+    label = singular if count == 1 else plural
+    return f"{count} {label}"
+
+
 def _recent_daily_card_groups(
     col: Collection, days: int = RECENT_DAYS
 ) -> tuple[list[DailyCardsGroup], int]:
@@ -373,16 +379,16 @@ class DeckBrowser:
     <div class="daily-cards-label">{label}</div>
     <div class="daily-cards-date">{date_label}</div>
   </div>
-  <div class="daily-cards-metric">{card_count} cards</div>
-  <div class="daily-cards-metric">{note_count} notes</div>
+  <div class="daily-cards-metric">{card_count_label}</div>
+  <div class="daily-cards-metric">{note_count_label}</div>
   <div class="daily-cards-action">{action}</div>
 </div>
 """.format(
                     row_classes=" ".join(row_classes),
                     label=html.escape(group.label),
                     date_label=html.escape(group.date_label),
-                    card_count=group.card_count,
-                    note_count=group.note_count,
+                    card_count_label=_count_label(group.card_count, "card"),
+                    note_count_label=_count_label(group.note_count, "note"),
                     action=action,
                 )
             )
@@ -394,7 +400,7 @@ class DeckBrowser:
         if has_recent_cards:
             panel_state = """
   <div class="daily-cards-actions">
-    <a class="daily-cards-link daily-cards-pill daily-cards-summary-link" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
+    <a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
   </div>
 """.format(recent_days=recent_days)
         return """
@@ -405,7 +411,7 @@ class DeckBrowser:
     <div class="daily-cards-pill daily-cards-rollover">Day resets at {rollover_label}</div>
     <div class="daily-cards-pill daily-cards-summary">
       <span class="daily-cards-summary-label">Last {recent_days} days</span>
-      <span class="daily-cards-summary-counts"><strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</span>
+      <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
   </div>
 {panel_state}  <div class="daily-cards-list">
@@ -415,8 +421,8 @@ class DeckBrowser:
 """.format(
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
             recent_days=recent_days,
-            total_cards=total_cards,
-            total_notes=total_notes,
+            total_cards_label=_count_label(total_cards, "card"),
+            total_notes_label=_count_label(total_notes, "note"),
             panel_state=panel_state,
             rows="\\n".join(rows),
         )
