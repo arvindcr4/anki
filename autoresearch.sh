@@ -12,33 +12,35 @@ text = addcards.read_text()
 doc_text = doc.read_text() if doc.exists() else ""
 
 score = 0
-front_center_affordance = 0
-env_detection = 0
-codex_status_surface = 0
+detail_visibility = 0
+tag_visibility = 0
+reset_behavior = 0
 
 checks = [
-    ("Connect Codex", 2, "front"),
-    ("Codex connection", 2, "status"),
-    ("_show_codex_connect", 2, "front"),
-    ("OPENAI_API_KEY", 2, "env"),
-    ("set_codex_status", 1, "status"),
-    ("_refresh_codex_connection", 2, "env"),
-    ("Codex", 1, "status"),
+    ("Source details", 2, "detail"),
+    ("set_source_details", 2, "detail"),
+    ("_update_source_details", 3, "detail"),
+    ("capture::inbox", 1, "tags"),
+    ("source::", 1, "tags"),
+    ("deck::", 1, "tags"),
+    ("type::", 1, "tags"),
+    ("_reset_source_workflow", 1, "reset"),
+    ("Source details: waiting for a file or URL", 2, "reset"),
 ]
 for needle, pts, bucket in checks:
     if needle in text or needle in doc_text:
         score += pts
-        if bucket == "front":
-            front_center_affordance += 1
-        elif bucket == "env":
-            env_detection += 1
-        elif bucket == "status":
-            codex_status_surface += 1
+        if bucket == "detail":
+            detail_visibility += 1
+        elif bucket == "tags":
+            tag_visibility += 1
+        elif bucket == "reset":
+            reset_behavior += 1
 
 syntax_ok = 1
-print(f"METRIC codex_connect_score={score}")
+print(f"METRIC source_detail_score={score}")
 print(f"METRIC syntax_ok={syntax_ok}")
-print(f"METRIC front_center_affordance={front_center_affordance}")
-print(f"METRIC env_detection={env_detection}")
-print(f"METRIC codex_status_surface={codex_status_surface}")
+print(f"METRIC detail_visibility={detail_visibility}")
+print(f"METRIC tag_visibility={tag_visibility}")
+print(f"METRIC reset_behavior={reset_behavior}")
 PY

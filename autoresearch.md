@@ -1,21 +1,20 @@
-# Autoresearch: Codex connection affordance in Anki Add Cards
+# Autoresearch: Detailed source preview in Anki Add Cards
 
 ## Objective
-Add an obvious way to connect Codex in the Add Cards LLM workspace. The source-first flow is now visible, but provider setup is still generic. The user specifically wants Codex surfaced as a first-class connection path so the workspace feels built for the current LLM era instead of an abstract future integration.
+Improve the source preview so it is not just a generic summary line. After capture, the user should be able to see a small inline breakdown of what was captured — filenames or hostnames plus the tags/context inferred from them. This should make the workflow feel more concrete and organized.
 
 ## Metrics
-- **Primary**: `codex_connect_score` (unitless, higher is better)
-- **Secondary**: `syntax_ok`, `front_center_affordance`, `env_detection`, `codex_status_surface`
+- **Primary**: `source_detail_score` (unitless, higher is better)
+- **Secondary**: `syntax_ok`, `detail_visibility`, `tag_visibility`, `reset_behavior`
 
 ## How to Run
 `./autoresearch.sh`
 
-The script performs a fast Python syntax check and scores whether Add Cards exposes a Codex-specific connection flow:
-- visible `Connect Codex` affordance in the banner
-- visible `Codex connection` status surface
-- explicit connection handler in Python
-- environment detection for `OPENAI_API_KEY`
-- Codex-specific guidance in the UI/doc copy
+The script performs a fast Python syntax check and scores whether Add Cards shows a richer source preview:
+- dedicated source detail surface
+- source detail update helper
+- source details reset with a fresh note
+- visible inferred tags / context in the preview area
 
 ## Files in Scope
 - `qt/aqt/addcards.py`
@@ -29,13 +28,11 @@ The script performs a fast Python syntax check and scores whether Add Cards expo
 - New runtime dependencies
 
 ## Constraints
-- Keep Codex setup inline and front-and-center.
-- Reuse existing status surfaces rather than opening a large wizard.
+- Keep the source detail view compact.
+- Prefer inline visibility over modal inspection.
 - Preserve the classic manual editing path.
 - Fast checks must pass after every kept experiment.
 
 ## What's Been Tried
-- Added a source-first quick-intake banner.
-- Added visible LLM workspace actions and a source preview loop.
-- Added gating so LLM actions only activate after a source is captured.
-- Current gap: provider setup is still generic. There is no explicit Codex connection button or Codex-specific readiness state.
+- Added a source-first banner, LLM workspace, source preview loop, Codex connection path, and provider preference.
+- Current gap: source preview still compresses the captured material into one sentence. The user cannot quickly inspect the concrete sources/tags that were inferred without reading the status copy.

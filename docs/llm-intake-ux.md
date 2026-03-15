@@ -133,3 +133,9 @@ If Codex is the preferred provider, the Add Cards banner should expose **Connect
 3. Once connected, what action can I take next?
 
 A simple first pass is environment detection for `OPENAI_API_KEY`, paired with preview-first messaging that makes Codex feel like the default path behind Summarize, Q&A, and Cloze.
+
+## Source details
+
+A compact **Source details** block can make the banner feel far more trustworthy. After capture, the user should see a short list of concrete filenames or hostnames, followed by the main inferred tags such as `capture::inbox`, `deck::...`, `type::...`, and `source::...`.
+
+This gives the learner instant feedback about what the system understood, without forcing them to inspect tags manually.

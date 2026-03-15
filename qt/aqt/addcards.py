@@ -124,6 +124,12 @@ class QuickIntakeFrame(QFrame):
         self.source_preview_label.setWordWrap(True)
         layout.addWidget(self.source_preview_label)
 
+        self.source_details_label = QLabel(
+            "Source details: waiting for a file or URL"
+        )
+        self.source_details_label.setWordWrap(True)
+        layout.addWidget(self.source_details_label)
+
         workspace_label = QLabel(
             "Preview first: choose how an LLM should turn this source into cards."
         )
@@ -183,6 +189,9 @@ class QuickIntakeFrame(QFrame):
 
     def set_source_preview(self, text: str) -> None:
         self.source_preview_label.setText(text)
+
+    def set_source_details(self, text: str) -> None:
+        self.source_details_label.setText(text)
 
     def set_llm_actions_enabled(self, enabled: bool) -> None:
         self.summarize_button.setEnabled(enabled)
@@ -304,10 +313,26 @@ class AddCards(QMainWindow):
     def _codex_api_key_present(self) -> bool:
         return bool(os.environ.get("OPENAI_API_KEY"))
 
+    def _codex_preferred(self) -> bool:
+        assert self.mw.pm.profile is not None
+        return bool(self.mw.pm.profile.get("codexProviderPreferred", False))
+
+    def _set_codex_preferred(self, enabled: bool) -> None:
+        assert self.mw.pm.profile is not None
+        self.mw.pm.profile["codexProviderPreferred"] = enabled
+
     def _refresh_codex_connection(self) -> None:
-        if self._codex_api_key_present():
+        if self._codex_preferred() and self._codex_api_key_present():
             self.intake_frame.set_codex_status(
-                "Codex connection: OPENAI_API_KEY detected • ready for preview-first actions"
+                "Codex connection: OPENAI_API_KEY detected • Codex preferred provider • ready for preview-first actions"
+            )
+        elif self._codex_preferred():
+            self.intake_frame.set_codex_status(
+                "Codex connection: Codex preferred provider • set OPENAI_API_KEY to enable preview-first actions"
+            )
+        elif self._codex_api_key_present():
+            self.intake_frame.set_codex_status(
+                "Codex connection: available • press Connect Codex to make it the preferred provider"
             )
         else:
             self.intake_frame.set_codex_status(
@@ -320,13 +345,20 @@ class AddCards(QMainWindow):
         self.intake_frame.set_source_preview(
             "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
         )
+        self.intake_frame.set_source_details(
+            "Source details: waiting for a file or URL"
+        )
         self.intake_frame.set_llm_actions_enabled(False)
 
     def _refresh_llm_readiness(self, source_summary: str | None = None) -> None:
         if source_summary is not None:
             self._last_source_summary = source_summary
         if self._last_source_summary:
-            if self._codex_api_key_present():
+            if self._codex_preferred() and self._codex_api_key_present():
+                self.intake_frame.set_llm_status(
+                    f"LLM status: Codex preferred provider ready for Summarize, Q&A, or Cloze on {self._last_source_summary}"
+                )
+            elif self._codex_api_key_present():
                 self.intake_frame.set_llm_status(
                     f"LLM status: Codex ready for Summarize, Q&A, or Cloze on {self._last_source_summary}"
                 )
@@ -335,7 +367,15 @@ class AddCards(QMainWindow):
                     f"LLM status: ready for Summarize, Q&A, or Cloze on {self._last_source_summary} once provider is configured"
                 )
         else:
-            if self._codex_api_key_present():
+            if self._codex_preferred() and self._codex_api_key_present():
+                self.intake_frame.set_llm_status(
+                    "LLM status: Codex preferred provider connected • capture a source to start preview-first actions"
+                )
+            elif self._codex_preferred():
+                self.intake_frame.set_llm_status(
+                    "LLM status: Codex preferred provider selected • add OPENAI_API_KEY to enable preview-first actions"
+                )
+            elif self._codex_api_key_present():
                 self.intake_frame.set_llm_status(
                     "LLM status: Codex connected • capture a source to start preview-first actions"
                 )
@@ -357,6 +397,17 @@ class AddCards(QMainWindow):
             self.intake_frame.set_source_preview(
                 f"Source preview: {summary} • next step: preview Summarize, Q&A, or Cloze"
             )
+
+    def _update_source_details(
+        self, labels: Sequence[str], tags: Sequence[str]
+    ) -> None:
+        shown_labels = ", ".join(labels[:3])
+        if len(labels) > 3:
+            shown_labels += ", …"
+        shown_tags = " • ".join(tags[:4])
+        self.intake_frame.set_source_details(
+            f"Source details: {shown_labels}\nTags: {shown_tags}"
+        )
 
     def _normalize_tag(self, text: str) -> str:
         cleaned = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -411,6 +462,7 @@ class AddCards(QMainWindow):
 
         self._paste_html_into_current_note("<br>".join(html_parts))
         self._append_tags(*tags)
+        self._update_source_details(labels, tags)
         summary = ", ".join(labels[:3])
         if len(labels) > 3:
             summary += ", …"
@@ -460,23 +512,30 @@ class AddCards(QMainWindow):
         )
 
     def _show_codex_connect(self) -> None:
+        self._set_codex_preferred(True)
         self._refresh_codex_connection()
+        self._refresh_llm_readiness(self._last_source_summary)
         if self._codex_api_key_present():
             showInfo(
-                "Codex connection is ready.\n\nOPENAI_API_KEY was detected, so Codex can sit behind Summarize, Q&A, and Cloze previews.",
+                "Codex preferred provider selected.\n\nOPENAI_API_KEY was detected, so Codex is ready to handle Summarize, Q&A, and Cloze previews.",
                 parent=self,
             )
         else:
             showInfo(
-                "Connect Codex by adding OPENAI_API_KEY to your environment.\n\nOnce OPENAI_API_KEY is available, the Add Cards LLM workspace can treat Codex as the default preview-first provider for Summarize, Q&A, and Cloze.",
+                "Codex preferred provider selected.\n\nAdd OPENAI_API_KEY to your environment to let Codex handle Summarize, Q&A, and Cloze previews from this workspace.",
                 parent=self,
             )
 
     def _show_llm_action(self, action: str) -> None:
         target = self._last_source_summary or "the current note"
-        self.intake_frame.set_llm_status(
-            f"LLM status: ready for {action} on {target} once provider is configured"
-        )
+        if self._codex_preferred():
+            self.intake_frame.set_llm_status(
+                f"LLM status: Codex will handle {action} on {target} in a preview-first flow"
+            )
+        else:
+            self.intake_frame.set_llm_status(
+                f"LLM status: ready for {action} on {target} once provider is configured"
+            )
         self._update_source_preview(target, selected_action=action)
         showInfo(
             f"Preview first: {action} should be the next step after capture.\n\n"
