@@ -19,14 +19,18 @@ This prototype follows common guidance from strong UX systems and books:
 - Keep the deck tree as the primary study structure.
 - Add a **Daily cards** panel beside or below the existing summary card.
 - Show recent days in descending order.
+- Add a compact **Last 7 days** summary so users instantly understand whether the panel is active and worth exploring.
 - For each day, show:
   - a human label like **Today**, **Yesterday**, or weekday
   - the date
   - card count
   - note count
-  - a direct **Browse** action
+  - a direct **Browse cards** action
 - If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**.
+- If the whole week is empty, show a reassuring panel-level hint: **Add cards today and they'll appear here**.
 
 ## Why this helps
 
 When users are doing research-heavy note creation, they often remember *when* they made something before they remember *which deck* they filed it into. A date-oriented surface gives them another intuitive path through the collection without replacing Anki's existing structure.
+
+The panel should also refresh after note and card changes, so the date view feels trustworthy instead of stale.

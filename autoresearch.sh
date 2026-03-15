@@ -29,6 +29,11 @@ checks = [
     ('deck-browser-secondary-row', 1, 'visual'),
     ('Daily cards', 1, 'docs'),
     ('date-oriented', 1, 'docs'),
+    ('daily-cards-summary', 2, 'visual'),
+    ("Add cards today and they'll appear here", 2, 'timeline'),
+    ('changes.note', 1, 'timeline'),
+    ('changes.card', 1, 'timeline'),
+    ('Browse cards', 1, 'browse'),
 ]
 for needle, pts, bucket in checks:
     if needle in joined:

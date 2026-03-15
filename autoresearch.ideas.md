@@ -4,3 +4,4 @@
 - Introduce source collections/inboxes that batch dropped materials before converting them into multiple cards, instead of forcing everything through a single note immediately.
 - Persist preferred provider selection in the profile and add a real Codex credential check flow instead of relying only on OPENAI_API_KEY detection.
 - Add an adaptive two-column desktop layout for the capture card and LLM workspace, with a stacked mobile/narrow fallback, so the Add Cards window can feel more like a modern split workspace.
+- Explore a true card-level daily timeline that can browse exact cards added on a date, not just notes created that day, if a safe card-id search/filter path can be wired into Browser search without huge query strings.

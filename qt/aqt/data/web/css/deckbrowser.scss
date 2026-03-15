@@ -115,6 +115,26 @@ body {
     color: color(fg-subtle);
 }
 
+.daily-cards-summary {
+    display: inline-flex;
+    align-self: start;
+    gap: 0.35rem;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    padding: 0.45rem 0.75rem;
+    font-size: 0.9rem;
+    background: color(canvas);
+}
+
+.daily-cards-zero-state {
+    border-radius: var(--border-radius-medium);
+    border: 1px dashed var(--border-subtle);
+    padding: 0.85rem 0.9rem;
+    color: color(fg-subtle);
+    background: color(canvas);
+}
+
 .daily-cards-list {
     display: flex;
     flex-direction: column;
@@ -133,6 +153,11 @@ body {
 }
 
 .daily-cards-row.is-today {
+    background: color(border-subtle);
+}
+
+.daily-cards-row.has-cards:hover {
+    border-color: color(border);
     background: color(border-subtle);
 }
 

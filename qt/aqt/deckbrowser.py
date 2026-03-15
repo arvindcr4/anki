@@ -37,13 +37,14 @@ class DeckBrowserBottomBar:
 
 @dataclass
 class DailyCardsGroup:
-    key: str
+    days_ago: int
     label: str
     date_label: str
     note_count: int
     card_count: int
     browse_prompt: str
-    note_ids: list[int]
+    day_start_ms: int
+    next_day_start_ms: int
 
 
 @dataclass
@@ -84,13 +85,34 @@ def _recent_daily_card_groups(col: Collection, days: int = 7) -> list[DailyCards
     assert tz is not None
     today = now.date()
     groups: list[DailyCardsGroup] = []
+    groups_by_days_ago: dict[int, DailyCardsGroup] = {}
 
-    for offset in range(days):
-        day = today - timedelta(days=offset)
+    for days_ago in range(days):
+        day = today - timedelta(days=days_ago)
         day_start = datetime.combine(day, datetime.min.time(), tzinfo=tz)
         next_day_start = day_start + timedelta(days=1)
-        rows = col.db.all(
-            """
+        if days_ago == 0:
+            label = "Today"
+        elif days_ago == 1:
+            label = "Yesterday"
+        else:
+            label = day.strftime("%a")
+        date_label = f"{day.strftime('%b')} {day.day}"
+        group = DailyCardsGroup(
+            days_ago=days_ago,
+            label=label,
+            date_label=date_label,
+            note_count=0,
+            card_count=0,
+            browse_prompt=f"Cards added on {date_label}",
+            day_start_ms=int(day_start.timestamp() * 1000),
+            next_day_start_ms=int(next_day_start.timestamp() * 1000),
+        )
+        groups.append(group)
+        groups_by_days_ago[days_ago] = group
+
+    rows = col.db.all(
+        """
 select n.id, count(c.id)
 from notes n
 join cards c on c.nid = n.id
@@ -98,29 +120,18 @@ where n.id >= ? and n.id < ?
 group by n.id
 order by n.id desc
 """,
-            int(day_start.timestamp() * 1000),
-            int(next_day_start.timestamp() * 1000),
-        )
-        note_ids = [int(note_id) for note_id, _card_count in rows]
-        card_count = sum(int(card_total) for _note_id, card_total in rows)
-        if offset == 0:
-            label = "Today"
-        elif offset == 1:
-            label = "Yesterday"
-        else:
-            label = day.strftime("%a")
-        date_label = f"{day.strftime('%b')} {day.day}"
-        groups.append(
-            DailyCardsGroup(
-                key=str(offset),
-                label=label,
-                date_label=date_label,
-                note_count=len(note_ids),
-                card_count=card_count,
-                browse_prompt=f"Cards added on {date_label}",
-                note_ids=note_ids,
-            )
-        )
+        groups[-1].day_start_ms,
+        groups[0].next_day_start_ms,
+    )
+
+    for note_id, card_total in rows:
+        day = datetime.fromtimestamp(int(note_id) / 1000, tz).date()
+        days_ago = (today - day).days
+        group = groups_by_days_ago.get(days_ago)
+        if not group:
+            continue
+        group.note_count += 1
+        group.card_count += int(card_total)
 
     return groups
 
@@ -134,7 +145,6 @@ class DeckBrowser:
         self.bottom = BottomBar(mw, mw.bottomWeb)
         self.scrollPos = QPoint(0, 0)
         self._refresh_needed = False
-        self._daily_card_searches: dict[str, tuple[str, str]] = {}
 
     def show(self) -> None:
         av_player.stop_and_clear_queue()
@@ -154,7 +164,14 @@ class DeckBrowser:
     def op_executed(
         self, changes: OpChanges, handler: object | None, focused: bool
     ) -> bool:
-        if changes.study_queues and handler is not self:
+        if (
+            changes.study_queues
+            or changes.note
+            or changes.card
+            or changes.note_text
+            or changes.deck
+            or changes.notetype
+        ) and handler is not self:
             self._refresh_needed = True
 
         if focused:
@@ -206,12 +223,39 @@ class DeckBrowser:
             lambda _: self.mw.onOverview()
         ).run_in_background(initiator=self)
 
+    def _daily_group_for(self, days_ago: int) -> DailyCardsGroup | None:
+        for group in self._render_data.daily_groups:
+            if group.days_ago == days_ago:
+                return group
+        return None
+
+    def _note_ids_added_between(self, day_start_ms: int, next_day_start_ms: int) -> list[int]:
+        return [
+            int(note_id)
+            for note_id in self.mw.col.db.list(
+                "select id from notes where id >= ? and id < ? order by id desc",
+                day_start_ms,
+                next_day_start_ms,
+            )
+        ]
+
     def _browse_added_cards(self, key: str) -> None:
-        if key not in self._daily_card_searches:
+        try:
+            days_ago = int(key)
+        except ValueError:
             return
-        search, prompt = self._daily_card_searches[key]
+        if not (group := self._daily_group_for(days_ago)):
+            return
+        note_ids = self._note_ids_added_between(
+            group.day_start_ms, group.next_day_start_ms
+        )
+        if not note_ids:
+            return
+        search = self.mw.col.build_search_string(
+            SearchNode(nids=SearchNode.IdList(ids=note_ids))
+        )
         browser = aqt.dialogs.open("Browser", self.mw)
-        browser.search_for(search, prompt)
+        browser.search_for(search, group.browse_prompt)
 
     # HTML generation
     ##########################################################################
@@ -290,19 +334,17 @@ class DeckBrowser:
 """.format(self._render_data.studied_today)
 
     def _renderDailyCards(self) -> str:
-        self._daily_card_searches.clear()
         rows: list[str] = []
+        total_cards = sum(group.card_count for group in self._render_data.daily_groups)
+        total_notes = sum(group.note_count for group in self._render_data.daily_groups)
+        has_recent_cards = total_cards > 0
         for group in self._render_data.daily_groups:
             row_classes = ["daily-cards-row"]
-            if group.key == "0":
+            if group.days_ago == 0:
                 row_classes.append("is-today")
-            if group.note_ids:
-                search = self.mw.col.build_search_string(
-                    SearchNode(nids=SearchNode.IdList(ids=group.note_ids))
-                )
-                self._daily_card_searches[group.key] = (search, group.browse_prompt)
+            if group.card_count:
                 action = (
-                    f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.key}\")'>Browse</a>"
+                    f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards</a>"
                 )
                 row_classes.append("has-cards")
             else:
@@ -327,15 +369,28 @@ class DeckBrowser:
                     action=action,
                 )
             )
+        zero_state = ""
+        if not has_recent_cards:
+            zero_state = """
+  <div class="daily-cards-zero-state">
+    Add cards today and they'll appear here for fast date-based browsing.
+  </div>
+"""
         return """
 <div class="daily-cards-panel deck-browser-card">
   <div class="deck-browser-card-label">Daily cards</div>
   <div class="daily-cards-subtitle">Browse recently created cards by date, not only by deck.</div>
-  <div class="daily-cards-list">
+  <div class="daily-cards-summary">Last 7 days: <strong>{total_cards}</strong> cards across <strong>{total_notes}</strong> notes</div>
+{zero_state}  <div class="daily-cards-list">
     {rows}
   </div>
 </div>
-""".format(rows="\\n".join(rows))
+""".format(
+            total_cards=total_cards,
+            total_notes=total_notes,
+            zero_state=zero_state,
+            rows="\\n".join(rows),
+        )
 
     def _renderDeckTree(self, top: DeckTreeNode) -> str:
         buf = """
