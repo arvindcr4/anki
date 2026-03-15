@@ -99,6 +99,14 @@ class QuickIntakeFrame(QFrame):
         self.context_label.setWordWrap(True)
         layout.addWidget(self.context_label)
 
+        self.llm_status_label = QLabel("LLM status: not configured")
+        self.llm_status_label.setWordWrap(True)
+        layout.addWidget(self.llm_status_label)
+
+        self.last_source_label = QLabel("Last source: none yet")
+        self.last_source_label.setWordWrap(True)
+        layout.addWidget(self.last_source_label)
+
         self.status_label = QLabel(
             "Tip: use capture::inbox plus source:: tags so imported material stays easy to triage later."
         )
@@ -122,6 +130,12 @@ class QuickIntakeFrame(QFrame):
         self.context_label.setText(
             f"Current deck: <b>{deck_name}</b> • Current note type: <b>{note_type_name}</b>"
         )
+
+    def set_llm_status(self, text: str) -> None:
+        self.llm_status_label.setText(text)
+
+    def set_last_source(self, text: str) -> None:
+        self.last_source_label.setText(text)
 
     def set_status(self, text: str) -> None:
         self.status_label.setText(text)
@@ -220,6 +234,8 @@ class AddCards(QMainWindow):
         assert layout is not None
         layout.insertWidget(1, self.intake_frame)
         self._update_intake_context()
+        self.intake_frame.set_llm_status("LLM status: not configured")
+        self.intake_frame.set_last_source("Last source: none yet")
 
     def _update_intake_context(self) -> None:
         self.intake_frame.set_context(
@@ -229,6 +245,9 @@ class AddCards(QMainWindow):
 
     def _update_intake_status(self, message: str) -> None:
         self.intake_frame.set_status(message)
+
+    def _update_last_source(self, summary: str) -> None:
+        self.intake_frame.set_last_source(f"Last source: {summary}")
 
     def _normalize_tag(self, text: str) -> str:
         cleaned = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -285,6 +304,7 @@ class AddCards(QMainWindow):
         if len(labels) > 3:
             summary += ", …"
         plural = "" if len(labels) == 1 else "s"
+        self._update_last_source(summary)
         self._update_intake_status(
             f"Added {len(labels)} {source_kind}{plural} to the current note • tags: capture::inbox, source::{source_kind}::*"
         )
@@ -313,6 +333,9 @@ class AddCards(QMainWindow):
             self._insert_source_links([url.strip()], source_kind="web")
 
     def _show_llm_setup(self) -> None:
+        self.intake_frame.set_llm_status(
+            "LLM status: setup surface reserved • provider not configured yet"
+        )
         showInfo(
             "LLM-era capture belongs here.\n\n"
             "Prototype goals:\n"
