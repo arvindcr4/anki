@@ -1,25 +1,24 @@
-# Autoresearch: Source-to-LLM preview loop in Anki Add Cards
+# Autoresearch: Gated source-to-LLM workflow clarity in Anki Add Cards
 
 ## Objective
-Strengthen the link between dropped source material and LLM actions. The Add Cards banner now exposes Summarize, Q&A, and Cloze actions, but it still reads more like a control strip than a source-to-generation workflow. The next step is to add an explicit source preview loop so the user can see: what source is active, that an LLM workspace exists, and what the next step will be.
+Clarify the workflow so the user sees an obvious sequence: capture source first, then use LLM actions. The current banner exposes Summarize / Q&A / Cloze, but those controls remain active even when no source has been captured, and they remain stale after a note is added. The next step is to gate those actions on source state and reset them when the note resets.
 
 ## Metrics
-- **Primary**: `source_preview_loop_score` (unitless, higher is better)
-- **Secondary**: `syntax_ok`, `source_preview_signals`, `llm_workspace_signals`
+- **Primary**: `workflow_gating_score` (unitless, higher is better)
+- **Secondary**: `syntax_ok`, `gating_signals`, `reset_signals`
 
 ## How to Run
 `./autoresearch.sh`
 
-The script performs a fast Python syntax check and scores whether Add Cards presents a clear source-to-LLM workflow:
-- explicit `LLM workspace` heading
-- explicit `Source preview` surface
-- visible Summarize / Q&A / Cloze actions
-- next-step messaging after source capture
-- dynamic preview updates when a source or action changes
+The script performs a fast Python syntax check and scores whether the Add Cards workflow is explicit and stateful:
+- LLM actions exist
+- LLM actions can be enabled/disabled as a group
+- actions default to disabled before a source is captured
+- actions are enabled when a source is captured
+- source workflow resets after the note resets
 
 ## Files in Scope
 - `qt/aqt/addcards.py`
-- `docs/llm-intake-ux.md`
 - `autoresearch.md` / `autoresearch.sh` / `autoresearch.ideas.md`
 
 ## Off Limits
@@ -29,13 +28,13 @@ The script performs a fast Python syntax check and scores whether Add Cards pres
 - New runtime dependencies
 
 ## Constraints
-- Keep the workflow inline and lightweight.
-- No big modal wizard; the value should be visible in the banner itself.
-- Preserve the classic manual editing path.
+- Keep the workflow inline.
+- Do not hide the existence of the LLM actions; make them visible but correctly gated.
+- Reset stale source state when moving to a fresh note.
 - Fast checks must pass after every kept experiment.
 
 ## What's Been Tried
-- Added a discoverable quick-intake banner with visible file/url capture.
-- Added auto-organization tags for source, deck, and note type.
-- Added visible LLM status, last-source feedback, and front-center Summarize / Q&A / Cloze actions.
-- Current gap: the active source is still described only as a status line. The UI needs an explicit source-preview surface to make the capture-to-generation loop legible at a glance.
+- Built a visible quick-intake banner.
+- Added organization defaults and source provenance tags.
+- Added visible LLM workspace actions and source preview messaging.
+- Current gap: the actions are not yet tied to source state. A learner can click them before capturing anything, and stale source context can linger after a new note is created.

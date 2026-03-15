@@ -123,21 +123,21 @@ class QuickIntakeFrame(QFrame):
         llm_actions = QHBoxLayout()
         llm_actions.setSpacing(8)
 
-        summarize = QPushButton("Summarize")
-        summarize.setAutoDefault(False)
-        qconnect(summarize.clicked, lambda: on_llm_action("Summarize"))
-        llm_actions.addWidget(summarize)
+        self.summarize_button = QPushButton("Summarize")
+        self.summarize_button.setAutoDefault(False)
+        qconnect(self.summarize_button.clicked, lambda: on_llm_action("Summarize"))
+        llm_actions.addWidget(self.summarize_button)
 
         qa_label = "Q&A"
-        qa = QPushButton(qa_label.replace("&", "&&"))
-        qa.setAutoDefault(False)
-        qconnect(qa.clicked, lambda: on_llm_action(qa_label))
-        llm_actions.addWidget(qa)
+        self.qa_button = QPushButton(qa_label.replace("&", "&&"))
+        self.qa_button.setAutoDefault(False)
+        qconnect(self.qa_button.clicked, lambda: on_llm_action(qa_label))
+        llm_actions.addWidget(self.qa_button)
 
-        cloze = QPushButton("Cloze")
-        cloze.setAutoDefault(False)
-        qconnect(cloze.clicked, lambda: on_llm_action("Cloze"))
-        llm_actions.addWidget(cloze)
+        self.cloze_button = QPushButton("Cloze")
+        self.cloze_button.setAutoDefault(False)
+        qconnect(self.cloze_button.clicked, lambda: on_llm_action("Cloze"))
+        llm_actions.addWidget(self.cloze_button)
         llm_actions.addStretch(1)
         layout.addLayout(llm_actions)
 
@@ -170,6 +170,11 @@ class QuickIntakeFrame(QFrame):
 
     def set_source_preview(self, text: str) -> None:
         self.source_preview_label.setText(text)
+
+    def set_llm_actions_enabled(self, enabled: bool) -> None:
+        self.summarize_button.setEnabled(enabled)
+        self.qa_button.setEnabled(enabled)
+        self.cloze_button.setEnabled(enabled)
 
     def set_status(self, text: str) -> None:
         self.status_label.setText(text)
@@ -270,10 +275,7 @@ class AddCards(QMainWindow):
         layout.insertWidget(1, self.intake_frame)
         self._last_source_summary: str | None = None
         self._update_intake_context()
-        self._refresh_llm_readiness()
-        self.intake_frame.set_source_preview(
-            "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
-        )
+        self._reset_source_workflow()
 
     def _update_intake_context(self) -> None:
         self.intake_frame.set_context(
@@ -283,6 +285,14 @@ class AddCards(QMainWindow):
 
     def _update_intake_status(self, message: str) -> None:
         self.intake_frame.set_status(message)
+
+    def _reset_source_workflow(self) -> None:
+        self._last_source_summary = None
+        self._refresh_llm_readiness()
+        self.intake_frame.set_source_preview(
+            "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
+        )
+        self.intake_frame.set_llm_actions_enabled(False)
 
     def _refresh_llm_readiness(self, source_summary: str | None = None) -> None:
         if source_summary is not None:
@@ -300,6 +310,7 @@ class AddCards(QMainWindow):
         self, summary: str, *, selected_action: str | None = None
     ) -> None:
         self._refresh_llm_readiness(summary)
+        self.intake_frame.set_llm_actions_enabled(True)
         if selected_action:
             self.intake_frame.set_source_preview(
                 f"Source preview: {summary} • selected action: {selected_action} • next step: preview output before writing"
@@ -587,6 +598,7 @@ class AddCards(QMainWindow):
             # and tags
             note.tags = old_note.tags
         self.setAndFocusNote(note)
+        self._reset_source_workflow()
 
     def on_operation_did_execute(
         self, changes: OpChanges, handler: object | None
