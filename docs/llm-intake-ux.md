@@ -123,3 +123,13 @@ The ideal inline loop is:
 4. Review a preview-first draft before writing into note fields.
 
 This keeps the workflow legible without forcing the learner into a separate wizard.
+
+## Codex connection
+
+If Codex is the preferred provider, the Add Cards banner should expose **Connect Codex** as a first-class affordance instead of hiding provider setup behind a generic settings step. A compact inline status line should answer three questions immediately:
+
+1. Is Codex connected?
+2. What credential is missing?
+3. Once connected, what action can I take next?
+
+A simple first pass is environment detection for `OPENAI_API_KEY`, paired with preview-first messaging that makes Codex feel like the default path behind Summarize, Q&A, and Cloze.

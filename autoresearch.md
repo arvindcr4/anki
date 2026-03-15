@@ -1,40 +1,41 @@
-# Autoresearch: Gated source-to-LLM workflow clarity in Anki Add Cards
+# Autoresearch: Codex connection affordance in Anki Add Cards
 
 ## Objective
-Clarify the workflow so the user sees an obvious sequence: capture source first, then use LLM actions. The current banner exposes Summarize / Q&A / Cloze, but those controls remain active even when no source has been captured, and they remain stale after a note is added. The next step is to gate those actions on source state and reset them when the note resets.
+Add an obvious way to connect Codex in the Add Cards LLM workspace. The source-first flow is now visible, but provider setup is still generic. The user specifically wants Codex surfaced as a first-class connection path so the workspace feels built for the current LLM era instead of an abstract future integration.
 
 ## Metrics
-- **Primary**: `workflow_gating_score` (unitless, higher is better)
-- **Secondary**: `syntax_ok`, `gating_signals`, `reset_signals`
+- **Primary**: `codex_connect_score` (unitless, higher is better)
+- **Secondary**: `syntax_ok`, `front_center_affordance`, `env_detection`, `codex_status_surface`
 
 ## How to Run
 `./autoresearch.sh`
 
-The script performs a fast Python syntax check and scores whether the Add Cards workflow is explicit and stateful:
-- LLM actions exist
-- LLM actions can be enabled/disabled as a group
-- actions default to disabled before a source is captured
-- actions are enabled when a source is captured
-- source workflow resets after the note resets
+The script performs a fast Python syntax check and scores whether Add Cards exposes a Codex-specific connection flow:
+- visible `Connect Codex` affordance in the banner
+- visible `Codex connection` status surface
+- explicit connection handler in Python
+- environment detection for `OPENAI_API_KEY`
+- Codex-specific guidance in the UI/doc copy
 
 ## Files in Scope
 - `qt/aqt/addcards.py`
+- `docs/llm-intake-ux.md`
 - `autoresearch.md` / `autoresearch.sh` / `autoresearch.ideas.md`
 
 ## Off Limits
 - Scheduling / FSRS logic
 - Rust backend / storage layer
-- Full provider integration
+- Real provider/network integration
 - New runtime dependencies
 
 ## Constraints
-- Keep the workflow inline.
-- Do not hide the existence of the LLM actions; make them visible but correctly gated.
-- Reset stale source state when moving to a fresh note.
+- Keep Codex setup inline and front-and-center.
+- Reuse existing status surfaces rather than opening a large wizard.
+- Preserve the classic manual editing path.
 - Fast checks must pass after every kept experiment.
 
 ## What's Been Tried
-- Built a visible quick-intake banner.
-- Added organization defaults and source provenance tags.
-- Added visible LLM workspace actions and source preview messaging.
-- Current gap: the actions are not yet tied to source state. A learner can click them before capturing anything, and stale source context can linger after a new note is created.
+- Added a source-first quick-intake banner.
+- Added visible LLM workspace actions and a source preview loop.
+- Added gating so LLM actions only activate after a source is captured.
+- Current gap: provider setup is still generic. There is no explicit Codex connection button or Codex-specific readiness state.

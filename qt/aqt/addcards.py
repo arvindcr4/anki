@@ -48,6 +48,7 @@ class QuickIntakeFrame(QFrame):
         on_choose_files: Callable[[], None],
         on_paste_url: Callable[[], None],
         on_llm_setup: Callable[[], None],
+        on_codex_connect: Callable[[], None],
         on_llm_action: Callable[[str], None],
         on_organize: Callable[[], None],
     ) -> None:
@@ -89,6 +90,11 @@ class QuickIntakeFrame(QFrame):
         qconnect(llm_setup.clicked, on_llm_setup)
         actions.addWidget(llm_setup)
 
+        connect_codex = QPushButton("Connect Codex")
+        connect_codex.setAutoDefault(False)
+        qconnect(connect_codex.clicked, on_codex_connect)
+        actions.addWidget(connect_codex)
+
         organize = QPushButton("Organize note")
         organize.setAutoDefault(False)
         qconnect(organize.clicked, on_organize)
@@ -107,6 +113,10 @@ class QuickIntakeFrame(QFrame):
         self.llm_status_label = QLabel("LLM status: not configured")
         self.llm_status_label.setWordWrap(True)
         layout.addWidget(self.llm_status_label)
+
+        self.codex_status_label = QLabel("Codex connection: not connected")
+        self.codex_status_label.setWordWrap(True)
+        layout.addWidget(self.codex_status_label)
 
         self.source_preview_label = QLabel(
             "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
@@ -167,6 +177,9 @@ class QuickIntakeFrame(QFrame):
 
     def set_llm_status(self, text: str) -> None:
         self.llm_status_label.setText(text)
+
+    def set_codex_status(self, text: str) -> None:
+        self.codex_status_label.setText(text)
 
     def set_source_preview(self, text: str) -> None:
         self.source_preview_label.setText(text)
@@ -267,6 +280,7 @@ class AddCards(QMainWindow):
             on_choose_files=self._show_intake_file_picker,
             on_paste_url=self._prompt_for_source_url,
             on_llm_setup=self._show_llm_setup,
+            on_codex_connect=self._show_codex_connect,
             on_llm_action=self._show_llm_action,
             on_organize=self._organize_current_note,
         )
@@ -275,6 +289,7 @@ class AddCards(QMainWindow):
         layout.insertWidget(1, self.intake_frame)
         self._last_source_summary: str | None = None
         self._update_intake_context()
+        self._refresh_codex_connection()
         self._reset_source_workflow()
 
     def _update_intake_context(self) -> None:
@@ -285,6 +300,19 @@ class AddCards(QMainWindow):
 
     def _update_intake_status(self, message: str) -> None:
         self.intake_frame.set_status(message)
+
+    def _codex_api_key_present(self) -> bool:
+        return bool(os.environ.get("OPENAI_API_KEY"))
+
+    def _refresh_codex_connection(self) -> None:
+        if self._codex_api_key_present():
+            self.intake_frame.set_codex_status(
+                "Codex connection: OPENAI_API_KEY detected • ready for preview-first actions"
+            )
+        else:
+            self.intake_frame.set_codex_status(
+                "Codex connection: not connected • press Connect Codex or set OPENAI_API_KEY"
+            )
 
     def _reset_source_workflow(self) -> None:
         self._last_source_summary = None
@@ -298,13 +326,23 @@ class AddCards(QMainWindow):
         if source_summary is not None:
             self._last_source_summary = source_summary
         if self._last_source_summary:
-            self.intake_frame.set_llm_status(
-                f"LLM status: ready for Summarize, Q&A, or Cloze on {self._last_source_summary} once provider is configured"
-            )
+            if self._codex_api_key_present():
+                self.intake_frame.set_llm_status(
+                    f"LLM status: Codex ready for Summarize, Q&A, or Cloze on {self._last_source_summary}"
+                )
+            else:
+                self.intake_frame.set_llm_status(
+                    f"LLM status: ready for Summarize, Q&A, or Cloze on {self._last_source_summary} once provider is configured"
+                )
         else:
-            self.intake_frame.set_llm_status(
-                "LLM status: provider not configured • preview first with Summarize, Q&A, or Cloze"
-            )
+            if self._codex_api_key_present():
+                self.intake_frame.set_llm_status(
+                    "LLM status: Codex connected • capture a source to start preview-first actions"
+                )
+            else:
+                self.intake_frame.set_llm_status(
+                    "LLM status: provider not configured • preview first with Summarize, Q&A, or Cloze"
+                )
 
     def _update_source_preview(
         self, summary: str, *, selected_action: str | None = None
@@ -409,6 +447,7 @@ class AddCards(QMainWindow):
         self.intake_frame.set_llm_status(
             "LLM status: provider setup surface reserved • preview first with Summarize, Q&A, or Cloze"
         )
+        self._refresh_codex_connection()
         showInfo(
             "LLM-era capture belongs here.\n\n"
             "Prototype goals:\n"
@@ -419,6 +458,19 @@ class AddCards(QMainWindow):
             "This experiment focuses on lowering capture friction first, while reserving a front-and-center surface for future LLM APIs.",
             parent=self,
         )
+
+    def _show_codex_connect(self) -> None:
+        self._refresh_codex_connection()
+        if self._codex_api_key_present():
+            showInfo(
+                "Codex connection is ready.\n\nOPENAI_API_KEY was detected, so Codex can sit behind Summarize, Q&A, and Cloze previews.",
+                parent=self,
+            )
+        else:
+            showInfo(
+                "Connect Codex by adding OPENAI_API_KEY to your environment.\n\nOnce OPENAI_API_KEY is available, the Add Cards LLM workspace can treat Codex as the default preview-first provider for Summarize, Q&A, and Cloze.",
+                parent=self,
+            )
 
     def _show_llm_action(self, action: str) -> None:
         target = self._last_source_summary or "the current note"
