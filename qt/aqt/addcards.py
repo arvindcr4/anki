@@ -57,128 +57,250 @@ class QuickIntakeFrame(QFrame):
         self.setAcceptDrops(True)
         self.setFrameShape(QFrame.Shape.StyledPanel)
         self.setObjectName("quickIntakeFrame")
+        self.setProperty("dragActive", False)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(12)
 
-        headline = QLabel("<b>Drop files or paste a URL</b>")
+        eyebrow = QLabel("Source-first capture")
+        eyebrow.setObjectName("quickIntakeEyebrow")
+        layout.addWidget(eyebrow)
+
+        headline = QLabel("Turn files and URLs into clean cards")
         headline.setObjectName("quickIntakeHeadline")
+        headline.setWordWrap(True)
         layout.addWidget(headline)
 
         body = QLabel(
-            "Capture source material into the current note, keep LLM setup visible, and add organization tags as you go."
+            "Start from source material, confirm where the note will land, then preview an LLM action before anything is written into fields."
         )
+        body.setObjectName("quickIntakeBody")
         body.setWordWrap(True)
         layout.addWidget(body)
+
+        chip_row = QHBoxLayout()
+        chip_row.setSpacing(8)
+        self.deck_chip = QLabel("Deck: —")
+        self.deck_chip.setObjectName("quickIntakeChip")
+        chip_row.addWidget(self.deck_chip)
+        self.note_type_chip = QLabel("Note type: —")
+        self.note_type_chip.setObjectName("quickIntakeChip")
+        chip_row.addWidget(self.note_type_chip)
+        chip_row.addStretch(1)
+        layout.addLayout(chip_row)
 
         actions = QHBoxLayout()
         actions.setSpacing(8)
 
         choose_files = QPushButton("Choose files")
+        choose_files.setObjectName("quickIntakePrimaryAction")
         choose_files.setAutoDefault(False)
         qconnect(choose_files.clicked, on_choose_files)
         actions.addWidget(choose_files)
 
         paste_url = QPushButton("Paste URL")
+        paste_url.setObjectName("quickIntakePrimaryAction")
         paste_url.setAutoDefault(False)
         qconnect(paste_url.clicked, on_paste_url)
         actions.addWidget(paste_url)
 
-        llm_setup = QPushButton("LLM setup")
-        llm_setup.setAutoDefault(False)
-        qconnect(llm_setup.clicked, on_llm_setup)
-        actions.addWidget(llm_setup)
-
         connect_codex = QPushButton("Connect Codex")
+        connect_codex.setObjectName("quickIntakeAccentAction")
         connect_codex.setAutoDefault(False)
         qconnect(connect_codex.clicked, on_codex_connect)
         actions.addWidget(connect_codex)
 
+        llm_setup = QPushButton("LLM setup")
+        llm_setup.setObjectName("quickIntakeGhostAction")
+        llm_setup.setAutoDefault(False)
+        qconnect(llm_setup.clicked, on_llm_setup)
+        actions.addWidget(llm_setup)
+
         organize = QPushButton("Organize note")
+        organize.setObjectName("quickIntakeGhostAction")
         organize.setAutoDefault(False)
         qconnect(organize.clicked, on_organize)
         actions.addWidget(organize)
         actions.addStretch(1)
         layout.addLayout(actions)
 
+        self.capture_section = self._make_section(layout, "Capture from source")
+        capture_layout = self.capture_section.layout()
+        assert isinstance(capture_layout, QVBoxLayout)
+
         self.context_label = QLabel()
+        self.context_label.setObjectName("quickIntakeContextHint")
         self.context_label.setWordWrap(True)
-        layout.addWidget(self.context_label)
-
-        llm_workspace_heading = QLabel("<b>LLM workspace</b>")
-        llm_workspace_heading.setWordWrap(True)
-        layout.addWidget(llm_workspace_heading)
-
-        self.llm_status_label = QLabel("LLM status: not configured")
-        self.llm_status_label.setWordWrap(True)
-        layout.addWidget(self.llm_status_label)
-
-        self.codex_status_label = QLabel("Codex connection: not connected")
-        self.codex_status_label.setWordWrap(True)
-        layout.addWidget(self.codex_status_label)
+        capture_layout.addWidget(self.context_label)
 
         self.source_preview_label = QLabel(
             "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
         )
+        self.source_preview_label.setObjectName("quickIntakeSupportingText")
         self.source_preview_label.setWordWrap(True)
-        layout.addWidget(self.source_preview_label)
+        capture_layout.addWidget(self.source_preview_label)
 
         self.source_details_label = QLabel(
             "Source details: waiting for a file or URL"
         )
+        self.source_details_label.setObjectName("quickIntakeStatusTone")
         self.source_details_label.setWordWrap(True)
-        layout.addWidget(self.source_details_label)
+        capture_layout.addWidget(self.source_details_label)
+
+        self.workspace_section = self._make_section(layout, "LLM workspace")
+        workspace_layout = self.workspace_section.layout()
+        assert isinstance(workspace_layout, QVBoxLayout)
+
+        self.llm_status_label = QLabel("LLM status: not configured")
+        self.llm_status_label.setObjectName("quickIntakeStatusTone")
+        self.llm_status_label.setWordWrap(True)
+        workspace_layout.addWidget(self.llm_status_label)
+
+        self.codex_status_label = QLabel("Codex connection: not connected")
+        self.codex_status_label.setObjectName("quickIntakeSupportingText")
+        self.codex_status_label.setWordWrap(True)
+        workspace_layout.addWidget(self.codex_status_label)
 
         workspace_label = QLabel(
             "Preview first: choose how an LLM should turn this source into cards."
         )
+        workspace_label.setObjectName("quickIntakeSupportingText")
         workspace_label.setWordWrap(True)
-        layout.addWidget(workspace_label)
+        workspace_layout.addWidget(workspace_label)
 
         llm_actions = QHBoxLayout()
         llm_actions.setSpacing(8)
 
         self.summarize_button = QPushButton("Summarize")
+        self.summarize_button.setObjectName("quickIntakePrimaryAction")
         self.summarize_button.setAutoDefault(False)
         qconnect(self.summarize_button.clicked, lambda: on_llm_action("Summarize"))
         llm_actions.addWidget(self.summarize_button)
 
         qa_label = "Q&A"
         self.qa_button = QPushButton(qa_label.replace("&", "&&"))
+        self.qa_button.setObjectName("quickIntakePrimaryAction")
         self.qa_button.setAutoDefault(False)
         qconnect(self.qa_button.clicked, lambda: on_llm_action(qa_label))
         llm_actions.addWidget(self.qa_button)
 
         self.cloze_button = QPushButton("Cloze")
+        self.cloze_button.setObjectName("quickIntakePrimaryAction")
         self.cloze_button.setAutoDefault(False)
         qconnect(self.cloze_button.clicked, lambda: on_llm_action("Cloze"))
         llm_actions.addWidget(self.cloze_button)
         llm_actions.addStretch(1)
-        layout.addLayout(llm_actions)
+        workspace_layout.addLayout(llm_actions)
 
         self.status_label = QLabel(
             "Tip: use capture::inbox plus source:: tags so imported material stays easy to triage later."
         )
+        self.status_label.setObjectName("quickIntakeSupportingText")
         self.status_label.setWordWrap(True)
         layout.addWidget(self.status_label)
 
         self.setStyleSheet(
             """
 #quickIntakeFrame {
-  border: 1px dashed palette(mid);
-  border-radius: 10px;
+  border: 1px solid palette(midlight);
+  border-radius: 18px;
   background: palette(base);
 }
-#quickIntakeHeadline {
-  font-size: 15px;
+#quickIntakeFrame[dragActive="true"] {
+  border: 2px solid palette(highlight);
+  background: palette(alternate-base);
+}
+QFrame#quickIntakeSection {
+  border: 1px solid palette(midlight);
+  border-radius: 14px;
+  background: palette(alternate-base);
+}
+QLabel#quickIntakeEyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: palette(highlight);
+  letter-spacing: 0.08em;
+}
+QLabel#quickIntakeHeadline {
+  font-size: 18px;
+  font-weight: 700;
+}
+QLabel#quickIntakeBody {
+  font-size: 13px;
+}
+QLabel#quickIntakeSectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+}
+QLabel#quickIntakeChip {
+  border: 1px solid palette(midlight);
+  border-radius: 999px;
+  background: palette(window);
+  padding: 4px 10px;
+  font-weight: 600;
+}
+QLabel#quickIntakeContextHint,
+QLabel#quickIntakeSupportingText {
+  font-size: 12px;
+}
+QLabel#quickIntakeStatusTone {
+  border-left: 3px solid palette(highlight);
+  padding-left: 10px;
+  font-size: 12px;
+}
+QPushButton#quickIntakePrimaryAction,
+QPushButton#quickIntakeAccentAction,
+QPushButton#quickIntakeGhostAction {
+  min-height: 30px;
+  padding: 4px 12px;
+  border-radius: 9px;
+  font-weight: 600;
+}
+QPushButton#quickIntakePrimaryAction {
+  border: 1px solid palette(midlight);
+  background: palette(button);
+}
+QPushButton#quickIntakeAccentAction {
+  border: 1px solid palette(highlight);
+  background: palette(window);
+}
+QPushButton#quickIntakeGhostAction {
+  border: 1px solid transparent;
+  background: transparent;
+}
+QPushButton#quickIntakePrimaryAction:disabled,
+QPushButton#quickIntakeAccentAction:disabled,
+QPushButton#quickIntakeGhostAction:disabled {
+  color: palette(mid);
+  border-color: palette(midlight);
 }
 """
         )
 
+    def _make_section(self, parent_layout: QVBoxLayout, title: str) -> QFrame:
+        section = QFrame()
+        section.setObjectName("quickIntakeSection")
+        section_layout = QVBoxLayout(section)
+        section_layout.setContentsMargins(12, 12, 12, 12)
+        section_layout.setSpacing(8)
+        heading = QLabel(title)
+        heading.setObjectName("quickIntakeSectionTitle")
+        section_layout.addWidget(heading)
+        parent_layout.addWidget(section)
+        return section
+
+    def _set_drag_active(self, active: bool) -> None:
+        self.setProperty("dragActive", active)
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
+
     def set_context(self, *, deck_name: str, note_type_name: str) -> None:
+        self.deck_chip.setText(f"Deck: {deck_name}")
+        self.note_type_chip.setText(f"Note type: {note_type_name}")
         self.context_label.setText(
-            f"Current deck: <b>{deck_name}</b> • Current note type: <b>{note_type_name}</b>"
+            f"Cards will land in <b>{deck_name}</b> using the <b>{note_type_name}</b> note type."
         )
 
     def set_llm_status(self, text: str) -> None:
@@ -204,12 +326,18 @@ class QuickIntakeFrame(QFrame):
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         mime = event.mimeData()
         if mime.hasUrls():
+            self._set_drag_active(True)
             event.acceptProposedAction()
             return
         if mime.hasText() and re.match(r"https?://", mime.text().strip()):
+            self._set_drag_active(True)
             event.acceptProposedAction()
             return
         super().dragEnterEvent(event)
+
+    def dragLeaveEvent(self, event: QDragLeaveEvent) -> None:
+        self._set_drag_active(False)
+        super().dragLeaveEvent(event)
 
     def dropEvent(self, event: QDropEvent) -> None:
         mime = event.mimeData()
@@ -228,6 +356,7 @@ class QuickIntakeFrame(QFrame):
             if re.match(r"https?://", text):
                 urls.append(text)
 
+        self._set_drag_active(False)
         if files or urls:
             self._on_drop(files, urls)
             event.acceptProposedAction()

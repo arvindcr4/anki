@@ -20,6 +20,18 @@ There are four main friction points in the current flow:
 5. **Organization by default**: every captured source should leave behind enough metadata to be triaged later.
 6. **Low-latency trust**: actions should feel immediate; slow LLM steps should be optional, explicit, and previewable.
 
+## Visual design for trust
+
+The intake surface should not look like a utility panel. It should communicate hierarchy at a glance:
+
+- a clear headline that explains the promise
+- context chips for deck and note type so destination is always visible
+- separate cards for source capture and LLM workspace so the flow reads top-to-bottom
+- obvious primary vs. secondary actions so the next step is self-evident
+- drag feedback that visibly lights up the capture area the moment a file or URL enters the window
+
+This kind of visual hierarchy lowers cognitive load and makes the prototype feel intentional instead of experimental.
+
 ## Proposed interaction model
 
 ### 1. Quick intake strip

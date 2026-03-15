@@ -3,3 +3,4 @@
 - Measure and reduce steps-to-first-card with an event log benchmark that compares current Add Cards flow vs. source-first quick intake flow.
 - Introduce source collections/inboxes that batch dropped materials before converting them into multiple cards, instead of forcing everything through a single note immediately.
 - Persist preferred provider selection in the profile and add a real Codex credential check flow instead of relying only on OPENAI_API_KEY detection.
+- Add an adaptive two-column desktop layout for the capture card and LLM workspace, with a stacked mobile/narrow fallback, so the Add Cards window can feel more like a modern split workspace.

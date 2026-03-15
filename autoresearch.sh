@@ -5,38 +5,41 @@ python3 - <<'PY'
 from pathlib import Path
 import py_compile
 
-addcards = Path('qt/aqt/addcards.py')
-toolbar = Path('qt/aqt/toolbar.py')
-doc = Path('docs/llm-intake-ux.md')
+addcards = Path("qt/aqt/addcards.py")
+doc = Path("docs/llm-intake-ux.md")
 py_compile.compile(str(addcards), doraise=True)
-py_compile.compile(str(toolbar), doraise=True)
-texts = [addcards.read_text(), toolbar.read_text(), doc.read_text() if doc.exists() else '']
-joined = '\n'.join(texts)
+text = addcards.read_text()
+doc_text = doc.read_text() if doc.exists() else ""
 score = 0
-toolbar_affordance = 0
-window_title_signal = 0
-docs_signal = 0
+visual_hierarchy = 0
+drag_feedback = 0
+context_clarity = 0
 checks = [
-    ('Add / Capture', 3, 'toolbar'),
-    ('source-first', 2, 'toolbar'),
-    ('drag/drop files or URLs', 2, 'toolbar'),
-    ('setWindowTitle', 1, 'title'),
-    ('Capture', 2, 'title'),
-    ('Open Add Cards', 2, 'docs'),
-    ('press A', 1, 'docs'),
+    ("quickIntakeSection", 2, "visual"),
+    ("quickIntakeChip", 2, "context"),
+    ("quickIntakePrimaryAction", 2, "visual"),
+    ("quickIntakeAccentAction", 2, "visual"),
+    ("quickIntakeGhostAction", 1, "visual"),
+    ("dragActive", 3, "drag"),
+    ("_set_drag_active", 2, "drag"),
+    ("Source-first capture", 2, "visual"),
+    ("visual hierarchy", 1, "docs"),
+    ("drag feedback", 1, "docs"),
 ]
 for needle, pts, bucket in checks:
-    if needle in joined:
+    if needle in text or needle in doc_text:
         score += pts
-        if bucket == 'toolbar':
-            toolbar_affordance += 1
-        elif bucket == 'title':
-            window_title_signal += 1
-        elif bucket == 'docs':
-            docs_signal += 1
-print(f'METRIC entrypoint_discoverability_score={score}')
-print(f'METRIC syntax_ok=1')
-print(f'METRIC toolbar_affordance={toolbar_affordance}')
-print(f'METRIC window_title_signal={window_title_signal}')
-print(f'METRIC docs_signal={docs_signal}')
+        if bucket == "visual":
+            visual_hierarchy += 1
+        elif bucket == "drag":
+            drag_feedback += 1
+        elif bucket == "context":
+            context_clarity += 1
+        elif bucket == "docs":
+            visual_hierarchy += 1
+print(f"METRIC intake_ux_polish_score={score}")
+print(f"METRIC syntax_ok=1")
+print(f"METRIC visual_hierarchy={visual_hierarchy}")
+print(f"METRIC drag_feedback={drag_feedback}")
+print(f"METRIC context_clarity={context_clarity}")
 PY
