@@ -1,22 +1,21 @@
-# Autoresearch: LLM-era intake UX for Anki Add Cards
+# Autoresearch: LLM workspace visibility in Anki Add Cards
 
 ## Objective
-Improve Anki's Add Cards experience for the LLM era by making source capture more discoverable, lower-friction, and better organized. Phase 1 made intake visible. Phase 2 made the banner feel complete with visible LLM status and last-source feedback. Phase 3 focuses on what the user explicitly asked for next: cards should stay neatly organized automatically whenever source material is captured.
+Make LLM APIs feel front and center in Anki's Add Cards flow without breaking the classic editor. The quick-intake banner already handles files, URLs, visible context, and auto-organization. The next step is to expose a small but obvious LLM workspace directly in that banner so the learner can immediately see what LLM-era actions this screen is designed around.
 
 ## Metrics
-- **Primary**: `source_organization_score` (unitless, higher is better)
-- **Secondary**: `syntax_ok`, `auto_context_tags`, `visible_context`
+- **Primary**: `llm_workspace_score` (unitless, higher is better)
+- **Secondary**: `syntax_ok`, `front_center_actions`, `preview_first_signals`
 
 ## How to Run
 `./autoresearch.sh`
 
-The script performs a fast Python syntax check and then scores how well the Add Cards intake flow preserves organization automatically:
-- visible current deck / note type context
-- automatic `capture::inbox` tagging
-- automatic source provenance tags
-- automatic deck and note type context tags on every capture
-- explicit organize action for manual cleanup
-- status text that reminds the learner which tags were applied
+The script performs a fast Python syntax check and then scores whether Add Cards now surfaces an obvious LLM workspace:
+- visible LLM status
+- visible LLM action buttons in the intake banner
+- explicit preview-first language
+- dynamic LLM readiness feedback after a source is captured
+- preserved file/URL capture entry points
 
 ## Files in Scope
 - `qt/aqt/addcards.py`
@@ -26,19 +25,18 @@ The script performs a fast Python syntax check and then scores how well the Add 
 ## Off Limits
 - Scheduling / FSRS logic
 - Rust backend / storage layer
-- Reviewer flow outside what is needed to support the Add Cards prototype
+- Full LLM provider integration
 - New runtime dependencies
 
 ## Constraints
-- Reuse existing editor insertion logic.
-- Keep changes scoped to Add Cards.
-- Favor simple defaults over complex configuration.
+- Keep the Add Cards experience simple; no large modal workflow if a compact inline workspace will do.
+- Reuse the current intake banner instead of inventing a second capture surface.
+- Preserve the non-LLM manual path.
 - Fast checks must pass after every kept experiment.
-- Preserve current add-card behavior for users who ignore the new UI.
 
 ## What's Been Tried
-- Exposed a discoverable intake strip with drag/drop, file picking, URL pasting, LLM setup entry point, and organization action.
-- Added automatic `capture::inbox` and source provenance tags on file/URL capture.
-- Added visible LLM status and last-source feedback in the banner.
-- Captured broader product rationale in `docs/llm-intake-ux.md`.
-- Current gap: deck and note type tags are only applied when the learner explicitly presses Organize, which means source-driven notes can still land with partial metadata.
+- Added a discoverable quick-intake banner with drag/drop, file picking, URL pasting, LLM setup entry point, and organization action.
+- Added visible current deck / note type context, visible LLM status, and last-source feedback.
+- Added automatic `capture::inbox`, source provenance, deck, and note-type tags on every source capture.
+- Captured the broader product rationale in `docs/llm-intake-ux.md`.
+- Current gap: LLM setup is visible, but actual LLM-era actions are still implicit. The banner needs explicit prompt/action affordances so the user immediately understands how source capture flows into generation.

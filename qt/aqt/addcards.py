@@ -48,6 +48,7 @@ class QuickIntakeFrame(QFrame):
         on_choose_files: Callable[[], None],
         on_paste_url: Callable[[], None],
         on_llm_setup: Callable[[], None],
+        on_llm_action: Callable[[str], None],
         on_organize: Callable[[], None],
     ) -> None:
         super().__init__()
@@ -106,6 +107,33 @@ class QuickIntakeFrame(QFrame):
         self.last_source_label = QLabel("Last source: none yet")
         self.last_source_label.setWordWrap(True)
         layout.addWidget(self.last_source_label)
+
+        workspace_label = QLabel(
+            "Preview first: choose how an LLM should turn this source into cards."
+        )
+        workspace_label.setWordWrap(True)
+        layout.addWidget(workspace_label)
+
+        llm_actions = QHBoxLayout()
+        llm_actions.setSpacing(8)
+
+        summarize = QPushButton("Summarize")
+        summarize.setAutoDefault(False)
+        qconnect(summarize.clicked, lambda: on_llm_action("Summarize"))
+        llm_actions.addWidget(summarize)
+
+        qa_label = "Q&A"
+        qa = QPushButton(qa_label.replace("&", "&&"))
+        qa.setAutoDefault(False)
+        qconnect(qa.clicked, lambda: on_llm_action(qa_label))
+        llm_actions.addWidget(qa)
+
+        cloze = QPushButton("Cloze")
+        cloze.setAutoDefault(False)
+        qconnect(cloze.clicked, lambda: on_llm_action("Cloze"))
+        llm_actions.addWidget(cloze)
+        llm_actions.addStretch(1)
+        layout.addLayout(llm_actions)
 
         self.status_label = QLabel(
             "Tip: use capture::inbox plus source:: tags so imported material stays easy to triage later."
@@ -228,13 +256,15 @@ class AddCards(QMainWindow):
             on_choose_files=self._show_intake_file_picker,
             on_paste_url=self._prompt_for_source_url,
             on_llm_setup=self._show_llm_setup,
+            on_llm_action=self._show_llm_action,
             on_organize=self._organize_current_note,
         )
         layout = self.form.centralwidget.layout()
         assert layout is not None
         layout.insertWidget(1, self.intake_frame)
+        self._last_source_summary: str | None = None
         self._update_intake_context()
-        self.intake_frame.set_llm_status("LLM status: not configured")
+        self._refresh_llm_readiness()
         self.intake_frame.set_last_source("Last source: none yet")
 
     def _update_intake_context(self) -> None:
@@ -246,8 +276,21 @@ class AddCards(QMainWindow):
     def _update_intake_status(self, message: str) -> None:
         self.intake_frame.set_status(message)
 
+    def _refresh_llm_readiness(self, source_summary: str | None = None) -> None:
+        if source_summary is not None:
+            self._last_source_summary = source_summary
+        if self._last_source_summary:
+            self.intake_frame.set_llm_status(
+                f"LLM status: ready for Summarize, Q&A, or Cloze on {self._last_source_summary} once provider is configured"
+            )
+        else:
+            self.intake_frame.set_llm_status(
+                "LLM status: provider not configured • preview first with Summarize, Q&A, or Cloze"
+            )
+
     def _update_last_source(self, summary: str) -> None:
         self.intake_frame.set_last_source(f"Last source: {summary}")
+        self._refresh_llm_readiness(summary)
 
     def _normalize_tag(self, text: str) -> str:
         cleaned = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
@@ -336,15 +379,27 @@ class AddCards(QMainWindow):
 
     def _show_llm_setup(self) -> None:
         self.intake_frame.set_llm_status(
-            "LLM status: setup surface reserved • provider not configured yet"
+            "LLM status: provider setup surface reserved • preview first with Summarize, Q&A, or Cloze"
         )
         showInfo(
             "LLM-era capture belongs here.\n\n"
             "Prototype goals:\n"
             "• make provider/API setup impossible to miss\n"
             "• summarize dropped files and URLs into card drafts\n"
+            "• expose prompt actions like Summarize, Q&A, and Cloze in the banner\n"
             "• keep organization defaults visible while capturing\n\n"
             "This experiment focuses on lowering capture friction first, while reserving a front-and-center surface for future LLM APIs.",
+            parent=self,
+        )
+
+    def _show_llm_action(self, action: str) -> None:
+        target = self._last_source_summary or "the current note"
+        self.intake_frame.set_llm_status(
+            f"LLM status: ready for {action} on {target} once provider is configured"
+        )
+        showInfo(
+            f"Preview first: {action} should be the next step after capture.\n\n"
+            f"When provider setup lands, {action} will generate a preview from {target} before writing anything into note fields.",
             parent=self,
         )
 

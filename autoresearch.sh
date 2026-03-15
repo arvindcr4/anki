@@ -6,44 +6,47 @@ from pathlib import Path
 import py_compile
 
 addcards = Path("qt/aqt/addcards.py")
-for path in (addcards,):
-    py_compile.compile(str(path), doraise=True)
-
+doc = Path("docs/llm-intake-ux.md")
+py_compile.compile(str(addcards), doraise=True)
 text = addcards.read_text()
+doc_text = doc.read_text() if doc.exists() else ""
+
 score = 0
-visible_context = 0
-auto_context_tags = 0
+front_center_actions = 0
+preview_first_signals = 0
 
-if "Current deck" in text and "Current note type" in text:
-    score += 1
-    visible_context += 1
-if "capture::inbox" in text:
-    score += 1
-if "source::file::" in text or "source::web::" in text:
-    score += 2
-if 'deck::' in text and 'type::' in text:
-    visible_context += 1
-if '_organize_current_note' in text:
-    score += 1
-if 'Applied organization tags' in text:
-    score += 1
+for needle, pts in [
+    ("LLM status", 1),
+    ("LLM setup", 1),
+    ("Choose files", 1),
+    ("Paste URL", 1),
+    ("Last source", 1),
+]:
+    if needle in text:
+        score += pts
 
-# Automatic context tagging must happen inside source capture, not just manual organize.
-insert_start = text.find('def _insert_source_links')
-insert_end = text.find('def _show_intake_file_picker')
-insert_block = text[insert_start:insert_end] if insert_start != -1 and insert_end != -1 else ''
-if 'deck::' in insert_block:
+for needle in ["Summarize", "Q&A", "Cloze"]:
+    if needle in text:
+        score += 2
+        front_center_actions += 1
+
+for needle in ["Preview first", "preview-first", "ready for"]:
+    if needle in text or needle in doc_text:
+        score += 1
+        preview_first_signals += 1
+
+if "_show_llm_action" in text:
     score += 2
-    auto_context_tags += 1
-if 'type::' in insert_block:
+if "set_llm_status(" in text and "_insert_source_links" in text and "ready" in text:
     score += 2
-    auto_context_tags += 1
-if 'tags: capture::inbox' in insert_block and 'deck::' in insert_block and 'type::' in insert_block:
+if "provider not configured" in text:
+    score += 1
+if "prompt presets" in doc_text or "preview-first" in doc_text:
     score += 1
 
 syntax_ok = 1
-print(f"METRIC source_organization_score={score}")
+print(f"METRIC llm_workspace_score={score}")
 print(f"METRIC syntax_ok={syntax_ok}")
-print(f"METRIC auto_context_tags={auto_context_tags}")
-print(f"METRIC visible_context={visible_context}")
+print(f"METRIC front_center_actions={front_center_actions}")
+print(f"METRIC preview_first_signals={preview_first_signals}")
 PY
