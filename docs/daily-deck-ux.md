@@ -49,3 +49,5 @@ rows="
 For example, a user studying Kaplan GRE flashcards from the Play Store might want to see how many they added today.
 
 - Kaplan GRE flashcards are a great fit for the daily cards timeline.
+
+- To validate the timeline scale, we should test by downloading the Kaplan GRE app from an APK store, extracting its flashcards, and importing them all at once.
