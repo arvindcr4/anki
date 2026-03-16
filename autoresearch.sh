@@ -45,6 +45,7 @@ checks = [
     ('changes.card', 1, 'timeline'),
     ('Browse cards', 1, 'browse'),
     ('Browse cards →', 2, 'browse'),
+    ('rows="\n".join(rows)', 2, 'visual'),
     ('Browse last 7 days', 2, 'browse'),
     ('Cards added on', 1, 'browse'),
     ('Cards added in last 7 days', 1, 'browse'),

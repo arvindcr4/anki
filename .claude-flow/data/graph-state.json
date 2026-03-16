@@ -1,0 +1,665 @@
+{
+    "version": 1,
+    "updatedAt": 1773627234274,
+    "nodeCount": 51,
+    "nodes": {
+        "mem-MEMORY-user-preferences": {
+            "id": "mem-MEMORY-user-preferences",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073181
+        },
+        "mem-MEMORY-tools---config": {
+            "id": "mem-MEMORY-tools---config",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073171
+        },
+        "mem-MEMORY-servers": {
+            "id": "mem-MEMORY-servers",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073171
+        },
+        "mem-MEMORY-clipboard-watcher": {
+            "id": "mem-MEMORY-clipboard-watcher",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073171
+        },
+        "mem-MEMORY-chennai-courts---summer-vacati": {
+            "id": "mem-MEMORY-chennai-courts---summer-vacati",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073172
+        },
+        "mem-MEMORY-research-stack": {
+            "id": "mem-MEMORY-research-stack",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073172
+        },
+        "mem-MEMORY-tweets---notes": {
+            "id": "mem-MEMORY-tweets---notes",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073172
+        },
+        "mem-MEMORY-obsidian-sync": {
+            "id": "mem-MEMORY-obsidian-sync",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073172
+        },
+        "mem-ai-researcher-2026----": {
+            "id": "mem-ai-researcher-2026----",
+            "category": "ai-researcher-2026",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073172
+        },
+        "mem-ai-researcher-2026-how-to-become-an-awesome-ai-re": {
+            "id": "mem-ai-researcher-2026-how-to-become-an-awesome-ai-re",
+            "category": "ai-researcher-2026",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073172
+        },
+        "mem-browserbase----": {
+            "id": "mem-browserbase----",
+            "category": "browserbase",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-clipboard-watcher----": {
+            "id": "mem-clipboard-watcher----",
+            "category": "clipboard-watcher",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-clipboard-watcher-overview": {
+            "id": "mem-clipboard-watcher-overview",
+            "category": "clipboard-watcher",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-clipboard-watcher-18-url-handlers--priority-orde": {
+            "id": "mem-clipboard-watcher-18-url-handlers--priority-orde",
+            "category": "clipboard-watcher",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-clipboard-watcher-fetch-fallback-chain": {
+            "id": "mem-clipboard-watcher-fetch-fallback-chain",
+            "category": "clipboard-watcher",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-clipboard-watcher-key-implementation-details": {
+            "id": "mem-clipboard-watcher-key-implementation-details",
+            "category": "clipboard-watcher",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-clipboard-watcher-environment-variables--in-laun": {
+            "id": "mem-clipboard-watcher-environment-variables--in-laun",
+            "category": "clipboard-watcher",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-fast-apply-research----": {
+            "id": "mem-fast-apply-research----",
+            "category": "fast-apply-research",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-fast-apply-research-research-completed-2026-03-12": {
+            "id": "mem-fast-apply-research-research-completed-2026-03-12",
+            "category": "fast-apply-research",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-fast-apply-research-key-findings": {
+            "id": "mem-fast-apply-research-key-findings",
+            "category": "fast-apply-research",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073173
+        },
+        "mem-notebooklm-py----": {
+            "id": "mem-notebooklm-py----",
+            "category": "notebooklm-py",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-notebooklm-py-notebooklm-py--v0-3-4-": {
+            "id": "mem-notebooklm-py-notebooklm-py--v0-3-4-",
+            "category": "notebooklm-py",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-notebooklm-py-key-capabilities": {
+            "id": "mem-notebooklm-py-key-capabilities",
+            "category": "notebooklm-py",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-notebooklm-py-usage-patterns": {
+            "id": "mem-notebooklm-py-usage-patterns",
+            "category": "notebooklm-py",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-notebooklm-py-discovery": {
+            "id": "mem-notebooklm-py-discovery",
+            "category": "notebooklm-py",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-oapl-off-policy-rl----": {
+            "id": "mem-oapl-off-policy-rl----",
+            "category": "oapl-off-policy-rl",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-oapl-off-policy-rl-paper--llms-can-learn-to-reaso": {
+            "id": "mem-oapl-off-policy-rl-paper--llms-can-learn-to-reaso",
+            "category": "oapl-off-policy-rl",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-oapl-off-policy-rl-core-insight": {
+            "id": "mem-oapl-off-policy-rl-core-insight",
+            "category": "oapl-off-policy-rl",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-oapl-off-policy-rl-key-results": {
+            "id": "mem-oapl-off-policy-rl-key-results",
+            "category": "oapl-off-policy-rl",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-oapl-off-policy-rl-relevance-to-fast-apply-work": {
+            "id": "mem-oapl-off-policy-rl-relevance-to-fast-apply-work",
+            "category": "oapl-off-policy-rl",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-oapl-off-policy-rl-source": {
+            "id": "mem-oapl-off-policy-rl-source",
+            "category": "oapl-off-policy-rl",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073174
+        },
+        "mem-prompt-highest-leverage-feature----": {
+            "id": "mem-prompt-highest-leverage-feature----",
+            "category": "prompt-highest-leverage-feature",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-prompt-highest-leverage-feature-the-prompt": {
+            "id": "mem-prompt-highest-leverage-feature-the-prompt",
+            "category": "prompt-highest-leverage-feature",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-prompt-highest-leverage-feature-context": {
+            "id": "mem-prompt-highest-leverage-feature-context",
+            "category": "prompt-highest-leverage-feature",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-prompt-highest-leverage-feature-how-to-apply": {
+            "id": "mem-prompt-highest-leverage-feature-how-to-apply",
+            "category": "prompt-highest-leverage-feature",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-research-mcp-stack----": {
+            "id": "mem-research-mcp-stack----",
+            "category": "research-mcp-stack",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-research-mcp-stack-research-mcp-servers--configur": {
+            "id": "mem-research-mcp-stack-research-mcp-servers--configur",
+            "category": "research-mcp-stack",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-research-mcp-stack-setup-notes": {
+            "id": "mem-research-mcp-stack-setup-notes",
+            "category": "research-mcp-stack",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073175
+        },
+        "mem-MEMORY-references": {
+            "id": "mem-MEMORY-references",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073179
+        },
+        "mem-reference_bead_polishing_prompt----": {
+            "id": "mem-reference_bead_polishing_prompt----",
+            "category": "reference_bead_polishing_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073179
+        },
+        "mem-reference_bead_polishing_prompt-source": {
+            "id": "mem-reference_bead_polishing_prompt-source",
+            "category": "reference_bead_polishing_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073179
+        },
+        "mem-reference_bead_polishing_prompt-the-prompt": {
+            "id": "mem-reference_bead_polishing_prompt-the-prompt",
+            "category": "reference_bead_polishing_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073179
+        },
+        "mem-reference_bead_polishing_prompt-key-principles": {
+            "id": "mem-reference_bead_polishing_prompt-key-principles",
+            "category": "reference_bead_polishing_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073179
+        },
+        "mem-reference_bead_polishing_prompt-context": {
+            "id": "mem-reference_bead_polishing_prompt-context",
+            "category": "reference_bead_polishing_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073179
+        },
+        "mem-reference_typinator_key----": {
+            "id": "mem-reference_typinator_key----",
+            "category": "reference_typinator_key",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073180
+        },
+        "mem-reference_vibe_research_prompt----": {
+            "id": "mem-reference_vibe_research_prompt----",
+            "category": "reference_vibe_research_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073180
+        },
+        "mem-reference_vibe_research_prompt-source": {
+            "id": "mem-reference_vibe_research_prompt-source",
+            "category": "reference_vibe_research_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073180
+        },
+        "mem-reference_vibe_research_prompt-context": {
+            "id": "mem-reference_vibe_research_prompt-context",
+            "category": "reference_vibe_research_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073180
+        },
+        "mem-reference_vibe_research_prompt-the-prompt": {
+            "id": "mem-reference_vibe_research_prompt-the-prompt",
+            "category": "reference_vibe_research_prompt",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073180
+        },
+        "mem-MEMORY-tools-installed--2026-03-13-": {
+            "id": "mem-MEMORY-tools-installed--2026-03-13-",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073181
+        },
+        "mem-MEMORY-mirofish-config": {
+            "id": "mem-MEMORY-mirofish-config",
+            "category": "core",
+            "confidence": 0.5,
+            "accessCount": 0,
+            "createdAt": 1773627073181
+        }
+    },
+    "edges": [
+        {
+            "sourceId": "mem-MEMORY-user-preferences",
+            "targetId": "mem-MEMORY-tools---config",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-tools---config",
+            "targetId": "mem-MEMORY-servers",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-servers",
+            "targetId": "mem-MEMORY-clipboard-watcher",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-clipboard-watcher",
+            "targetId": "mem-MEMORY-chennai-courts---summer-vacati",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-chennai-courts---summer-vacati",
+            "targetId": "mem-MEMORY-research-stack",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-research-stack",
+            "targetId": "mem-MEMORY-tweets---notes",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-tweets---notes",
+            "targetId": "mem-MEMORY-obsidian-sync",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-ai-researcher-2026----",
+            "targetId": "mem-ai-researcher-2026-how-to-become-an-awesome-ai-re",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-clipboard-watcher----",
+            "targetId": "mem-clipboard-watcher-overview",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-clipboard-watcher-overview",
+            "targetId": "mem-clipboard-watcher-18-url-handlers--priority-orde",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-clipboard-watcher-18-url-handlers--priority-orde",
+            "targetId": "mem-clipboard-watcher-fetch-fallback-chain",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-clipboard-watcher-fetch-fallback-chain",
+            "targetId": "mem-clipboard-watcher-key-implementation-details",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-clipboard-watcher-key-implementation-details",
+            "targetId": "mem-clipboard-watcher-environment-variables--in-laun",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-fast-apply-research----",
+            "targetId": "mem-fast-apply-research-research-completed-2026-03-12",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-fast-apply-research-research-completed-2026-03-12",
+            "targetId": "mem-fast-apply-research-key-findings",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-notebooklm-py----",
+            "targetId": "mem-notebooklm-py-notebooklm-py--v0-3-4-",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-notebooklm-py-notebooklm-py--v0-3-4-",
+            "targetId": "mem-notebooklm-py-key-capabilities",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-notebooklm-py-key-capabilities",
+            "targetId": "mem-notebooklm-py-usage-patterns",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-notebooklm-py-usage-patterns",
+            "targetId": "mem-notebooklm-py-discovery",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-oapl-off-policy-rl----",
+            "targetId": "mem-oapl-off-policy-rl-paper--llms-can-learn-to-reaso",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-oapl-off-policy-rl-paper--llms-can-learn-to-reaso",
+            "targetId": "mem-oapl-off-policy-rl-core-insight",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-oapl-off-policy-rl-core-insight",
+            "targetId": "mem-oapl-off-policy-rl-key-results",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-oapl-off-policy-rl-key-results",
+            "targetId": "mem-oapl-off-policy-rl-relevance-to-fast-apply-work",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-oapl-off-policy-rl-relevance-to-fast-apply-work",
+            "targetId": "mem-oapl-off-policy-rl-source",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-prompt-highest-leverage-feature----",
+            "targetId": "mem-prompt-highest-leverage-feature-the-prompt",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-prompt-highest-leverage-feature-the-prompt",
+            "targetId": "mem-prompt-highest-leverage-feature-context",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-prompt-highest-leverage-feature-context",
+            "targetId": "mem-prompt-highest-leverage-feature-how-to-apply",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-research-mcp-stack----",
+            "targetId": "mem-research-mcp-stack-research-mcp-servers--configur",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-research-mcp-stack-research-mcp-servers--configur",
+            "targetId": "mem-research-mcp-stack-setup-notes",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_bead_polishing_prompt----",
+            "targetId": "mem-reference_bead_polishing_prompt-source",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_bead_polishing_prompt-source",
+            "targetId": "mem-reference_bead_polishing_prompt-the-prompt",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_bead_polishing_prompt-the-prompt",
+            "targetId": "mem-reference_bead_polishing_prompt-key-principles",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_bead_polishing_prompt-key-principles",
+            "targetId": "mem-reference_bead_polishing_prompt-context",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_vibe_research_prompt----",
+            "targetId": "mem-reference_vibe_research_prompt-source",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_vibe_research_prompt-source",
+            "targetId": "mem-reference_vibe_research_prompt-context",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-reference_vibe_research_prompt-context",
+            "targetId": "mem-reference_vibe_research_prompt-the-prompt",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-user-preferences",
+            "targetId": "mem-MEMORY-tools-installed--2026-03-13-",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-MEMORY-tools-installed--2026-03-13-",
+            "targetId": "mem-MEMORY-mirofish-config",
+            "type": "temporal",
+            "weight": 0.5
+        },
+        {
+            "sourceId": "mem-fast-apply-research----",
+            "targetId": "mem-fast-apply-research-research-completed-2026-03-12",
+            "type": "similar",
+            "weight": 0.3387096774193548
+        },
+        {
+            "sourceId": "mem-prompt-highest-leverage-feature-the-prompt",
+            "targetId": "mem-prompt-highest-leverage-feature-how-to-apply",
+            "type": "similar",
+            "weight": 0.35658914728682173
+        },
+        {
+            "sourceId": "mem-reference_bead_polishing_prompt-the-prompt",
+            "targetId": "mem-reference_bead_polishing_prompt-key-principles",
+            "type": "similar",
+            "weight": 0.3203463203463203
+        }
+    ],
+    "pageRanks": {
+        "mem-MEMORY-user-preferences": 0.008447269081589394,
+        "mem-MEMORY-tools---config": 0.012037359352402455,
+        "mem-MEMORY-servers": 0.018679024459204704,
+        "mem-MEMORY-clipboard-watcher": 0.024324435649520672,
+        "mem-MEMORY-chennai-courts---summer-vacati": 0.029123012948839608,
+        "mem-MEMORY-research-stack": 0.03320180656051044,
+        "mem-MEMORY-tweets---notes": 0.03666882670174075,
+        "mem-MEMORY-obsidian-sync": 0.03961585662254742,
+        "mem-ai-researcher-2026----": 0.008447269081589394,
+        "mem-ai-researcher-2026-how-to-become-an-awesome-ai-re": 0.015627449623215522,
+        "mem-browserbase----": 0.008447269081589394,
+        "mem-clipboard-watcher----": 0.008447269081589394,
+        "mem-clipboard-watcher-overview": 0.015627449623215522,
+        "mem-clipboard-watcher-18-url-handlers--priority-orde": 0.02173059929519389,
+        "mem-clipboard-watcher-fetch-fallback-chain": 0.026918272003847454,
+        "mem-clipboard-watcher-key-implementation-details": 0.03132775389383176,
+        "mem-clipboard-watcher-environment-variables--in-laun": 0.035075859227189116,
+        "mem-fast-apply-research----": 0.008447269081589394,
+        "mem-fast-apply-research-research-completed-2026-03-12": 0.015627449623215522,
+        "mem-fast-apply-research-key-findings": 0.02173059929519389,
+        "mem-notebooklm-py----": 0.008447269081589394,
+        "mem-notebooklm-py-notebooklm-py--v0-3-4-": 0.015627449623215522,
+        "mem-notebooklm-py-key-capabilities": 0.02173059929519389,
+        "mem-notebooklm-py-usage-patterns": 0.026918272003847454,
+        "mem-notebooklm-py-discovery": 0.03132775389383176,
+        "mem-oapl-off-policy-rl----": 0.008447269081589394,
+        "mem-oapl-off-policy-rl-paper--llms-can-learn-to-reaso": 0.015627449623215522,
+        "mem-oapl-off-policy-rl-core-insight": 0.02173059929519389,
+        "mem-oapl-off-policy-rl-key-results": 0.026918272003847454,
+        "mem-oapl-off-policy-rl-relevance-to-fast-apply-work": 0.03132775389383176,
+        "mem-oapl-off-policy-rl-source": 0.035075859227189116,
+        "mem-prompt-highest-leverage-feature----": 0.008447269081589394,
+        "mem-prompt-highest-leverage-feature-the-prompt": 0.015627449623215522,
+        "mem-prompt-highest-leverage-feature-context": 0.015088934188391643,
+        "mem-prompt-highest-leverage-feature-how-to-apply": 0.027914525920333735,
+        "mem-research-mcp-stack----": 0.008447269081589394,
+        "mem-research-mcp-stack-research-mcp-servers--configur": 0.015627449623215522,
+        "mem-research-mcp-stack-setup-notes": 0.02173059929519389,
+        "mem-MEMORY-references": 0.008447269081589394,
+        "mem-reference_bead_polishing_prompt----": 0.008447269081589394,
+        "mem-reference_bead_polishing_prompt-source": 0.015627449623215522,
+        "mem-reference_bead_polishing_prompt-the-prompt": 0.02173059929519389,
+        "mem-reference_bead_polishing_prompt-key-principles": 0.026918272003847454,
+        "mem-reference_bead_polishing_prompt-context": 0.03132775389383176,
+        "mem-reference_typinator_key----": 0.008447269081589394,
+        "mem-reference_vibe_research_prompt----": 0.008447269081589394,
+        "mem-reference_vibe_research_prompt-source": 0.015627449623215522,
+        "mem-reference_vibe_research_prompt-context": 0.02173059929519389,
+        "mem-reference_vibe_research_prompt-the-prompt": 0.026918272003847454,
+        "mem-MEMORY-tools-installed--2026-03-13-": 0.012037359352402455,
+        "mem-MEMORY-mirofish-config": 0.018679024459204704
+    }
+}

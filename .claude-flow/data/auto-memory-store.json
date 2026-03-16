@@ -1,0 +1,678 @@
+[
+    {
+        "id": "mem-MEMORY-user-preferences",
+        "key": "user-preferences",
+        "content": "- **Always use Supermemory for memory**: Use Supermemory (mcp__api-supermemory-ai__addMemory) as the primary memory store — always save important context, findings, decisions, and preferences there instead of only relying on local memory files.\n- **Always save conversations to Supermemory**: At the end of conversations or periodically during long ones, save key topics, research findings, tweets, tools configured, decisions made, and notable information to Supermemory (mcp__api-supermemory-ai__ad",
+        "summary": "User Preferences",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073171
+    },
+    {
+        "id": "mem-MEMORY-tools---config",
+        "key": "tools-config",
+        "content": "- **iPhone-Mac SMS**: Always check iPhone-Mac connection for reading SMS/OTP on Mac (iMessage/SMS forwarding)\n- **Gmail MCP for OTPs**: Always check Gmail via MCP tools (mcp__gmail__gmail_search) for OTPs, verification codes, and emails — don't ask user to check manually\n- RSS MCP: rss-reader-mcp (not rss-mcp which is broken) in ~/.claude/settings.json\n- mcporter for ad-hoc MCP server calls from CLI\n- **mcporter fallback rule**: When an MCP tool isn't available (server not connected, needs resta",
+        "summary": "Tools & Config",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073171
+    },
+    {
+        "id": "mem-MEMORY-servers",
+        "key": "servers",
+        "content": "- **fan-stand**: Hetzner ccx43 (16 cores, 64GB RAM), Fedora 43, IP 159.69.184.238\n  - SSH: port 2222, user `arvind`, key-only auth (`ssh fan-stand`)\n  - Hardened: SELinux enforcing, firewalld drop zone (only 2222/tcp), fail2ban, sysctl hardening, auditd, AIDE, dnf-automatic\n  - Root login disabled, password auth disabled\n  - Lynis score: 80/100\n  - Sudo password: `ChangeMeN0w!` (should be changed)\n  - Amazon DCV installed (v2025.0, el9 RPMs on Fedora 43): `https://159.69.184.238:8443` — web view",
+        "summary": "Servers",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073171
+    },
+    {
+        "id": "mem-MEMORY-clipboard-watcher",
+        "key": "clipboard-watcher",
+        "content": "- [Full reference](clipboard-watcher.md) — 18-handler clipboard URL watcher at `~/xes/scripts/clipboard_watcher.py`\n- LaunchAgent: `com.arvind.tweet-watcher.plist` (always running)\n- Fetch chain: Jina → Browserbase → raw xh\n- Tweet chain: fxtwitter API → X API v2 → Jina (fxtwitter handles X Articles with `article.content.blocks`)\n- xh in subprocess needs `--ignore-stdin` flag (not `stdin=subprocess.DEVNULL`)\n- [Browserbase config](browserbase.md) — API key `bb_live_GIGMqnltTXrssRuEyEttLZhhkxI`",
+        "summary": "Clipboard Watcher",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073171
+    },
+    {
+        "id": "mem-MEMORY-chennai-courts---summer-vacati",
+        "key": "chennai-courts-summer-vacation-2026",
+        "content": "- **Madras High Court**: 1 May – 31 May 2026\n- **All subordinate courts (District, Sessions, Munsif, Metropolitan Magistrate)**: 1 May – 31 May 2026\n- **Family Courts**: 1 May – 15 May 2026 only (reopen 16 May)\n- **Dussehra**: 17 Oct – 25 Oct 2026\n- **Christmas**: 23 Dec – 31 Dec 2026\n- Source: TN Govt Gazette No. 51 (24 Dec 2025), Madras HC R.O.C. No. 98708-A/2025/C3\n- Official calendar: https://hcmadras.tn.gov.in/calendar.php",
+        "summary": "Chennai Courts — Summer Vacation 2026",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073172
+    },
+    {
+        "id": "mem-MEMORY-research-stack",
+        "key": "research-stack",
+        "content": "- [Research MCP Stack](research-mcp-stack.md) — PubMed, arXiv, Exa, Jina, Scite, SciSummary configured\n- [Fast Apply & LLM Speed Research](fast-apply-research.md) — Morph alternatives, speculative decoding, tree-sitter hybrid pipeline, Osmosis-Apply-1.7B\n- [OAPL Off-Policy RL](oapl-off-policy-rl.md) — arXiv:2602.19362, 3x sample efficiency vs GRPO, relevant to apply model fine-tuning\n- [notebooklm-py](notebooklm-py.md) — Installed v0.3.4 with Claude Code skill, programmatic Google NotebookLM acc",
+        "summary": "Research Stack",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073172
+    },
+    {
+        "id": "mem-MEMORY-tweets---notes",
+        "key": "tweets-notes",
+        "content": "- [AI Researcher 2026](ai-researcher-2026.md) — Will Brown (@willccbb): get good at evals or kernels, read papers and vibe-implement them",
+        "summary": "Tweets & Notes",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073172
+    },
+    {
+        "id": "mem-MEMORY-obsidian-sync",
+        "key": "obsidian-sync",
+        "content": "- **xes vault**: Remote vault `ee17cc7093c14d09accfab5f565ad59c`, local path `~/xes/`, Obsidian Sync (Asia region)\n- Obsidian account: arvindcr4@gmail.com (logged in via obsidian-headless)\n- Sync command: `npx obsidian-headless sync --path /Users/arvind/xes`\n- Twitter likes (2095) already imported to `~/xes/twitter-likes/`",
+        "summary": "Obsidian Sync",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073172
+    },
+    {
+        "id": "mem-ai-researcher-2026----",
+        "key": "-",
+        "content": "name: AI researcher advice 2026\ndescription: Will Brown's advice on becoming an AI researcher in 2026 — evals, kernels, vibe-implementing papers\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "ai-researcher-2026",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/ai-researcher-2026.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073172
+    },
+    {
+        "id": "mem-ai-researcher-2026-how-to-become-an-awesome-ai-re",
+        "key": "how-to-become-an-awesome-ai-researcher-in-2026",
+        "content": "Source: @willccbb (Will Brown), screenshotted by @himanshustwts (2031618129588326840), 2026-03-11\n\nTwo paths:\n1. **Get good at evals** — designing rigorous benchmarks and evaluation frameworks\n2. **Get good at kernels** — GPU kernel programming (Triton, CUDA) for training/inference optimization\n\nMeta-skill:\n- **Read papers and vibe-implement them** — use AI coding tools to quickly prototype implementations from papers rather than just reading passively",
+        "summary": "How to become an awesome AI researcher in 2026",
+        "namespace": "ai-researcher-2026",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/ai-researcher-2026.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073172
+    },
+    {
+        "id": "mem-browserbase----",
+        "key": "-",
+        "content": "name: Browserbase API\ndescription: Browserbase Fetch API key and config for clipboard watcher fallback fetching\ntype: reference\n---\n\n- **Browserbase API Key**: `bb_live_GIGMqnltTXrssRuEyEttLZhhkxI`\n- Configured in launchd plist (`com.arvind.tweet-watcher.plist`) as `BROWSERBASE_API_KEY`\n- Used as fallback in clipboard_watcher.py `fetch_jina()` — when Jina fails, tries Browserbase Fetch API before raw xh\n- Free tier: 1000 fetch calls/month, 1 browser hour, 5 RPS\n- Developer plan ($20/mo): 100 bro",
+        "summary": "---",
+        "namespace": "browserbase",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/browserbase.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-clipboard-watcher----",
+        "key": "-",
+        "content": "name: Clipboard Watcher\ndescription: Always-running clipboard URL watcher with 18 handlers, fetch fallback chain, and Obsidian vault integration\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "clipboard-watcher",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/clipboard-watcher.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-clipboard-watcher-overview",
+        "key": "overview",
+        "content": "- **File**: `/Users/arvind/xes/scripts/clipboard_watcher.py`\n- **LaunchAgent**: `com.arvind.tweet-watcher.plist` (KeepAlive, RunAtLoad)\n- **Log**: `/tmp/tweet-watcher.log`, errors: `/tmp/tweet-watcher.err`",
+        "summary": "Overview",
+        "namespace": "clipboard-watcher",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/clipboard-watcher.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-clipboard-watcher-18-url-handlers--priority-orde",
+        "key": "18-url-handlers-priority-order-",
+        "content": "1. Tweet URLs → fxtwitter API + X API v2 + Jina → `~/xes/tweets/`\n2. GitHub URLs → DeepWiki + Gemini → `~/xes/repos/`\n3. arXiv URLs → abstract + summarize → `~/xes/papers/`\n4. YouTube URLs → transcript/description → `~/xes/videos/`\n5. Reddit URLs → post + top comments → `~/xes/reddit/`\n6. HN URLs → story + top comments → `~/xes/hn/`\n7. HF Model URLs → model card → `~/xes/models/`\n8. Package URLs (npm/PyPI/crates) → package info → `~/xes/packages/`\n9. LinkedIn URLs → profile/post → `~/xes/linkedi",
+        "summary": "18 URL Handlers (priority order)",
+        "namespace": "clipboard-watcher",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/clipboard-watcher.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-clipboard-watcher-fetch-fallback-chain",
+        "key": "fetch-fallback-chain",
+        "content": "1. Jina AI reader (primary — markdown, paid plan)\n2. Browserbase Fetch API (fallback — JS rendering, proxied)\n3. Raw xh fetch + HTML strip (last resort)",
+        "summary": "Fetch Fallback Chain",
+        "namespace": "clipboard-watcher",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/clipboard-watcher.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-clipboard-watcher-key-implementation-details",
+        "key": "key-implementation-details",
+        "content": "- xh requires `--ignore-stdin` flag in subprocess (not `stdin=subprocess.DEVNULL`)\n- fxtwitter API returns full X Article content in `article.content.blocks[].text`\n- Gemini model: `gemini-3.1-flash-lite-preview`\n- SO API returns gzip — needs `gzip.decompress()`\n- `last_processed_url = replacement[:200]` after clipboard replace to allow re-copying same URL",
+        "summary": "Key Implementation Details",
+        "namespace": "clipboard-watcher",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/clipboard-watcher.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-clipboard-watcher-environment-variables--in-laun",
+        "key": "environment-variables-in-launchd-plist-",
+        "content": "- PATH, GEMINI_API_KEY, TAVILY_API_KEY, TURBOPUFFER_API_KEY, JINA_API_KEY, X_BEARER_TOKEN, BROWSERBASE_API_KEY",
+        "summary": "Environment Variables (in launchd plist)",
+        "namespace": "clipboard-watcher",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/clipboard-watcher.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-fast-apply-research----",
+        "key": "-",
+        "content": "name: Fast Apply & LLM Speed Research\ndescription: Deep research on Morph LLM alternatives, fast-apply engines, speculative decoding, tree-sitter pipelines for blazingly fast code editing\ntype: project\n---",
+        "summary": "---",
+        "namespace": "fast-apply-research",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/fast-apply-research.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-fast-apply-research-research-completed-2026-03-12",
+        "key": "research-completed-2026-03-12",
+        "content": "Deep research on making LLM code editing blazingly fast. Reports saved to:\n- `~/morph-llm-alternatives.md` / `.json` — broad alternatives comparison\n- `~/fast-apply-engines.md` / `.json` — fast-apply engines deep dive\n- `~/fireworks-speculation-bench.py` — benchmark script for Fireworks AI speculation (account suspended, needs billing fix)\n\n**Why:** User exploring alternatives to Morph LLM and ways to make every aspect of LLM code editing fast — generation, apply, search, validation.\n\n**How to a",
+        "summary": "Research completed 2026-03-12",
+        "namespace": "fast-apply-research",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/fast-apply-research.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-fast-apply-research-key-findings",
+        "key": "key-findings",
+        "content": "### Best Self-Hosted Apply Models\n- **Osmosis-Apply-1.7B** (best, Qwen3-based, RLHF, reward 0.98, on Ollama)\n- **Kortix FastApply-1.5B** (older, Q4_K_M 986MB, 25-35 tok/s on CPU)\n- Both run on fan-stand (CPU-only, 16 cores, 64GB RAM)\n\n### Speed Techniques\n- **EfficientEdit** (8-13x speedup): Reuses original code as draft tokens\n- **Speculative decoding**: vLLM suffix decoding (model-free) or llama.cpp `--model-draft`\n- **KV-cache prefix caching**: 96% TTFT reduction for repeated edits\n- **Firewo",
+        "summary": "Key Findings",
+        "namespace": "fast-apply-research",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/fast-apply-research.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073173
+    },
+    {
+        "id": "mem-notebooklm-py----",
+        "key": "-",
+        "content": "name: notebooklm-py setup\ndescription: notebooklm-py installed as uv tool with Claude Code skill for programmatic Google NotebookLM access\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "notebooklm-py",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/notebooklm-py.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-notebooklm-py-notebooklm-py--v0-3-4-",
+        "key": "notebooklm-py-v0-3-4-",
+        "content": "- **Repo**: https://github.com/teng-lin/notebooklm-py (5.2k stars, MIT)\n- **Installed**: `uv tool install \"notebooklm-py[browser]\"` — CLI available as `notebooklm`\n- **Claude Code skill**: `~/.claude/skills/notebooklm/SKILL.md` (installed via `notebooklm skill install`)\n- **Auth**: Google OAuth via `notebooklm login`, stored at `~/.notebooklm/storage_state.json`\n- **Authenticated**: 2026-03-12, Google account with .google.co.in cookies",
+        "summary": "notebooklm-py (v0.3.4)",
+        "namespace": "notebooklm-py",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/notebooklm-py.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-notebooklm-py-key-capabilities",
+        "key": "key-capabilities",
+        "content": "- Create notebooks, add sources (URLs, PDFs, YouTube, Google Drive)\n- Chat with sources (citation-backed, Gemini RAG)\n- Generate: podcasts, videos, slide decks, quizzes, flashcards, infographics, mind maps, reports, data tables\n- Download all artifacts (MP3, MP4, PDF, PPTX, PNG, CSV, JSON, Markdown)\n- Web/Drive research with auto-import (`add-research --mode deep`)\n- Features beyond web UI: batch downloads, quiz/flashcard export, mind map JSON, PPTX slides, slide revision",
+        "summary": "Key capabilities",
+        "namespace": "notebooklm-py",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/notebooklm-py.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-notebooklm-py-usage-patterns",
+        "key": "usage-patterns",
+        "content": "- CLI: `notebooklm create/source add/ask/generate/download`\n- Skill activates on intents like \"create a podcast about X\"\n- For parallel agents: use `-n <notebook_id>` instead of `notebooklm use`\n- Long operations: spawn background agent with `artifact wait`",
+        "summary": "Usage patterns",
+        "namespace": "notebooklm-py",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/notebooklm-py.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-notebooklm-py-discovery",
+        "key": "discovery",
+        "content": "- Found via @SystematicPeter tweet (2031732668770259378): NotebookLM + Claude Code = research grounded in verified source material",
+        "summary": "Discovery",
+        "namespace": "notebooklm-py",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/notebooklm-py.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-oapl-off-policy-rl----",
+        "key": "-",
+        "content": "name: OAPL Off-Policy RL Paper\ndescription: arXiv:2602.19362 — OAPL algorithm matches DeepCoder with 3x fewer samples, tolerates 400-step policy lag, relevant to fast-apply model training\ntype: project\n---",
+        "summary": "---",
+        "namespace": "oapl-off-policy-rl",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/oapl-off-policy-rl.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-oapl-off-policy-rl-paper--llms-can-learn-to-reaso",
+        "key": "paper-llms-can-learn-to-reason-via-off-policy-rl",
+        "content": "- **arXiv**: 2602.19362 (Feb 2026, v2)\n- **Authors**: Daniel Ritter, Owen Oertell, Bradley Guo, Jonathan Chang, Kianté Brantley, Wen Sun (Cornell)\n- **Algorithm**: OAPL (Optimal Advantage-based Policy Optimization with Lagged Inference policy)",
+        "summary": "Paper: LLMs Can Learn to Reason Via Off-Policy RL",
+        "namespace": "oapl-off-policy-rl",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/oapl-off-policy-rl.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-oapl-off-policy-rl-core-insight",
+        "key": "core-insight",
+        "content": "On-policy RL for LLMs (PPO, GRPO) is broken in practice — distributed training inherently creates off-policy data due to policy lag between training and inference engines. OAPL embraces off-policyness with squared regression objective + KL regularization.",
+        "summary": "Core Insight",
+        "namespace": "oapl-off-policy-rl",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/oapl-off-policy-rl.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-oapl-off-policy-rl-key-results",
+        "key": "key-results",
+        "content": "- Matches **DeepCoder** (on-policy GRPO) on LiveCodeBench with **3x fewer training samples**\n- Outperforms GRPO+IS on competition math benchmarks\n- Tolerates **400+ gradient step lag** (100x more off-policy than prior work)\n- Better test-time scaling (Pass@k) — avoids entropy collapse\n- Enables fully asynchronous off-policy training",
+        "summary": "Key Results",
+        "namespace": "oapl-off-policy-rl",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/oapl-off-policy-rl.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-oapl-off-policy-rl-relevance-to-fast-apply-work",
+        "key": "relevance-to-fast-apply-work",
+        "content": "**Why:** Could dramatically cut training cost for fine-tuning apply models (e.g., forking Osmosis-Apply-1.7B).\n\n**How to apply:**\n1. **Training efficiency** — 3x less compute by reusing old rollouts instead of regenerating on-policy data\n2. **Async training** — 400-step lag tolerance enables async training on fan-stand without staleness issues\n3. **Entropy preservation** — KL regularization prevents apply models from collapsing to repetitive outputs",
+        "summary": "Relevance to Fast-Apply Work",
+        "namespace": "oapl-off-policy-rl",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/oapl-off-policy-rl.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-oapl-off-policy-rl-source",
+        "key": "source",
+        "content": "Found via @yacinelearning tweet, 2026-03-12",
+        "summary": "Source",
+        "namespace": "oapl-off-policy-rl",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/oapl-off-policy-rl.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073174
+    },
+    {
+        "id": "mem-prompt-highest-leverage-feature----",
+        "key": "-",
+        "content": "name: Highest-Leverage Feature Prompt\ndescription: Jeffrey Emanuel's (@doodlestein) prompt that elicits genuinely creative, high-impact feature suggestions from AI\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "prompt-highest-leverage-feature",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/prompt-highest-leverage-feature.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-prompt-highest-leverage-feature-the-prompt",
+        "key": "the-prompt",
+        "content": "> what's the single smartest and most radically innovative and accretive and useful and compelling addition you could make to the project at this point?",
+        "summary": "The Prompt",
+        "namespace": "prompt-highest-leverage-feature",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/prompt-highest-leverage-feature.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-prompt-highest-leverage-feature-context",
+        "key": "context",
+        "content": "- Source: [@doodlestein](https://x.com/doodlestein/status/2032891274177524175) (Jeffrey Emanuel, creator of mcp-agent-mail)\n- Works by stacking quality adjectives to push past generic suggestions into genuinely creative territory\n- In his case, it produced the \"Air Traffic Controller\" idea: a meta-coordination agent that uses the same protocol it monitors (zero new surface area)",
+        "summary": "Context",
+        "namespace": "prompt-highest-leverage-feature",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/prompt-highest-leverage-feature.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-prompt-highest-leverage-feature-how-to-apply",
+        "key": "how-to-apply",
+        "content": "Use after establishing project context. The adjective stacking (\"smartest\", \"most radically innovative\", \"accretive\", \"useful\", \"compelling\") forces the model to find the single highest-leverage change rather than listing safe incremental improvements.",
+        "summary": "How to apply",
+        "namespace": "prompt-highest-leverage-feature",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/prompt-highest-leverage-feature.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-research-mcp-stack----",
+        "key": "-",
+        "content": "name: Research MCP Stack\ndescription: Full research MCP server stack configured in Claude Code — PubMed, arXiv, Exa, Jina, Scite, SciSummary\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "research-mcp-stack",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/research-mcp-stack.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-research-mcp-stack-research-mcp-servers--configur",
+        "key": "research-mcp-servers-configured-in-claude-json-",
+        "content": "| MCP Server | Status | Coverage |\n|-----------|--------|----------|\n| **PubMed** | Active | Biomedical papers, PMID lookup |\n| **arXiv** | Active | CS/physics/math preprints, paper search/download |\n| **Exa** | Active | Web + academic search (replaces WebSearch) |\n| **Jina Reader** | Active | Fetch any URL/paper content |\n| **Scite** (`scite-research`) | Needs OAuth auth | Smart Citations (supporting/contrasting/mentioning), 250M+ articles, DOI lookup, full-text search |\n| **SciSummary** (`scis",
+        "summary": "Research MCP Servers (configured in ~/.claude.json)",
+        "namespace": "research-mcp-stack",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/research-mcp-stack.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-research-mcp-stack-setup-notes",
+        "key": "setup-notes",
+        "content": "- **Scite**: Remote HTTP MCP at `https://mcp.scite.ai/mcp`. Run `/mcp` in Claude Code to trigger OAuth. Requires paid Scite subscription.\n- **SciSummary**: Uses `supergateway` to bridge streamable HTTP. Get token from scisummary.com dashboard, then update config: `claude mcp remove scisummary -s user && claude mcp add scisummary -s user -- npx -y supergateway --streamableHttp \"https://scisummary.com/mcp\" --header \"Authorization: Bearer REAL_TOKEN\"`\n- **Scite unique value**: Only tool that gives ",
+        "summary": "Setup Notes",
+        "namespace": "research-mcp-stack",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind/memory/research-mcp-stack.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073175
+    },
+    {
+        "id": "mem-MEMORY-references",
+        "key": "references",
+        "content": "- [Bead Polishing Prompt](reference_bead_polishing_prompt.md) — Iterative plan-review prompt for refining implementation plans before coding (from @doodlestein)\n- [Typinator Key](reference_typinator_key.md) — Typinator software license key\n- [Vibe Research Prompt](reference_vibe_research_prompt.md) — Autonomous research agent prompt for collaborative experiment planning and execution (from @DanielCHTan97)",
+        "summary": "References",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073179
+    },
+    {
+        "id": "mem-reference_bead_polishing_prompt----",
+        "key": "-",
+        "content": "name: Bead Polishing Prompt (Jeffrey Emanuel / @doodlestein)\ndescription: Iterative plan-review prompt for refining implementation plans (\"beads\") before coding — run repeatedly until stable\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "reference_bead_polishing_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_bead_polishing_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073179
+    },
+    {
+        "id": "mem-reference_bead_polishing_prompt-source",
+        "key": "source",
+        "content": "Tweet by Jeffrey Emanuel (@doodlestein): https://x.com/doodlestein/status/2032908021362254248",
+        "summary": "Source",
+        "namespace": "reference_bead_polishing_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_bead_polishing_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073179
+    },
+    {
+        "id": "mem-reference_bead_polishing_prompt-the-prompt",
+        "key": "the-prompt",
+        "content": "> Check over each bead super carefully— are you sure it makes sense? Is it optimal? Could we change anything to make the system work better for users? If so, revise the beads. It's a lot easier and faster to operate in \"plan space\" before we start implementing these things! DO NOT OVERSIMPLIFY THINGS! DO NOT LOSE ANY FEATURES OR FUNCTIONALITY! Also make sure that as part of the beads we include comprehensive unit tests and e2e test scripts with great, detailed logging so we can be sure that ever",
+        "summary": "The Prompt",
+        "namespace": "reference_bead_polishing_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_bead_polishing_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073179
+    },
+    {
+        "id": "mem-reference_bead_polishing_prompt-key-principles",
+        "key": "key-principles",
+        "content": "1. **Operate in plan space** — catch flaws before implementation, not after\n2. **Preserve completeness** — don't oversimplify or drop features\n3. **Mandate tests in the plan** — comprehensive unit + e2e tests with detailed logging baked into the plan itself\n4. **Use specific tooling** — `br` for changes, `bv` for validation/diagnosis\n5. **Iterate until stable** — keep running the prompt until it finds nothing important to change",
+        "summary": "Key Principles",
+        "namespace": "reference_bead_polishing_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_bead_polishing_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073179
+    },
+    {
+        "id": "mem-reference_bead_polishing_prompt-context",
+        "key": "context",
+        "content": "- \"Beads\" are implementation plan units managed via the `br` CLI tool\n- `bv` is a validation/diagnosis tool for checking bead quality\n- The technique is iterative: run the prompt repeatedly (4+ rounds) until the AI stops finding meaningful issues\n- In the example, after 4 rounds Claude was still finding 5 real issues (misplaced sections, contradictory comments, stale titles, wrong property tests, missing mechanisms)",
+        "summary": "Context",
+        "namespace": "reference_bead_polishing_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_bead_polishing_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073179
+    },
+    {
+        "id": "mem-reference_typinator_key----",
+        "key": "-",
+        "content": "name: Typinator License Key\ndescription: Typinator software license key for text expansion tool\ntype: reference\n---\n\nTYP-ERG-042023-S-1-542265-497171-1",
+        "summary": "---",
+        "namespace": "reference_typinator_key",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_typinator_key.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073180
+    },
+    {
+        "id": "mem-reference_vibe_research_prompt----",
+        "key": "-",
+        "content": "name: Vibe Research Prompt (Daniel Tan / @DanielCHTan97)\ndescription: Autonomous research agent prompt for collaborative experiment planning, execution, and write-up using Claude Code\ntype: reference\n---",
+        "summary": "---",
+        "namespace": "reference_vibe_research_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_vibe_research_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073180
+    },
+    {
+        "id": "mem-reference_vibe_research_prompt-source",
+        "key": "source",
+        "content": "Tweet by Daniel Tan (@DanielCHTan97): https://x.com/DanielCHTan97/status/2032871215140831295",
+        "summary": "Source",
+        "namespace": "reference_vibe_research_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_vibe_research_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073180
+    },
+    {
+        "id": "mem-reference_vibe_research_prompt-context",
+        "key": "context",
+        "content": "\"Vibe researching\" — use an LLM to collaboratively draft a research plan, then one-shot the experiment. Opus 4.6 in Claude Code produces interesting research artifacts with few basic errors. Two stages: (1) vibe research for exploration, (2) in-the-loop review + clean reproduction of interesting findings.",
+        "summary": "Context",
+        "namespace": "reference_vibe_research_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_vibe_research_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073180
+    },
+    {
+        "id": "mem-reference_vibe_research_prompt-the-prompt",
+        "key": "the-prompt",
+        "content": "### Instructions for LLM\n\nYou are a completely autonomous researcher, working together with a human. The human often has various question they're interested in finding out the answers to - your goal is to do quick, tightly-scoped research sprints that make progress on answering these questions.\n\nYour work proceeds in two main stages:\n1. Draft a plan collaboratively with the human.\n2. Execute on the plan until complete.\n\n**On drafting a plan:**\n- The plan should include details about the high-lev",
+        "summary": "The Prompt",
+        "namespace": "reference_vibe_research_prompt",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-forge-main-fork/memory/reference_vibe_research_prompt.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073180
+    },
+    {
+        "id": "mem-MEMORY-user-preferences",
+        "key": "user-preferences",
+        "content": "- When user shares a link to a software tool that can be installed, save it to mem0 under user \"arvind\" with \"INSTALL:\" prefix\n- User prefers `xh` over `curl` for HTTP requests\n- User prefers Jina Reader MCP for fetching web content (per CLAUDE.md)",
+        "summary": "User Preferences",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-glass/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073181
+    },
+    {
+        "id": "mem-MEMORY-tools-installed--2026-03-13-",
+        "key": "tools-installed-2026-03-13-",
+        "content": "See mem0 for full list. Key installs:\n- ~/hf-tools venv (Python 3.14): trl, accelerate, huggingface_hub, trackio, llama-cpp-python, openscreener\n- ~/MiroFish: Multi-agent prediction engine (Python 3.12 backend, Node frontend)\n- Global npm: context7, agent-browser v0.19, chartli\n- Pending: llmfit (brew install llmfit)",
+        "summary": "Tools Installed (2026-03-13)",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-glass/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073181
+    },
+    {
+        "id": "mem-MEMORY-mirofish-config",
+        "key": "mirofish-config",
+        "content": "- Location: ~/MiroFish\n- LLM: MiniMax M2.5 Coding Plan via api.minimax.io/v1 (NOT api.minimaxi.chat)\n- Zep API key configured in ~/MiroFish/.env\n- Frontend: localhost:3000, Backend: localhost:5001",
+        "summary": "MiroFish Config",
+        "namespace": "core",
+        "type": "semantic",
+        "metadata": {
+            "sourceFile": "/Users/arvind/.claude/projects/-Users-arvind-glass/memory/MEMORY.md",
+            "bootstrapped": true
+        },
+        "createdAt": 1773627073181
+    }
+]

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📚 Anki Bookmarks</h1>
+
+    <div id="status-bar" class="status idle">
+      <span id="status-text">Ready</span>
+    </div>
+
+    <div class="subject-section">
+      <label for="subject">Subject Focus</label>
+      <textarea id="subject" rows="2"
+        placeholder="e.g. Machine learning fundamentals, key algorithms and their trade-offs"></textarea>
+    </div>
+
+    <div class="button-group">
+      <button id="btn-new" class="btn primary">
+        ⚡ Process New Bookmarks
+      </button>
+      <button id="btn-all" class="btn secondary">
+        🔄 Reprocess All
+      </button>
+    </div>
+
+    <div id="progress-section" class="hidden">
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+      <div id="progress-detail" class="progress-detail"></div>
+    </div>
+
+    <div id="results" class="hidden">
+      <div class="result-row">
+        <span>Cards created:</span>
+        <strong id="cards-count">0</strong>
+      </div>
+      <div id="error-list" class="error-list hidden"></div>
+    </div>
+
+    <div class="footer">
+      <a href="#" id="open-options">⚙️ Settings</a>
+      <span id="anki-status" class="anki-badge">checking...</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

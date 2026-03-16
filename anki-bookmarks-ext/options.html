@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Anki Bookmark Flashcards — Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Anki Bookmark Flashcards</h1>
+    <p class="subtitle">Configure how bookmarks are processed into flashcards</p>
+
+    <!-- LLM Provider -->
+    <section class="card">
+      <h2>LLM Provider</h2>
+      <div class="field">
+        <label for="provider">Provider</label>
+        <select id="provider">
+          <option value="claude">Claude (Anthropic)</option>
+          <option value="openai">OpenAI</option>
+          <option value="gemini">Gemini (Google)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="api-key">API Key</label>
+        <input type="password" id="api-key" placeholder="sk-... or sk-ant-...">
+      </div>
+      <div class="field">
+        <label for="model">Model <span class="hint">(leave blank for default)</span></label>
+        <input type="text" id="model" placeholder="e.g. claude-sonnet-4-20250514">
+      </div>
+    </section>
+
+    <!-- Anki Server -->
+    <section class="card">
+      <h2>Anki Server</h2>
+      <div class="field">
+        <label for="anki-url">Server URL</label>
+        <input type="url" id="anki-url" placeholder="http://localhost:8765">
+        <p class="hint">AnkiConnect-compatible server. No authentication required.</p>
+      </div>
+      <div class="field">
+        <label for="deck-name">Deck Name</label>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <input type="text" id="deck-name" list="deck-suggestions"
+            placeholder="auto (derives from subject or folder)">
+          <button id="refresh-decks" class="btn secondary" style="white-space: nowrap;">↻ Load</button>
+        </div>
+        <datalist id="deck-suggestions"></datalist>
+        <p class="hint">Set to "auto" to derive from subject focus or bookmark folder. Or pick an existing deck.</p>
+      </div>
+      <div class="field">
+        <label for="model-name">Note Model</label>
+        <input type="text" id="model-name" placeholder="Basic">
+      </div>
+      <button id="test-anki" class="btn secondary">Test Connection</button>
+      <span id="anki-test-result" class="test-result"></span>
+    </section>
+
+    <!-- Extraction Mode -->
+    <section class="card">
+      <h2>Extraction Mode</h2>
+      <div class="field">
+        <label for="default-mode">Default Mode</label>
+        <select id="default-mode">
+          <option value="auto">Auto-detect (HTML or PDF)</option>
+          <option value="html">Always treat as HTML → Markdown</option>
+          <option value="pdf">Always treat as PDF → Text</option>
+        </select>
+        <p class="hint">Auto-detect uses URL and Content-Type to choose the right extractor.</p>
+      </div>
+    </section>
+
+    <!-- Subject Prompt -->
+    <section class="card">
+      <h2>Subject Focus</h2>
+      <div class="field">
+        <label for="subject-prompt">Flashcard generation prompt</label>
+        <textarea id="subject-prompt" rows="4"
+          placeholder="e.g. Focus on machine learning concepts, key algorithms, mathematical foundations, and practical applications. Ignore ads, navigation, and author bios."></textarea>
+        <p class="hint">This prompt guides the LLM to generate flashcards focused on your area of study. Leave blank for general extraction.</p>
+      </div>
+    </section>
+
+    <!-- Bookmark Folders -->
+    <section class="card">
+      <h2>Bookmark Folders</h2>
+      <p class="hint">Select which bookmark folders to process. Leave all unchecked to process everything.</p>
+      <div id="folder-list" class="folder-list">
+        <em>Loading folders...</em>
+      </div>
+    </section>
+
+    <!-- Actions -->
+    <section class="card">
+      <h2>Data</h2>
+      <button id="reset-processed" class="btn danger">Reset Processed URLs</button>
+      <span class="hint">This will re-process all bookmarks on next run.</span>
+    </section>
+
+    <div class="save-bar">
+      <button id="save" class="btn primary">Save Settings</button>
+      <span id="save-status"></span>
+    </div>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

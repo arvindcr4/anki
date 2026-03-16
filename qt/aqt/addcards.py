@@ -141,9 +141,7 @@ class QuickIntakeFrame(QFrame):
         self.source_preview_label.setWordWrap(True)
         capture_layout.addWidget(self.source_preview_label)
 
-        self.source_details_label = QLabel(
-            "Source details: waiting for a file or URL"
-        )
+        self.source_details_label = QLabel("Source details: waiting for a file or URL")
         self.source_details_label.setObjectName("quickIntakeStatusTone")
         self.source_details_label.setWordWrap(True)
         capture_layout.addWidget(self.source_details_label)
@@ -560,7 +558,9 @@ class AddCards(QMainWindow):
 
         if self.editor.currentField is None:
             self.editor.currentField = 0
-            self.editor.web.evalWithCallback("focusField(0); true;", lambda _ret: insert())
+            self.editor.web.evalWithCallback(
+                "focusField(0); true;", lambda _ret: insert()
+            )
         else:
             insert()
 
@@ -569,7 +569,9 @@ class AddCards(QMainWindow):
             return
 
         html_parts: list[str] = []
-        deck_tag = f"deck::{self._normalize_tag(self.deck_chooser.selected_deck_name())}"
+        deck_tag = (
+            f"deck::{self._normalize_tag(self.deck_chooser.selected_deck_name())}"
+        )
         type_tag = f"type::{self._normalize_tag(self.notetype_chooser.selected_notetype_name())}"
         tags = ["capture::inbox", deck_tag, type_tag]
         labels: list[str] = []
@@ -673,7 +675,9 @@ class AddCards(QMainWindow):
         )
 
     def _organize_current_note(self) -> None:
-        deck_tag = f"deck::{self._normalize_tag(self.deck_chooser.selected_deck_name())}"
+        deck_tag = (
+            f"deck::{self._normalize_tag(self.deck_chooser.selected_deck_name())}"
+        )
         type_tag = f"type::{self._normalize_tag(self.notetype_chooser.selected_notetype_name())}"
         self._append_tags("capture::inbox", deck_tag, type_tag)
         self._update_intake_status(

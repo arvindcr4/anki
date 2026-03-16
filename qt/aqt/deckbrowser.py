@@ -366,9 +366,7 @@ class DeckBrowser:
             if group.days_ago == 0:
                 row_classes.append("is-today")
             if group.card_count:
-                action = (
-                    f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
-                )
+                action = f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
                 row_classes.append("has-cards")
             else:
                 row_classes.append("is-empty")
@@ -425,7 +423,7 @@ class DeckBrowser:
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             panel_state=panel_state,
-            rows="\\n".join(rows),
+            rows="\n".join(rows),
         )
 
     def _renderDeckTree(self, top: DeckTreeNode) -> str:

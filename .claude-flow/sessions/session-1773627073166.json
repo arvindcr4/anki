@@ -1,0 +1,24 @@
+{
+    "id": "session-1773627073166",
+    "startedAt": "2026-03-16T02:11:13.166Z",
+    "cwd": "/Users/arvind/anki",
+    "context": {
+        "lastMatchedPatterns": [
+            "mem-notebooklm-py-key-capabilities",
+            "mem-oapl-off-policy-rl-core-insight",
+            "mem-reference_bead_polishing_prompt-key-principles",
+            "mem-research-mcp-stack-research-mcp-servers--configur",
+            "mem-research-mcp-stack-setup-notes"
+        ]
+    },
+    "metrics": {
+        "edits": 0,
+        "commands": 0,
+        "tasks": 0,
+        "errors": 0
+    },
+    "updatedAt": "2026-03-16T02:13:09.357Z",
+    "restoredAt": "2026-03-16T02:13:35.630Z",
+    "endedAt": "2026-03-16T02:13:54.276Z",
+    "duration": 161111
+}

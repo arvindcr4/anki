@@ -34,10 +34,11 @@ This prototype follows common guidance from strong UX systems and books:
 - If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**, but visually de-emphasize it so active days stand out first.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
+- Render row separators with real HTML newlines instead of literal **\n** text so the timeline never shows spacer artifacts between days.
 - If the whole week is empty, show a reassuring panel-level hint: **Add cards today and they'll appear here**.
 
 ## Why this helps
 
-When users are doing research-heavy note creation, they often remember *when* they made something before they remember *which deck* they filed it into. A date-oriented surface gives them another intuitive path through the collection without replacing Anki's existing structure.
+When users are doing research-heavy note creation, they often remember _when_ they made something before they remember _which deck_ they filed it into. A date-oriented surface gives them another intuitive path through the collection without replacing Anki's existing structure.
 
 The panel should also refresh after note and card changes, so the date view feels trustworthy instead of stale. Browse actions should target the exact added-day card search, and the displayed day buckets should follow Anki's scheduler cutoff instead of plain midnight, so the UI wording and the Browser results stay aligned.
