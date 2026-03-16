@@ -132,6 +132,7 @@ def _recent_daily_card_groups(
         )
 
     window_start = (next_day_cutoff - (DAY_SECS * days)) * 1000
+    assert col.db is not None
     rows = col.db.all(
         """
 select id, nid
@@ -260,7 +261,7 @@ class DeckBrowser:
         browser = aqt.dialogs.open("Browser", self.mw)
         browser.search_for(
             f"added:{recent_days}",
-            f"Cards added in last {recent_days} days",
+            "Cards added in last 7 days",
         )
 
     def _browse_added_cards(self, key: str) -> None:
@@ -409,7 +410,7 @@ class DeckBrowser:
   <div class="daily-cards-meta">
     <div class="daily-cards-pill daily-cards-rollover">Day resets at {rollover_label}</div>
     <div class="daily-cards-pill daily-cards-summary">
-      <span class="daily-cards-summary-label">Last {recent_days} days</span>
+      <span class="daily-cards-summary-label">Last 7 days:</span>
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
   </div>
@@ -419,7 +420,6 @@ class DeckBrowser:
 </div>
 """.format(
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
-            recent_days=recent_days,
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             panel_state=panel_state,

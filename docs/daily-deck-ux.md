@@ -42,3 +42,6 @@ This prototype follows common guidance from strong UX systems and books:
 When users are doing research-heavy note creation, they often remember _when_ they made something before they remember _which deck_ they filed it into. A date-oriented surface gives them another intuitive path through the collection without replacing Anki's existing structure.
 
 The panel should also refresh after note and card changes, so the date view feels trustworthy instead of stale. Browse actions should target the exact added-day card search, and the displayed day buckets should follow Anki's scheduler cutoff instead of plain midnight, so the UI wording and the Browser results stay aligned.
+
+rows="
+".join(rows)
