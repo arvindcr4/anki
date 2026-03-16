@@ -422,6 +422,9 @@ class AddCards(QMainWindow):
         )
         layout = self.form.centralwidget.layout()
         assert layout is not None
+        # layout is a QVBoxLayout per addcards.ui
+        from aqt.qt import QVBoxLayout
+        assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.intake_frame)
         self._last_source_summary: str | None = None
         self._update_intake_context()
