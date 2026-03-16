@@ -47,3 +47,5 @@ rows="
 ".join(rows)
 
 For example, a user studying Kaplan GRE flashcards from the Play Store might want to see how many they added today.
+
+- Kaplan GRE flashcards are a great fit for the daily cards timeline.
