@@ -31,8 +31,9 @@ This prototype follows common guidance from strong UX systems and books:
   - card count
   - note count
   - a direct **Browse cards** action that opens an exact added-day search
-- If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**.
+- If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**, but visually de-emphasize it so active days stand out first.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
+- Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
 - If the whole week is empty, show a reassuring panel-level hint: **Add cards today and they'll appear here**.
 
 ## Why this helps

@@ -184,6 +184,14 @@ body {
     background: color(border-subtle);
 }
 
+.daily-cards-row.is-empty {
+    opacity: 0.72;
+}
+
+.daily-cards-row.is-empty .daily-cards-metric {
+    background: transparent;
+}
+
 .daily-cards-row.has-cards:hover {
     border-color: color(border);
     background: color(border-subtle);
@@ -217,6 +225,9 @@ body {
 }
 
 .daily-cards-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
     color: color(fg-link);
     font-weight: 700;
     text-decoration: none;

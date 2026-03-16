@@ -367,10 +367,11 @@ class DeckBrowser:
                 row_classes.append("is-today")
             if group.card_count:
                 action = (
-                    f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards</a>"
+                    f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
                 )
                 row_classes.append("has-cards")
             else:
+                row_classes.append("is-empty")
                 action = '<span class="daily-cards-empty">No cards added</span>'
             rows.append(
                 """
