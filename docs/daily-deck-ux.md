@@ -45,3 +45,5 @@ The panel should also refresh after note and card changes, so the date view feel
 
 rows="
 ".join(rows)
+
+For example, a user studying Kaplan GRE flashcards from the Play Store might want to see how many they added today.
