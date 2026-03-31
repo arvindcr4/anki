@@ -55,6 +55,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
 - Also mark that most recent active row as **Latest session** so the user can find it at a glance without scanning dates.
+- When the latest session is not today, pair its browse action with **Create today** so the user can turn yesterday’s momentum into a fresh capture session immediately.
 - Pair that browse shortcut with a persistent **Create cards** CTA so users can immediately turn a new idea into study material.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
 - Mark the busiest row with a light **Most active** badge so the user can find the biggest capture session without rereading every line.
