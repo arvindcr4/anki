@@ -10,3 +10,4 @@ iteration	status	change_description	anki_tag_parse_us	template_parse_us	template
 10	keep	Tighten cloze normal_text: check {{c and }} directly	0.48	0.32	1.00	3.17	0.79	0.59	0.88	7.23	2f2eff2a3
 12	keep	Write ordinals directly to buffer in cloze rendering	0.49	0.37	1.04	2.42	0.69	0.60	0.98	6.59	b0747a763
 13	keep	Fast byte-scan for cloze numbers (no AST)	0.49	0.37	1.04	2.84	0.17	0.60	0.98	6.49	19440bec4
+14	keep	Fast-path strip_html for plain text + strip_html_plain bench	0.49	0.37	1.03	2.43	0.22	0.63	0.81	5.98	b5327738b
