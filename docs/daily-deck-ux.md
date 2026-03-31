@@ -43,6 +43,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
+- If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
 - Pair that browse shortcut with a persistent **Create cards** CTA so users can immediately turn a new idea into study material.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
 - Mark the busiest row with a light **Most active** badge so the user can find the biggest capture session without rereading every line.

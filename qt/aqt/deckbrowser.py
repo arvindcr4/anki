@@ -405,6 +405,10 @@ class DeckBrowser:
             if busiest_days_ago is not None
             else None
         )
+        latest_active_group = next(
+            (group for group in self._render_data.daily_groups if group.card_count),
+            None,
+        )
         streak_count = 0
         streak_label = "Current streak"
         if (
@@ -540,6 +544,13 @@ class DeckBrowser:
                     action=action,
                 )
             )
+        latest_day_action = ""
+        if latest_active_group and latest_active_group.days_ago > 0:
+            latest_day_action = (
+                f'<a class="daily-cards-link daily-cards-pill" href=# '
+                f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
+                "Browse latest day</a>"
+            )
         panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
@@ -554,9 +565,13 @@ class DeckBrowser:
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
     <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
+    {latest_day_action}
     <a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
   </div>
-""".format(recent_days=recent_days)
+""".format(
+                latest_day_action=latest_day_action,
+                recent_days=recent_days,
+            )
         return """
 <div class="daily-cards-panel deck-browser-card">
   <div class="deck-browser-card-label">Daily cards</div>

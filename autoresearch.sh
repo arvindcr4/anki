@@ -55,6 +55,8 @@ checks = [
     ('Browse cards →', 2, 'browse'),
     ('rows="\n".join(rows)', 2, 'visual'),
     ('Browse last 7 days', 2, 'browse'),
+    ('Browse latest day', 2, 'browse'),
+    ('latest_active_group', 1, 'timeline'),
     ('Cards added on', 1, 'browse'),
     ('Cards added in last 7 days', 1, 'browse'),
     ('scheduler cutoff', 2, 'timeline'),

@@ -78,28 +78,34 @@ impl TemplateMode {
             return None;
         }
 
+        let start_char = self.start_tag().as_bytes()[0]; // '{' or '<'
+
         // Loop, starting from the first character
         for (i, _) in input.char_indices() {
             let remaining = &input[i..];
+            let first_byte = remaining.as_bytes()[0];
 
-            // Valid handlebar clause?
-            if let Ok((after_handlebar, token)) = self.handlebar_token(remaining) {
-                // Found at the start of string, so that's the next token
-                return Some(if i == 0 {
-                    (after_handlebar, token)
-                } else {
-                    // There was some text prior to this, so return it instead
-                    (remaining, Token::Text(&input[..i]))
-                });
+            // Only try parsing at positions that could start a token
+            if first_byte == start_char {
+                // Valid handlebar clause?
+                if let Ok((after_handlebar, token)) = self.handlebar_token(remaining) {
+                    return Some(if i == 0 {
+                        (after_handlebar, token)
+                    } else {
+                        (remaining, Token::Text(&input[..i]))
+                    });
+                }
             }
 
-            // Check comments too
-            if let Ok((after_comment, token)) = comment_token(remaining) {
-                return Some(if i == 0 {
-                    (after_comment, token)
-                } else {
-                    (remaining, Token::Text(&input[..i]))
-                });
+            if first_byte == b'<' {
+                // Check comments too
+                if let Ok((after_comment, token)) = comment_token(remaining) {
+                    return Some(if i == 0 {
+                        (after_comment, token)
+                    } else {
+                        (remaining, Token::Text(&input[..i]))
+                    });
+                }
             }
         }
 
