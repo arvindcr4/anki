@@ -225,6 +225,18 @@ body {
     color: white;
 }
 
+.daily-cards-bar.is-streak-bar {
+    box-shadow: inset 0 0 0 2px color(canvas);
+}
+
+.daily-cards-bar.is-latest-bar {
+    border-style: dashed;
+}
+
+.daily-cards-bar.is-busiest-bar {
+    filter: saturate(1.15);
+}
+
 .daily-cards-bar.is-empty {
     opacity: 0.5;
 }

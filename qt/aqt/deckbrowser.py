@@ -506,11 +506,15 @@ class DeckBrowser:
                 if not group.card_count:
                     break
                 streak_count += 1
+        streak_days_ago: set[int] = set()
         streak_summary = f"{streak_label}: none yet"
         streak_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
         )
         if streak_count:
+            if latest_active_group:
+                streak_start = latest_active_group.days_ago
+                streak_days_ago = set(range(streak_start, streak_start + streak_count))
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
             if latest_active_group:
                 streak_title = (
@@ -594,6 +598,12 @@ class DeckBrowser:
                 f"{_count_label(group.note_count, 'note')}"
             )
             bar_classes = ["daily-cards-bar"]
+            if group.days_ago in streak_days_ago and group.card_count:
+                bar_classes.append("is-streak-bar")
+            if latest_active_group and group.days_ago == latest_active_group.days_ago:
+                bar_classes.append("is-latest-bar")
+            if group.days_ago == busiest_days_ago and group.card_count:
+                bar_classes.append("is-busiest-bar")
             if group.card_count:
                 bar_classes.append("has-cards")
                 bar_markup = (
