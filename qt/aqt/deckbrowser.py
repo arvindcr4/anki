@@ -690,6 +690,12 @@ class DeckBrowser:
                     action=action,
                 )
             )
+        today_action = ""
+        if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+            today_action = (
+                '<a class="daily-cards-link daily-cards-pill" href=# '
+                'onclick="return pycmd(\'browseAdded:0\')">Browse today</a>'
+            )
         latest_day_action = ""
         if latest_active_group and latest_active_group.days_ago > 0:
             latest_day_action = (
@@ -711,10 +717,12 @@ class DeckBrowser:
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
     <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
+    {today_action}
     {latest_day_action}
     <a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
   </div>
 """.format(
+                today_action=today_action,
                 latest_day_action=latest_day_action,
                 recent_days=recent_days,
             )
