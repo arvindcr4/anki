@@ -21,6 +21,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Show recent days in descending order.
 - Add a compact **Last 7 days** summary so users instantly understand whether the panel is active and worth exploring.
 - Surface the rollover explicitly with a small hint like **Day resets at 4 AM** so users understand why late-night cards stay grouped together.
+- Show the explicit date range for the visible week so **Last 7 days** is grounded in real calendar dates, not just an abstract relative label.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
 - Add a compact 7-day activity strip so learners can scan recent capture volume before reading the detailed rows.

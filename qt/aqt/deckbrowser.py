@@ -430,6 +430,12 @@ class DeckBrowser:
             (group for group in self._render_data.daily_groups if group.card_count),
             None,
         )
+        range_summary = "Range: this week"
+        if self._render_data.daily_groups:
+            range_summary = (
+                f"Range: {self._render_data.daily_groups[-1].date_label}"
+                f" → {self._render_data.daily_groups[0].date_label}"
+            )
         density_summary = "Density: no cards yet"
         if total_notes:
             density_summary = f"Density: {total_cards / total_notes:.1f} cards/note"
@@ -661,6 +667,7 @@ class DeckBrowser:
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
     <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
+    <div class="daily-cards-pill daily-cards-range">{range_summary}</div>
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
     {streak_summary_markup}
     {busiest_summary_markup}
@@ -682,6 +689,7 @@ class DeckBrowser:
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             active_day_count_label=_count_label(active_day_count, "active day"),
+            range_summary=range_summary,
             density_summary=density_summary,
             streak_summary_markup=streak_summary_markup,
             busiest_summary_markup=busiest_summary_markup,

@@ -74,6 +74,8 @@ checks = [
     ('Most active', 1, 'visual'),
     ('daily-cards-status', 1, 'visual'),
     ('active day', 2, 'timeline'),
+    ('daily-cards-range', 1, 'visual'),
+    ('Range:', 2, 'timeline'),
     ('daily-cards-density', 1, 'visual'),
     ('Density:', 2, 'timeline'),
     ('cards/note', 2, 'timeline'),
