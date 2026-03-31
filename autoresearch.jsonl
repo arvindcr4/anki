@@ -9,3 +9,5 @@
 {"type":"config","name":"daily_cards_timeline_v2","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
 {"run":8,"commit":"86ba127","metric":64,"metrics":{},"status":"keep","description":"Added a create-cards CTA, active/busiest-day timeline cues, and database-side daily aggregation so the deck browser is more actionable and lighter on large recent imports.","timestamp":1774969758865,"segment":1,"confidence":null,"iterationTokens":113}
 {"type":"config","name":"daily_cards_timeline_v3","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":9,"commit":"265514a","metric":67,"metrics":{},"status":"keep","description":"Turned Today’s empty row into a create-first-card CTA, making the daily timeline better at nudging fresh capture instead of showing a dead-end zero state.","timestamp":1774969961666,"segment":2,"confidence":null,"iterationTokens":112}
+{"type":"config","name":"daily_cards_timeline_v4","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}

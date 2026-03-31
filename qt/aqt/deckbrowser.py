@@ -422,6 +422,13 @@ class DeckBrowser:
             if group.card_count:
                 action = f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
                 row_classes.append("has-cards")
+                if group.days_ago == 0:
+                    action = """
+<div class="daily-cards-action-stack">
+  <a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:0\")'>Browse cards →</a>
+  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('addcards')">Create another</a>
+</div>
+"""
             else:
                 row_classes.append("is-empty")
                 if group.days_ago == 0:
