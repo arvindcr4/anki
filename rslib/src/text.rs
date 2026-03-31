@@ -275,6 +275,13 @@ pub fn strip_html_benchmark() {
 }
 
 #[cfg(feature = "bench")]
+pub fn strip_html_plain_benchmark() {
+    use std::hint::black_box;
+    let text = "The capital of France is Paris. It is located in northern France along the Seine river.";
+    black_box(strip_html(black_box(text)));
+}
+
+#[cfg(feature = "bench")]
 pub fn html_to_text_line_benchmark() {
     use std::hint::black_box;
     let html = r#"<div>First line</div><br><p>Second <b>line</b> with [sound:audio.mp3] media</p><div>Third line with <a href="url">link</a></div>"#;

@@ -8,6 +8,7 @@ use anki::template::template_parse_benchmark;
 use anki::template::template_render_benchmark;
 use anki::text::html_to_text_line_benchmark;
 use anki::text::strip_html_benchmark;
+use anki::text::strip_html_plain_benchmark;
 use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::Criterion;
@@ -21,6 +22,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("cloze_reveal", |b| b.iter(|| cloze_reveal_benchmark()));
     c.bench_function("cloze_numbers", |b| b.iter(|| cloze_numbers_benchmark()));
     c.bench_function("strip_html", |b| b.iter(|| strip_html_benchmark()));
+    c.bench_function("strip_html_plain", |b| {
+        b.iter(|| strip_html_plain_benchmark())
+    });
     c.bench_function("html_to_text_line", |b| {
         b.iter(|| html_to_text_line_benchmark())
     });
