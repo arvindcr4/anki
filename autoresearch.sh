@@ -28,6 +28,8 @@ checks = [
     ('daily-cards-bar', 2, 'visual'),
     ('daily-cards-bar-label', 1, 'visual'),
     ('daily-cards-bar-count', 1, 'visual'),
+    ('aria-label', 2, 'visual'),
+    ('cards across', 2, 'timeline'),
     ('daily-cards-row', 2, 'visual'),
     ('browseAdded', 3, 'browse'),
     ('browseRecent', 2, 'browse'),

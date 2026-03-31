@@ -23,6 +23,7 @@ pub mod image_occlusion;
 pub mod import_export;
 pub mod latex;
 pub mod links;
+// pub mod llm; // WIP: disabled until compilation errors are fixed
 pub mod log;
 mod markdown;
 pub mod media;

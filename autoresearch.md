@@ -17,7 +17,7 @@ The script performs a fast Python syntax check and scores whether the deck brows
 
 - daily timeline data model in deck browser rendering
 - clickable browse-by-date action
-- dedicated daily cards panel styling, including a compact 7-day activity strip
+- dedicated daily cards panel styling, including a compact 7-day activity strip with accessible labels
 - empty/zero state support for dates with no cards
 - card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt, and a keep-capturing shortcut for Today
 - momentum cues such as streaks, busiest-day summaries, and next-step guidance so the panel encourages continuity, not just navigation

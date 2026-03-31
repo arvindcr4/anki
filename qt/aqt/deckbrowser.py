@@ -458,17 +458,26 @@ class DeckBrowser:
             bar_height = 16
             if max_cards and group.card_count:
                 bar_height += int((group.card_count / max_cards) * 44)
+            bar_summary = html.escape(
+                f"{group.label} {group.date_label}: "
+                f"{_count_label(group.card_count, 'card')} across "
+                f"{_count_label(group.note_count, 'note')}"
+            )
             bar_classes = ["daily-cards-bar"]
             if group.card_count:
                 bar_classes.append("has-cards")
                 bar_markup = (
-                    f"<a class='{' '.join(bar_classes)}' style='height:{bar_height}px' href=# "
+                    f"<a class='{' '.join(bar_classes)}' style='height:{bar_height}px' "
+                    f"title='{bar_summary}' aria-label='{bar_summary}' href=# "
                     f"onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>"
                     f"<span class='daily-cards-bar-count'>{group.card_count}</span></a>"
                 )
             else:
                 bar_classes.append("is-empty")
-                bar_markup = f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px'></div>"
+                bar_markup = (
+                    f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px' "
+                    f"title='{bar_summary}' aria-label='{bar_summary}'></div>"
+                )
             activity_bars.append(
                 """
 <div class="daily-cards-bar-column">

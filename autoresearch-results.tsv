@@ -1,2 +1,3 @@
 iteration	status	change_description	anki_tag_parse_us	template_parse_us	template_render_us	cloze_reveal_us	cloze_numbers_us	strip_html_us	html_to_text_line_us	total_us	commit_hash
 0	baseline	Initial state before optimization	1.46	0.36	287.76	17.08	3.00	1.88	1.71	313.25	-
+1	keep	Fast-path field_is_empty + disable broken llm module for release builds	0.49	0.36	263.52	5.92	1.37	0.58	0.77	273.01	34388968e

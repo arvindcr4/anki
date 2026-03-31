@@ -947,27 +947,34 @@ pub fn template_parse_benchmark() {
 pub fn template_render_benchmark() {
     use std::borrow::Cow;
     use std::hint::black_box;
+
     use anki_i18n::I18n;
 
     let tr = I18n::template_only();
     let mut field_map: HashMap<&str, Cow<str>> = HashMap::new();
     field_map.insert("Front", Cow::Borrowed("What is the capital of France?"));
     field_map.insert("Back", Cow::Borrowed("Paris is the capital of France. It is located in northern France along the Seine river."));
-    field_map.insert("Extra", Cow::Borrowed("Population: ~2.1 million (city), ~12 million (metro)"));
+    field_map.insert(
+        "Extra",
+        Cow::Borrowed("Population: ~2.1 million (city), ~12 million (metro)"),
+    );
 
     let qfmt = "{{Front}}";
     let afmt = "{{FrontSide}}\n<hr id=answer>\n{{Back}}\n{{#Extra}}<br>{{Extra}}{{/Extra}}";
 
-    black_box(render_card(RenderCardRequest {
-        qfmt: black_box(qfmt),
-        afmt: black_box(afmt),
-        field_map: &field_map,
-        card_ord: 0,
-        is_cloze: false,
-        browser: false,
-        tr: &tr,
-        partial_render: false,
-    }).unwrap());
+    black_box(
+        render_card(RenderCardRequest {
+            qfmt: black_box(qfmt),
+            afmt: black_box(afmt),
+            field_map: &field_map,
+            card_ord: 0,
+            is_cloze: false,
+            browser: false,
+            tr: &tr,
+            partial_render: false,
+        })
+        .unwrap(),
+    );
 }
 
 #[cfg(test)]
