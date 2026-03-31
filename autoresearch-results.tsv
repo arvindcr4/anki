@@ -6,3 +6,5 @@ iteration	status	change_description	anki_tag_parse_us	template_parse_us	template
 4	keep	Cloze tokenizer: skip non-starters + fast single ordinal	0.47	0.33	0.91	4.00	0.73	0.60	0.77	7.81	125df1f67
 5	keep	Fast ordinals_str + pre-alloc cloze buf	0.48	0.32	0.93	3.05	0.73	0.59	0.78	6.88	8525227f3
 6	keep	Fast-dispatch cloze tokenizer by first byte	0.48	0.33	0.93	2.84	0.74	0.60	0.76	6.68	242c009be
+9	discard	Skip unnecessary regex passes in html_to_text_line (regression)	0.47	0.33	0.94	3.05	0.73	1.03	1.94	8.49	a4045d1dd
+10	keep	Tighten cloze normal_text: check {{c and }} directly	0.48	0.32	1.00	3.17	0.79	0.59	0.88	7.23	2f2eff2a3

@@ -607,6 +607,10 @@ class DeckBrowser:
         busiest_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>'
         )
+        burst_summary = "Burst: no capture yet"
+        burst_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-burst">{burst_summary}</div>'
+        )
         if busiest_group:
             busiest_summary = "Busiest: {label} ({count})".format(
                 label=html.escape(busiest_group.label),
@@ -617,6 +621,14 @@ class DeckBrowser:
                 f'title="Browse busiest day" aria-label="Browse busiest day" '
                 f'onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
                 f"{busiest_summary}</a>"
+            )
+            burst_pct = round((busiest_group.card_count / total_cards) * 100)
+            burst_summary = f"Burst: {burst_pct}% on busiest day"
+            burst_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-burst" href=# '
+                f'title="Browse burst day" aria-label="Browse burst day" '
+                f'onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
+                f"{burst_summary}</a>"
             )
         max_cards = max(
             (group.card_count for group in self._render_data.daily_groups),
@@ -818,6 +830,7 @@ class DeckBrowser:
     {pace_summary_markup}
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
     {streak_summary_markup}
+    {burst_summary_markup}
     {busiest_summary_markup}
   </div>
   <div class="daily-cards-heatmap" role="group" aria-label="7 day activity strip">
@@ -844,6 +857,7 @@ class DeckBrowser:
             pace_summary_markup=pace_summary_markup,
             density_summary=density_summary,
             streak_summary_markup=streak_summary_markup,
+            burst_summary_markup=burst_summary_markup,
             busiest_summary_markup=busiest_summary_markup,
             guidance=guidance,
             guidance_actions="\n".join(guidance_actions),
