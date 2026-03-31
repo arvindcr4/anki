@@ -613,8 +613,27 @@ class DeckBrowser:
                 f"You were active on {_count_label(active_day_count, 'day')}. "
                 "Add a card today to restart the streak."
             )
+            restart_label = "Restart streak today"
+            if trend_summary == "Trend: rising":
+                guidance = (
+                    f"You were active on {_count_label(active_day_count, 'day')}. "
+                    "Momentum is rising—add a card today to extend it."
+                )
+                restart_label = "Extend rising trend"
+            elif trend_summary == "Trend: cooling":
+                guidance = (
+                    f"You were active on {_count_label(active_day_count, 'day')}. "
+                    "Momentum is cooling—add a card today to reverse it."
+                )
+                restart_label = "Reverse cooling trend"
+            elif trend_summary == "Trend: just started":
+                guidance = (
+                    f"You were active on {_count_label(active_day_count, 'day')}. "
+                    "This week just started to move—add one today to turn it into a streak."
+                )
+                restart_label = "Build a streak today"
             guidance_actions.append(
-                '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">Restart streak today</a>'
+                f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">{restart_label}</a>'
             )
             if latest_active_group:
                 guidance_actions.append(

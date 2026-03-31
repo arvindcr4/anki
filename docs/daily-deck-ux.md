@@ -45,6 +45,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Pair it with a **burst** pill that quantifies how much of the visible week came from that single day.
 - Follow those metrics with a short guidance sentence that answers the next-step question: keep capturing, restart the streak today, or start this week’s timeline.
 - Pair that guidance with context-sensitive actions so the banner can directly offer **Keep the streak going**, **Restart streak today**, **Browse current streak**, or **Create first card** depending on the learner’s recent activity.
+- Let the guidance react to the weekly trend as well: for example, suggest **Extend rising trend** when momentum is building, or **Reverse cooling trend** when activity is fading.
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.
