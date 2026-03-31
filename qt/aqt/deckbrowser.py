@@ -430,6 +430,12 @@ class DeckBrowser:
             (group for group in self._render_data.daily_groups if group.card_count),
             None,
         )
+        gap_summary = "Gap: no recent capture"
+        if latest_active_group:
+            if latest_active_group.days_ago == 0:
+                gap_summary = "Gap: captured today"
+            else:
+                gap_summary = f"Gap: last capture {_count_label(latest_active_group.days_ago, 'day')} ago"
         range_summary = "Range: this week"
         if self._render_data.daily_groups:
             range_summary = (
@@ -576,6 +582,14 @@ class DeckBrowser:
             status_badge = ""
             if group.days_ago == 0:
                 row_classes.append("is-today")
+            if (
+                latest_active_group
+                and group.days_ago == latest_active_group.days_ago
+                and group.card_count
+                and group.days_ago != 0
+            ):
+                row_classes.append("is-latest-session")
+                status_badge = '<span class="daily-cards-status daily-cards-status-secondary">Latest session</span>'
             if group.days_ago == busiest_days_ago and group.card_count:
                 row_classes.append("is-busiest")
                 status_badge = '<span class="daily-cards-status">Most active</span>'
@@ -667,6 +681,7 @@ class DeckBrowser:
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
     <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
+    <div class="daily-cards-pill daily-cards-gap">{gap_summary}</div>
     <div class="daily-cards-pill daily-cards-range">{range_summary}</div>
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
     {streak_summary_markup}
@@ -689,6 +704,7 @@ class DeckBrowser:
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             active_day_count_label=_count_label(active_day_count, "active day"),
+            gap_summary=gap_summary,
             range_summary=range_summary,
             density_summary=density_summary,
             streak_summary_markup=streak_summary_markup,

@@ -144,6 +144,7 @@ body {
 }
 
 .daily-cards-activity,
+.daily-cards-gap,
 .daily-cards-range,
 .daily-cards-density,
 .daily-cards-streak,
@@ -290,6 +291,10 @@ body {
     border-color: color(fg-link);
 }
 
+.daily-cards-row.is-latest-session {
+    border-color: color(border);
+}
+
 .daily-cards-row.is-empty {
     opacity: 0.72;
 }
@@ -336,6 +341,11 @@ body {
     color: white;
     font-size: 0.72rem;
     font-weight: 700;
+}
+
+.daily-cards-status-secondary {
+    background: color(border);
+    color: color(fg);
 }
 
 .daily-cards-date {

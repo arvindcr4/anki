@@ -22,6 +22,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Add a compact **Last 7 days** summary so users instantly understand whether the panel is active and worth exploring.
 - Surface the rollover explicitly with a small hint like **Day resets at 4 AM** so users understand why late-night cards stay grouped together.
 - Show the explicit date range for the visible week so **Last 7 days** is grounded in real calendar dates, not just an abstract relative label.
+- Add a compact **Gap** summary that tells the learner how long it has been since the last capture session.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
 - Add a compact 7-day activity strip so learners can scan recent capture volume before reading the detailed rows.
@@ -50,6 +51,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
+- Also mark that most recent active row as **Latest session** so the user can find it at a glance without scanning dates.
 - Pair that browse shortcut with a persistent **Create cards** CTA so users can immediately turn a new idea into study material.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
 - Mark the busiest row with a light **Most active** badge so the user can find the biggest capture session without rereading every line.
