@@ -319,6 +319,16 @@ body {
     filter: saturate(1.15);
 }
 
+.daily-cards-insight {
+    border-radius: var(--border-radius-medium);
+    padding: 0.7rem 0.85rem;
+    background: color(canvas);
+    border: 1px solid var(--border-subtle);
+    color: color(fg-subtle);
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
 .daily-cards-guidance-block {
     display: flex;
     flex-direction: column;
