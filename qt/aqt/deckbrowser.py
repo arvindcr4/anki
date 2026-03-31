@@ -465,14 +465,12 @@ class DeckBrowser:
                     else "Browse last streak"
                 )
                 streak_summary_markup = (
-                    f"<a class=\"daily-cards-link daily-cards-pill daily-cards-streak\" href=# "
-                    f"title=\"{streak_title}\" onclick=\"return pycmd('browseStreak:{latest_active_group.days_ago},{streak_count}')\">"
+                    f'<a class="daily-cards-link daily-cards-pill daily-cards-streak" href=# '
+                    f'title="{streak_title}" onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">'
                     f"{streak_summary}</a>"
                 )
             else:
-                streak_summary_markup = (
-                    f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
-                )
+                streak_summary_markup = f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
         heatmap_hint = "Bars light up as you create or import cards."
         if has_recent_cards:
             heatmap_hint = "Tap a bar to browse that day."
@@ -491,7 +489,7 @@ class DeckBrowser:
             )
             if latest_active_group:
                 guidance_actions.append(
-                    f"<a class=\"daily-cards-link daily-cards-pill\" href=# onclick=\"return pycmd('browseStreak:{latest_active_group.days_ago},{streak_count}')\">Browse current streak</a>"
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">Browse current streak</a>'
                 )
         elif active_day_count:
             guidance = (
@@ -503,7 +501,7 @@ class DeckBrowser:
             )
             if latest_active_group:
                 guidance_actions.append(
-                    f"<a class=\"daily-cards-link daily-cards-pill\" href=# onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">Browse latest day</a>"
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Browse latest day</a>'
                 )
         else:
             guidance_actions.append(
@@ -573,6 +571,13 @@ class DeckBrowser:
                 row_classes.append("is-busiest")
                 status_badge = '<span class="daily-cards-status">Most active</span>'
             if group.card_count:
+                metrics_markup = """
+  <div class="daily-cards-metric">{card_count_label}</div>
+  <div class="daily-cards-metric">{note_count_label}</div>
+""".format(
+                    card_count_label=_count_label(group.card_count, "card"),
+                    note_count_label=_count_label(group.note_count, "note"),
+                )
                 action = f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
                 row_classes.append("has-cards")
                 if group.days_ago == 0:
@@ -584,11 +589,14 @@ class DeckBrowser:
 """
             else:
                 row_classes.append("is-empty")
+                metrics_markup = (
+                    '<div class="daily-cards-empty-summary">No cards added</div>'
+                )
                 if group.days_ago == 0:
                     row_classes.append("is-capture-target")
                     action = "<a class='daily-cards-link' href=# onclick=\"return pycmd('addcards')\">Create first card →</a>"
                 else:
-                    action = '<span class="daily-cards-empty">No cards added</span>'
+                    action = '<span class="daily-cards-empty">—</span>'
             rows.append(
                 """
 <div class="{row_classes}">
@@ -599,8 +607,7 @@ class DeckBrowser:
     </div>
     <div class="daily-cards-date">{date_label}</div>
   </div>
-  <div class="daily-cards-metric">{card_count_label}</div>
-  <div class="daily-cards-metric">{note_count_label}</div>
+  {metrics_markup}
   <div class="daily-cards-action">{action}</div>
 </div>
 """.format(
@@ -608,8 +615,7 @@ class DeckBrowser:
                     label=html.escape(group.label),
                     status_badge=status_badge,
                     date_label=html.escape(group.date_label),
-                    card_count_label=_count_label(group.card_count, "card"),
-                    note_count_label=_count_label(group.note_count, "note"),
+                    metrics_markup=metrics_markup,
                     action=action,
                 )
             )

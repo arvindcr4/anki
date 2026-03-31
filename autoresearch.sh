@@ -36,6 +36,8 @@ checks = [
     ('browseStreak', 2, 'browse'),
     ('added:', 3, 'browse'),
     ('No cards added', 1, 'timeline'),
+    ('daily-cards-empty-summary', 1, 'visual'),
+    ('0 cards / 0 notes', 1, 'timeline'),
     ('deck-browser-secondary-row', 1, 'visual'),
     ('Daily cards', 1, 'docs'),
     ('date-oriented', 1, 'docs'),

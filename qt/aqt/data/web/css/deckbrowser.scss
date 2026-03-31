@@ -301,6 +301,12 @@ body {
     background: transparent;
 }
 
+.daily-cards-empty-summary {
+    grid-column: 2 / span 2;
+    color: color(fg-subtle);
+    font-size: 0.85rem;
+}
+
 .daily-cards-row.has-cards:hover {
     border-color: color(border);
     background: color(border-subtle);
@@ -392,6 +398,7 @@ body {
         grid-template-columns: minmax(0, 1fr) auto;
     }
 
+    .daily-cards-empty-summary,
     .daily-cards-action {
         grid-column: 1 / -1;
         justify-self: start;
