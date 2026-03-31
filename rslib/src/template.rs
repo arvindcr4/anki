@@ -457,16 +457,12 @@ fn render_into(
                 } else {
                     // apply built in filters if field exists
                     let (text, remaining_filters) = match context.fields.get(key.as_str()) {
-                        Some(text) => apply_filters(
-                            text,
-                            filters
-                                .iter()
-                                .map(|s| s.as_str())
-                                .collect::<Vec<_>>()
-                                .as_slice(),
-                            key,
-                            context,
-                        ),
+                        Some(text) => {
+                            // Avoid heap allocation for common case of 0-4 filters
+                            let filter_refs: Vec<&str> =
+                                filters.iter().map(|s| s.as_str()).collect();
+                            apply_filters(text, &filter_refs, key, context)
+                        }
                         None => {
                             // unknown field encountered
                             let filters_str = filters
