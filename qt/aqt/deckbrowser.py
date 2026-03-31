@@ -442,7 +442,8 @@ class DeckBrowser:
         if latest_active_group:
             gap_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-gap" href=# '
-                f'title="Browse latest capture" onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">'
+                f'title="Browse latest capture" aria-label="Browse latest capture" '
+                f'onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">'
                 f"{gap_summary}</a>"
             )
         range_summary = "Range: this week"
@@ -459,12 +460,14 @@ class DeckBrowser:
         if has_recent_cards:
             active_day_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-activity" href=# '
-                'title="Browse active week" onclick="return pycmd(\'browseRecent\')">'
+                'title="Browse active week" aria-label="Browse active week" '
+                'onclick="return pycmd(\'browseRecent\')">'
                 f"{active_day_count_label} with cards</a>"
             )
             range_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-range" href=# '
-                'title="Browse visible week" onclick="return pycmd(\'browseRecent\')">'
+                'title="Browse visible week" aria-label="Browse visible week" '
+                'onclick="return pycmd(\'browseRecent\')">'
                 f"{range_summary}</a>"
             )
         density_summary = "Density: no cards yet"
@@ -506,7 +509,8 @@ class DeckBrowser:
                 )
                 streak_summary_markup = (
                     f'<a class="daily-cards-link daily-cards-pill daily-cards-streak" href=# '
-                    f'title="{streak_title}" onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">'
+                    f'title="{streak_title}" aria-label="{streak_title}" '
+                    f'onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">'
                     f"{streak_summary}</a>"
                 )
             else:
@@ -561,7 +565,8 @@ class DeckBrowser:
             )
             busiest_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest" href=# '
-                f'title="Browse busiest day" onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
+                f'title="Browse busiest day" aria-label="Browse busiest day" '
+                f'onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
                 f"{busiest_summary}</a>"
             )
         max_cards = max(
@@ -712,11 +717,11 @@ class DeckBrowser:
     {streak_summary_markup}
     {busiest_summary_markup}
   </div>
-  <div class="daily-cards-heatmap">
+  <div class="daily-cards-heatmap" role="group" aria-label="7 day activity strip">
     {activity_bars}
   </div>
   <div class="daily-cards-strip-hint">{heatmap_hint}</div>
-{panel_state}  <div class="daily-cards-guidance-block">
+{panel_state}  <div class="daily-cards-guidance-block" role="status" aria-live="polite">
     <div class="daily-cards-guidance">{guidance}</div>
     <div class="daily-cards-guidance-actions">{guidance_actions}</div>
   </div>
