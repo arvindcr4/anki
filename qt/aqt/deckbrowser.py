@@ -424,7 +424,11 @@ class DeckBrowser:
                 row_classes.append("has-cards")
             else:
                 row_classes.append("is-empty")
-                action = '<span class="daily-cards-empty">No cards added</span>'
+                if group.days_ago == 0:
+                    row_classes.append("is-capture-target")
+                    action = "<a class='daily-cards-link' href=# onclick=\"return pycmd('addcards')\">Create first card →</a>"
+                else:
+                    action = '<span class="daily-cards-empty">No cards added</span>'
             rows.append(
                 """
 <div class="{row_classes}">

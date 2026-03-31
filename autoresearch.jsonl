@@ -7,3 +7,5 @@
 {"run":6,"commit":"77540f6","metric":50,"metrics":{},"status":"keep","description":"Created a script stub `download_kaplan.sh` to download the Kaplan GRE APK and simulate the extraction process for testing the daily cards timeline.","timestamp":1773631673087,"segment":0}
 {"run":7,"commit":"6b6ada2","metric":50,"metrics":{},"status":"discard","description":"Reconfirmed the current daily cards timeline baseline before trying UX and capability improvements for date-based browsing.","timestamp":1774969399439,"segment":0,"confidence":null,"iterationTokens":null}
 {"type":"config","name":"daily_cards_timeline_v2","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":8,"commit":"86ba127","metric":64,"metrics":{},"status":"keep","description":"Added a create-cards CTA, active/busiest-day timeline cues, and database-side daily aggregation so the deck browser is more actionable and lighter on large recent imports.","timestamp":1774969758865,"segment":1,"confidence":null,"iterationTokens":113}
+{"type":"config","name":"daily_cards_timeline_v3","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}

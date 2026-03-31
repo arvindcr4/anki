@@ -210,6 +210,11 @@ body {
     opacity: 0.72;
 }
 
+.daily-cards-row.is-capture-target {
+    opacity: 1;
+    border-style: dashed;
+}
+
 .daily-cards-row.is-empty .daily-cards-metric {
     background: transparent;
 }

@@ -61,6 +61,8 @@ checks = [
     ('daily-cards-status', 1, 'visual'),
     ('active day', 2, 'timeline'),
     ('Busiest:', 2, 'timeline'),
+    ('Create first card', 2, 'capture'),
+    ('is-capture-target', 1, 'visual'),
     ('count(distinct nid)', 2, 'query'),
     ('group by days_ago', 1, 'query'),
 ]
