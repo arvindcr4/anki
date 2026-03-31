@@ -481,6 +481,21 @@ class DeckBrowser:
                 'onclick="return pycmd(\'browseRecent\')">'
                 f"{range_summary}</a>"
             )
+        pace_summary = "Pace: no active days yet"
+        if active_day_count:
+            pace_summary = (
+                f"Pace: {total_cards / active_day_count:.1f} cards/active day"
+            )
+        pace_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-pace">{pace_summary}</div>'
+        )
+        if has_recent_cards:
+            pace_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-pace" href=# '
+                'title="Browse weekly pace context" aria-label="Browse weekly pace context" '
+                'onclick="return pycmd(\'browseRecent\')">'
+                f"{pace_summary}</a>"
+            )
         density_summary = "Density: no cards yet"
         if total_notes:
             density_summary = f"Density: {total_cards / total_notes:.1f} cards/note"
@@ -778,6 +793,7 @@ class DeckBrowser:
     {quiet_day_markup}
     {gap_summary_markup}
     {range_summary_markup}
+    {pace_summary_markup}
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
     {streak_summary_markup}
     {busiest_summary_markup}
@@ -803,6 +819,7 @@ class DeckBrowser:
             quiet_day_markup=quiet_day_markup,
             gap_summary_markup=gap_summary_markup,
             range_summary_markup=range_summary_markup,
+            pace_summary_markup=pace_summary_markup,
             density_summary=density_summary,
             streak_summary_markup=streak_summary_markup,
             busiest_summary_markup=busiest_summary_markup,
