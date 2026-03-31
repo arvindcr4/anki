@@ -426,6 +426,22 @@ pub fn extract_cloze_for_typing(text: &str, cloze_ord: u16) -> Cow<'_, str> {
     }
 }
 
+#[cfg(feature = "bench")]
+pub fn cloze_reveal_benchmark() {
+    use std::hint::black_box;
+    let text = "{{c1::Paris}} is the capital of {{c2::France}}. The {{c3::Eiffel Tower}} was built in {{c1::1889}} and is {{c2::330 meters}} tall. {{c1::Gustave Eiffel}} designed it.";
+    black_box(reveal_cloze_text(black_box(text), 1, true));
+    black_box(reveal_cloze_text(black_box(text), 1, false));
+    black_box(reveal_cloze_text(black_box(text), 2, true));
+}
+
+#[cfg(feature = "bench")]
+pub fn cloze_numbers_benchmark() {
+    use std::hint::black_box;
+    let text = "{{c1::one}} {{c2::two}} {{c3::three}} {{c4::four}} {{c5::five}} {{c1::six}} {{c2::seven}} {{c3::eight}}";
+    black_box(cloze_numbers_in_string(black_box(text)));
+}
+
 /// If text contains any LaTeX tags, render the front and back
 /// of each cloze deletion so that LaTeX can be generated. If
 /// no LaTeX is found, returns an empty string.

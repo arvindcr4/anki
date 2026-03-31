@@ -263,6 +263,20 @@ pub fn strip_html_for_tts(html: &str) -> Cow<'_, str> {
         .map_cow(strip_html)
 }
 
+#[cfg(feature = "bench")]
+pub fn strip_html_benchmark() {
+    use std::hint::black_box;
+    let html = r#"<div class="front"><p>What is the <b>capital</b> of <i>France</i>?</p><br><img src="france.jpg"><ul><li>Hint 1</li><li>Hint 2</li></ul></div>"#;
+    black_box(strip_html(black_box(html)));
+}
+
+#[cfg(feature = "bench")]
+pub fn html_to_text_line_benchmark() {
+    use std::hint::black_box;
+    let html = r#"<div>First line</div><br><p>Second <b>line</b> with [sound:audio.mp3] media</p><div>Third line with <a href="url">link</a></div>"#;
+    black_box(html_to_text_line(black_box(html), false));
+}
+
 /// Truncate a String on a valid UTF8 boundary.
 pub(crate) fn truncate_to_char_boundary(s: &mut String, mut max: usize) {
     if max >= s.len() {
