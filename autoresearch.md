@@ -16,7 +16,7 @@ Prototype a Roam-like daily cards view on the main deck browser so learners can 
 The script performs a fast Python syntax check and scores whether the deck browser exposes a date-oriented daily cards UX:
 
 - daily timeline data model in deck browser rendering
-- clickable browse-by-date actions, including resume-your-last-capture, streak, and busiest-day shortcuts
+- clickable browse-by-date actions, including resume-your-last-capture, streak, busiest-day, and summary-pill shortcuts
 - dedicated daily cards panel styling, including a compact 7-day activity strip with accessible labels and discoverability hints
 - empty/zero state support for dates with no cards, without noisy repeated zero-count pills
 - card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt, and a keep-capturing shortcut for Today

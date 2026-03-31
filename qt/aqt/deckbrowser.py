@@ -412,7 +412,7 @@ class DeckBrowser:
 </div>
 """.format(self._render_data.studied_today)
 
-    def _renderDailyCards(self) -> str:
+    def _renderDailyCards(self) -> str:  # noqa: PLR0912
         rows: list[str] = []
         activity_bars: list[str] = []
         recent_days = len(self._render_data.daily_groups)
@@ -436,11 +436,36 @@ class DeckBrowser:
                 gap_summary = "Gap: captured today"
             else:
                 gap_summary = f"Gap: last capture {_count_label(latest_active_group.days_ago, 'day')} ago"
+        gap_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-gap">{gap_summary}</div>'
+        )
+        if latest_active_group:
+            gap_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-gap" href=# '
+                f'title="Browse latest capture" onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">'
+                f"{gap_summary}</a>"
+            )
         range_summary = "Range: this week"
         if self._render_data.daily_groups:
             range_summary = (
                 f"Range: {self._render_data.daily_groups[-1].date_label}"
                 f" → {self._render_data.daily_groups[0].date_label}"
+            )
+        active_day_count_label = _count_label(active_day_count, "active day")
+        active_day_markup = f'<div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>'
+        range_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-range">{range_summary}</div>'
+        )
+        if has_recent_cards:
+            active_day_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-activity" href=# '
+                'title="Browse active week" onclick="return pycmd(\'browseRecent\')">'
+                f"{active_day_count_label} with cards</a>"
+            )
+            range_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-range" href=# '
+                'title="Browse visible week" onclick="return pycmd(\'browseRecent\')">'
+                f"{range_summary}</a>"
             )
         density_summary = "Density: no cards yet"
         if total_notes:
@@ -680,9 +705,9 @@ class DeckBrowser:
       <span class="daily-cards-summary-label">Last 7 days:</span>
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
-    <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
-    <div class="daily-cards-pill daily-cards-gap">{gap_summary}</div>
-    <div class="daily-cards-pill daily-cards-range">{range_summary}</div>
+    {active_day_markup}
+    {gap_summary_markup}
+    {range_summary_markup}
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
     {streak_summary_markup}
     {busiest_summary_markup}
@@ -703,9 +728,9 @@ class DeckBrowser:
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
-            active_day_count_label=_count_label(active_day_count, "active day"),
-            gap_summary=gap_summary,
-            range_summary=range_summary,
+            active_day_markup=active_day_markup,
+            gap_summary_markup=gap_summary_markup,
+            range_summary_markup=range_summary_markup,
             density_summary=density_summary,
             streak_summary_markup=streak_summary_markup,
             busiest_summary_markup=busiest_summary_markup,
