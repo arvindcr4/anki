@@ -24,6 +24,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
 - Add compact momentum pills for **active days**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Follow those metrics with a short guidance sentence that answers the next-step question: keep capturing, restart the streak today, or start this week’s timeline.
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.

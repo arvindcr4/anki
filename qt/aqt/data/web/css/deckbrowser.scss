@@ -188,6 +188,15 @@ body {
     background: color(canvas);
 }
 
+.daily-cards-guidance {
+    border-radius: var(--border-radius-medium);
+    padding: 0.75rem 0.85rem;
+    background: color(border-subtle);
+    color: color(fg-subtle);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
 .daily-cards-list {
     display: flex;
     flex-direction: column;

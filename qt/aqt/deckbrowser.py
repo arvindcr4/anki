@@ -429,6 +429,17 @@ class DeckBrowser:
         streak_summary = f"{streak_label}: none yet"
         if streak_count:
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
+        guidance = "Create or import cards to start this week's timeline."
+        if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+            guidance = (
+                f"You're on a {_count_label(streak_count, 'day')} streak. "
+                "Keep capturing while the topic is fresh."
+            )
+        elif active_day_count:
+            guidance = (
+                f"You were active on {_count_label(active_day_count, 'day')}. "
+                "Add a card today to restart the streak."
+            )
         busiest_summary = "Busiest: no recent activity yet"
         if busiest_group:
             busiest_summary = "Busiest: {label} ({count})".format(
@@ -515,7 +526,8 @@ class DeckBrowser:
     <div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>
     <div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>
   </div>
-{panel_state}  <div class="daily-cards-list">
+{panel_state}  <div class="daily-cards-guidance">{guidance}</div>
+  <div class="daily-cards-list">
     {rows}
   </div>
 </div>
@@ -526,6 +538,7 @@ class DeckBrowser:
             active_day_count_label=_count_label(active_day_count, "active day"),
             streak_summary=streak_summary,
             busiest_summary=busiest_summary,
+            guidance=guidance,
             panel_state=panel_state,
             rows="\n".join(rows),
         )

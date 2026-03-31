@@ -15,3 +15,5 @@
 {"type":"config","name":"daily_cards_timeline_v5","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
 {"run":11,"commit":"d086e7f","metric":76,"metrics":{},"status":"keep","description":"Added an Import cards shortcut beside create/browse actions so the daily timeline supports both fresh capture and bulk learning-material generation from the main deck screen.","timestamp":1774970155050,"segment":4,"confidence":null,"iterationTokens":103}
 {"type":"config","name":"daily_cards_timeline_v6","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":12,"commit":"36766ea","metric":81,"metrics":{},"status":"keep","description":"Added streak context to the daily cards meta row so learners can see continuity and momentum, not just a static list of recently created material.","timestamp":1774970240617,"segment":5,"confidence":null,"iterationTokens":103}
+{"type":"config","name":"daily_cards_timeline_v7","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
