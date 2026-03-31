@@ -59,6 +59,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - If today already has cards, surface a top-level **Browse today** shortcut because that is often the fastest way to revisit the freshest generated material.
+- Include today’s date in that shortcut label so the action still makes sense around late-night rollover boundaries.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
 - Include the latest session’s date in that shortcut label, so the user can verify the jump target without cross-referencing the strip first.
 - Also mark that most recent active row as **Latest session** so the user can find it at a glance without scanning dates.

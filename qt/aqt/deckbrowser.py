@@ -753,9 +753,14 @@ class DeckBrowser:
             )
         today_action = ""
         if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+            today_label = (
+                f"Browse today ({self._render_data.daily_groups[0].date_label})"
+            )
             today_action = (
                 '<a class="daily-cards-link daily-cards-pill" href=# '
-                'onclick="return pycmd(\'browseAdded:0\')">Browse today</a>'
+                f'title="{today_label}" aria-label="{today_label}" '
+                'onclick="return pycmd(\'browseAdded:0\')">'
+                f"{today_label}</a>"
             )
         latest_day_action = ""
         if latest_active_group and latest_active_group.days_ago > 0:

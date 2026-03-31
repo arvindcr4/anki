@@ -66,6 +66,7 @@ checks = [
     ('rows="\n".join(rows)', 2, 'visual'),
     ('Browse last 7 days', 2, 'browse'),
     ('Browse today', 2, 'browse'),
+    ('Browse today (', 1, 'browse'),
     ('Browse latest day', 2, 'browse'),
     ('Browse latest day (', 1, 'browse'),
     ('latest_active_group', 1, 'timeline'),
