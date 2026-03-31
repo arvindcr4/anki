@@ -266,6 +266,8 @@ class DeckBrowser:
             self.mw.onAddCard()
         elif cmd == "importcards":
             self.mw.onImport()
+        elif cmd == "browseStreak":
+            self._browse_streak_cards(arg)
         return False
 
     def set_current_deck(self, deck_id: DeckId) -> None:
@@ -304,6 +306,25 @@ class DeckBrowser:
             self._daily_group_search(group),
             f"Cards added on {group.date_label}",
         )
+
+    def _browse_streak_cards(self, arg: str) -> None:
+        try:
+            start_days_ago_str, span_str = arg.split(",", 1)
+            start_days_ago = int(start_days_ago_str)
+            span = int(span_str)
+        except ValueError:
+            return
+        if span <= 0:
+            return
+        upper_bound = start_days_ago + span
+        if start_days_ago == 0:
+            query = f"added:{upper_bound}"
+            title = "Cards added in current streak"
+        else:
+            query = f"added:{upper_bound} -added:{start_days_ago}"
+            title = "Cards added in last streak"
+        browser = aqt.dialogs.open("Browser", self.mw)
+        browser.search_for(query, title)
 
     # HTML generation
     ##########################################################################
@@ -432,8 +453,26 @@ class DeckBrowser:
                     break
                 streak_count += 1
         streak_summary = f"{streak_label}: none yet"
+        streak_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
+        )
         if streak_count:
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
+            if latest_active_group:
+                streak_title = (
+                    "Browse current streak"
+                    if latest_active_group.days_ago == 0
+                    else "Browse last streak"
+                )
+                streak_summary_markup = (
+                    f"<a class=\"daily-cards-link daily-cards-pill daily-cards-streak\" href=# "
+                    f"title=\"{streak_title}\" onclick=\"return pycmd('browseStreak:{latest_active_group.days_ago},{streak_count}')\">"
+                    f"{streak_summary}</a>"
+                )
+            else:
+                streak_summary_markup = (
+                    f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
+                )
         heatmap_hint = "Bars light up as you create or import cards."
         if has_recent_cards:
             heatmap_hint = "Tap a bar to browse that day."
@@ -461,8 +500,8 @@ class DeckBrowser:
                 count=_count_label(busiest_group.card_count, "card"),
             )
             busiest_summary_markup = (
-                f"<a class=\"daily-cards-link daily-cards-pill daily-cards-busiest\" href=# "
-                f"title=\"Browse busiest day\" onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest" href=# '
+                f'title="Browse busiest day" onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
                 f"{busiest_summary}</a>"
             )
         max_cards = max(
@@ -591,7 +630,7 @@ class DeckBrowser:
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
     <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
-    <div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>
+    {streak_summary_markup}
     {busiest_summary_markup}
   </div>
   <div class="daily-cards-heatmap">
@@ -609,6 +648,7 @@ class DeckBrowser:
             total_notes_label=_count_label(total_notes, "note"),
             active_day_count_label=_count_label(active_day_count, "active day"),
             streak_summary=streak_summary,
+            streak_summary_markup=streak_summary_markup,
             busiest_summary=busiest_summary,
             busiest_summary_markup=busiest_summary_markup,
             guidance=guidance,
