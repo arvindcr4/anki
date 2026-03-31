@@ -452,10 +452,18 @@ class DeckBrowser:
                 "Add a card today to restart the streak."
             )
         busiest_summary = "Busiest: no recent activity yet"
+        busiest_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>'
+        )
         if busiest_group:
             busiest_summary = "Busiest: {label} ({count})".format(
                 label=html.escape(busiest_group.label),
                 count=_count_label(busiest_group.card_count, "card"),
+            )
+            busiest_summary_markup = (
+                f"<a class=\"daily-cards-link daily-cards-pill daily-cards-busiest\" href=# "
+                f"title=\"Browse busiest day\" onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
+                f"{busiest_summary}</a>"
             )
         max_cards = max(
             (group.card_count for group in self._render_data.daily_groups),
@@ -584,7 +592,7 @@ class DeckBrowser:
     </div>
     <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
     <div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>
-    <div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>
+    {busiest_summary_markup}
   </div>
   <div class="daily-cards-heatmap">
     {activity_bars}
@@ -602,6 +610,7 @@ class DeckBrowser:
             active_day_count_label=_count_label(active_day_count, "active day"),
             streak_summary=streak_summary,
             busiest_summary=busiest_summary,
+            busiest_summary_markup=busiest_summary_markup,
             guidance=guidance,
             heatmap_hint=heatmap_hint,
             activity_bars="\n".join(activity_bars),

@@ -82,6 +82,7 @@ checks = [
     ('restart the streak', 2, 'timeline'),
     ('start this week\'s timeline', 2, 'timeline'),
     ('Busiest:', 2, 'timeline'),
+    ('Browse busiest day', 2, 'browse'),
     ('Create first card', 2, 'capture'),
     ('Create another', 2, 'capture'),
     ('daily-cards-action-stack', 1, 'capture'),

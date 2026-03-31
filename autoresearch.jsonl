@@ -27,3 +27,5 @@
 {"type":"config","name":"daily_cards_timeline_v11","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
 {"run":17,"commit":"d1ef650","metric":104,"metrics":{},"status":"keep","description":"Added a discoverability hint under the activity strip so users immediately understand that the bars are browseable and will fill in as they create or import cards.","timestamp":1774970712908,"segment":10,"confidence":null,"iterationTokens":103}
 {"type":"config","name":"daily_cards_timeline_v12","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":18,"commit":"b88e9f8","metric":107,"metrics":{},"status":"keep","description":"Added a browse-latest-day shortcut so users who missed today can jump straight back to their most recent capture session without scanning the whole week.","timestamp":1774970808287,"segment":11,"confidence":null,"iterationTokens":103}
+{"type":"config","name":"daily_cards_timeline_v13","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
