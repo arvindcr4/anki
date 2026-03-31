@@ -61,7 +61,6 @@ This prototype follows common guidance from strong UX systems and books:
 - If today already has cards, surface a top-level **Browse today** shortcut because that is often the fastest way to revisit the freshest generated material.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
 - Also mark that most recent active row as **Latest session** so the user can find it at a glance without scanning dates.
-- If the latest session is also the busiest day, show both badges instead of forcing one to win, so the row preserves both meanings.
 - When the latest session is not today, pair its browse action with **Create today** so the user can turn yesterday’s momentum into a fresh capture session immediately.
 - Pair that browse shortcut with a persistent **Create cards** CTA so users can immediately turn a new idea into study material.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
