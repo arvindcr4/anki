@@ -65,6 +65,7 @@ checks = [
     ('Browse cards →', 2, 'browse'),
     ('rows="\n".join(rows)', 2, 'visual'),
     ('Browse last 7 days', 2, 'browse'),
+    ('Browse visible week (', 1, 'browse'),
     ('Browse today', 2, 'browse'),
     ('Browse today (', 1, 'browse'),
     ('Browse latest day', 2, 'browse'),

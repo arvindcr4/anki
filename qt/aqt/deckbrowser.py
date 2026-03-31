@@ -781,18 +781,25 @@ class DeckBrowser:
   </div>
 """
         if has_recent_cards:
+            browse_recent_label = f"Browse {recent_days} day range"
+            if self._render_data.daily_groups:
+                browse_recent_label = (
+                    "Browse visible week ("
+                    f"{self._render_data.daily_groups[-1].date_label} → "
+                    f"{self._render_data.daily_groups[0].date_label})"
+                )
             panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
     <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
     {today_action}
     {latest_day_action}
-    <a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
+    <a class="daily-cards-link daily-cards-pill" href=# title="{browse_recent_label}" aria-label="{browse_recent_label}" onclick="return pycmd('browseRecent')">{browse_recent_label}</a>
   </div>
 """.format(
                 today_action=today_action,
                 latest_day_action=latest_day_action,
-                recent_days=recent_days,
+                browse_recent_label=browse_recent_label,
             )
         return """
 <div class="daily-cards-panel deck-browser-card">

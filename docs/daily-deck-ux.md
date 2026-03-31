@@ -58,6 +58,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
+- Prefer a visible-range label on that shortcut so the week-level action is anchored to concrete dates, not just a relative count.
 - If today already has cards, surface a top-level **Browse today** shortcut because that is often the fastest way to revisit the freshest generated material.
 - Include today’s date in that shortcut label so the action still makes sense around late-night rollover boundaries.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
