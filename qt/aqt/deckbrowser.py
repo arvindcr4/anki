@@ -673,7 +673,7 @@ class DeckBrowser:
                 )
             )
             row_classes = ["daily-cards-row"]
-            status_badge = ""
+            status_badges: list[str] = []
             if group.days_ago == 0:
                 row_classes.append("is-today")
             if (
@@ -683,10 +683,14 @@ class DeckBrowser:
                 and group.days_ago != 0
             ):
                 row_classes.append("is-latest-session")
-                status_badge = '<span class="daily-cards-status daily-cards-status-secondary">Latest session</span>'
+                status_badges.append(
+                    '<span class="daily-cards-status daily-cards-status-secondary">Latest session</span>'
+                )
             if group.days_ago == busiest_days_ago and group.card_count:
                 row_classes.append("is-busiest")
-                status_badge = '<span class="daily-cards-status">Most active</span>'
+                status_badges.append(
+                    '<span class="daily-cards-status">Most active</span>'
+                )
             if group.card_count:
                 metrics_markup = """
   <div class="daily-cards-metric">{card_count_label}</div>
@@ -727,7 +731,7 @@ class DeckBrowser:
   <div class="daily-cards-date-group">
     <div class="daily-cards-label-row">
       <div class="daily-cards-label">{label}</div>
-      {status_badge}
+      {status_badges}
     </div>
     <div class="daily-cards-date">{date_label}</div>
   </div>
@@ -737,7 +741,7 @@ class DeckBrowser:
 """.format(
                     row_classes=" ".join(row_classes),
                     label=html.escape(group.label),
-                    status_badge=status_badge,
+                    status_badges="".join(status_badges),
                     date_label=html.escape(group.date_label),
                     metrics_markup=metrics_markup,
                     action=action,
