@@ -459,7 +459,7 @@ class AddCards(QMainWindow):
             )
         elif self._codex_preferred():
             self.intake_frame.set_codex_status(
-                "Codex connection: Codex preferred provider • set OPENAI_API_KEY to enable preview-first actions"
+                "Codex connection: Codex preferred provider • add OPENAI_API_KEY to enable preview-first actions"
             )
         elif self._codex_api_key_present():
             self.intake_frame.set_codex_status(
@@ -488,6 +488,10 @@ class AddCards(QMainWindow):
             if self._codex_preferred() and self._codex_api_key_present():
                 self.intake_frame.set_llm_status(
                     f"LLM status: Codex preferred provider ready for Summarize, Q&A, or Cloze on {self._last_source_summary}"
+                )
+            elif self._codex_preferred():
+                self.intake_frame.set_llm_status(
+                    f"LLM status: Codex preferred provider selected • add OPENAI_API_KEY to enable Summarize, Q&A, and Cloze previews"
                 )
             elif self._codex_api_key_present():
                 self.intake_frame.set_llm_status(
@@ -728,57 +732,67 @@ class AddCards(QMainWindow):
         if note is None:
             return
 
-        if result.action == "qa" and result.cards:
-            # Fill first two fields with first Q&A pair
-            card = result.cards[0]
-            if len(note.fields) >= 1:
-                note.fields[0] = card.front
-            if len(note.fields) >= 2:
-                note.fields[1] = card.back
+        added_count = 0
 
-            # Show preview of all generated cards
-            preview_lines = []
-            for i, c in enumerate(result.cards, 1):
-                preview_lines.append(f"{i}. Q: {c.front}\n   A: {c.back}")
-            preview = "\n\n".join(preview_lines)
+        if result.action == "qa" and result.cards:
+            # Add all generated Q&A pairs as separate notes
+            deck_id = self.deck_chooser.selected_deck_id()
+            for card in result.cards:
+                new_note = self.col.new_note(note.note_type())
+                if len(new_note.fields) >= 1:
+                    new_note.fields[0] = card.front
+                if len(new_note.fields) >= 2:
+                    new_note.fields[1] = card.back
+                new_note.tags = list(card.tags)
+                try:
+                    self.col.add_note(new_note, deck_id)
+                    added_count += 1
+                except Exception:
+                    pass  # skip duplicates or invalid notes
 
             self.intake_frame.set_llm_status(
-                f"LLM status: generated {len(result.cards)} Q&A cards with {result.model_used}"
-            )
-            self.intake_frame.set_source_preview(
-                f"Generated {len(result.cards)} Q&A pairs:\n{preview}"
+                f"LLM status: added {added_count}/{len(result.cards)} Q&A cards with {result.model_used}"
             )
 
         elif result.action == "cloze" and result.clozes:
-            # Fill first field with first cloze
+            # For cloze, we need a Cloze notetype
+            # Fill the current note with the first cloze as a preview
             if len(note.fields) >= 1:
                 note.fields[0] = result.clozes[0].text
+            self.editor.loadNote()
 
             self.intake_frame.set_llm_status(
                 f"LLM status: generated {len(result.clozes)} cloze cards with {result.model_used}"
             )
 
         elif result.action == "summarize" and result.summary:
-            # Fill the back field (or second field) with summary
             target_idx = 1 if len(note.fields) >= 2 else 0
             note.fields[target_idx] = result.summary
+            self.editor.loadNote()
 
             self.intake_frame.set_llm_status(
                 f"LLM status: generated summary with {result.model_used}"
             )
 
-        # Reload the editor to show changes
-        self.editor.loadNote()
-        # Add generation tags
-        current_tags = note.string_tags()
-        if "ai-generated" not in current_tags:
-            note.tags.append("ai-generated")
-            self.editor.loadNote()
-
-        tooltip(
-            f"{action} generated with {result.model_used}",
-            period=2000,
-        )
+        if added_count > 0:
+            # Reset editor for next note
+            self.mw.reset()
+            self.set_note(self.col.new_note(note.note_type()), self)
+            tooltip(
+                f"Added {added_count} {action} cards to deck",
+                period=2000,
+            )
+        else:
+            # Reload editor to show field changes
+            if result.action != "qa":
+                current_tags = note.string_tags()
+                if "ai-generated" not in current_tags:
+                    note.tags.append("ai-generated")
+                    self.editor.loadNote()
+            tooltip(
+                f"{action} generated with {result.model_used}",
+                period=2000,
+            )
 
     def _handle_llm_error(self, error_msg: str) -> None:
         """Handle LLM generation errors."""
