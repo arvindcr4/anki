@@ -223,8 +223,22 @@ pub fn html_to_text_line(html: &str, preserve_media_filenames: bool) -> Cow<'_, 
     };
     PERSISTENT_HTML_SPACERS
         .replace_all(html, " ")
-        .map_cow(|s| TYPE_TAG.replace_all(s, ""))
-        .map_cow(|s| SOUND_TAG.replace_all(s, sound_rep))
+        // Only apply TYPE_TAG regex if the input could contain [[type:
+        .map_cow(|s| {
+            if s.contains("[[type:") {
+                TYPE_TAG.replace_all(s, "")
+            } else {
+                Cow::Borrowed(s)
+            }
+        })
+        // Only apply SOUND_TAG regex if the input could contain [sound:
+        .map_cow(|s| {
+            if s.contains("[sound:") {
+                SOUND_TAG.replace_all(s, sound_rep)
+            } else {
+                Cow::Borrowed(s)
+            }
+        })
         .map_cow(html_stripper)
         .trim()
 }
