@@ -171,6 +171,21 @@ fn ordinals_str(ordinals: &[u16]) -> String {
     }
 }
 
+/// Write ordinals directly to a buffer, avoiding String allocation
+fn write_ordinals(buf: &mut String, ordinals: &[u16]) {
+    match ordinals {
+        [single] => write!(buf, "{single}").unwrap(),
+        _ => {
+            for (i, ord) in ordinals.iter().enumerate() {
+                if i > 0 {
+                    buf.push(',');
+                }
+                write!(buf, "{ord}").unwrap();
+            }
+        }
+    }
+}
+
 impl ExtractedCloze<'_> {
     /// Return the cloze's hint, or "..." if none was provided.
     fn hint(&self) -> &str {
@@ -312,22 +327,18 @@ fn reveal_cloze(
                     ),
                 }
             }
-            write!(
-                buf,
-                r#"<span class="cloze" data-cloze="{}" data-ordinal="{}">[{}]</span>"#,
-                encode_attribute(&content_buf),
-                ordinals_str(&cloze.ordinals),
-                cloze.hint()
-            )
-            .unwrap();
+            buf.push_str(r#"<span class="cloze" data-cloze=""#);
+            buf.push_str(&encode_attribute(&content_buf));
+            buf.push_str(r#"" data-ordinal=""#);
+            write_ordinals(buf, &cloze.ordinals);
+            buf.push_str(r#"">[""#);
+            buf.push_str(cloze.hint());
+            buf.push_str(r#"]</span>"#);
         }
         (false, true) => {
-            write!(
-                buf,
-                r#"<span class="cloze" data-ordinal="{}">"#,
-                ordinals_str(&cloze.ordinals)
-            )
-            .unwrap();
+            buf.push_str(r#"<span class="cloze" data-ordinal=""#);
+            write_ordinals(buf, &cloze.ordinals);
+            buf.push_str(r#"">"#);
             for node in &cloze.nodes {
                 match node {
                     TextOrCloze::Text(text) => buf.push_str(text),
@@ -340,12 +351,9 @@ fn reveal_cloze(
         }
         (_, false) => {
             // question or answer side inactive cloze; text shown, children may be active
-            write!(
-                buf,
-                r#"<span class="cloze-inactive" data-ordinal="{}">"#,
-                ordinals_str(&cloze.ordinals)
-            )
-            .unwrap();
+            buf.push_str(r#"<span class="cloze-inactive" data-ordinal=""#);
+            write_ordinals(buf, &cloze.ordinals);
+            buf.push_str(r#"">"#);
             for node in &cloze.nodes {
                 match node {
                     TextOrCloze::Text(text) => buf.push_str(text),

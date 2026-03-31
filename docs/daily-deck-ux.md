@@ -34,7 +34,8 @@ This prototype follows common guidance from strong UX systems and books:
 - Make the activity strip self-explanatory with hover and assistive labels that include the day, date, and cards-across-notes summary.
 - Add a tiny helper line under the strip so users immediately understand that bars are browseable, and that empty bars will light up as they create or import cards.
 - Make the empty **Today** bar itself a lightweight **create first card** target, so the visual strip can start a capture flow instead of only reflecting past activity.
-- Add compact momentum pills for **active days**, **quiet days**, **cards-per-note density**, **cards-per-active-day pace**, **burst share**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Add compact momentum pills for **active days**, **quiet days**, **cards-per-note density**, **cards-per-active-day pace**, **trend**, **burst share**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Show **trend** to indicate whether recent capture is rising, steady, cooling, or just starting, instead of forcing the learner to mentally compare the strip bars.
 - Show **burst share** to reveal whether the week reflects steady capture or one dominant import/generation session.
 - Show **cards-per-active-day pace** so the panel reveals recent capture intensity even when the week has only a few active days.
 - Show **quiet days** explicitly so the panel makes gaps in capture behavior visible, not just productive days.

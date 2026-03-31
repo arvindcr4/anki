@@ -496,6 +496,30 @@ class DeckBrowser:
                 'onclick="return pycmd(\'browseRecent\')">'
                 f"{pace_summary}</a>"
             )
+        recent_window = self._render_data.daily_groups[:3]
+        earlier_window = self._render_data.daily_groups[3:]
+        recent_avg = sum(group.card_count for group in recent_window) / max(1, len(recent_window))
+        earlier_avg = sum(group.card_count for group in earlier_window) / max(1, len(earlier_window))
+        trend_summary = "Trend: no activity yet"
+        if total_cards:
+            if recent_avg and not earlier_avg:
+                trend_summary = "Trend: just started"
+            elif earlier_avg and recent_avg >= earlier_avg * 1.25:
+                trend_summary = "Trend: rising"
+            elif earlier_avg and recent_avg <= earlier_avg * 0.8:
+                trend_summary = "Trend: cooling"
+            else:
+                trend_summary = "Trend: steady"
+        trend_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-trend">{trend_summary}</div>'
+        )
+        if has_recent_cards:
+            trend_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-trend" href=# '
+                'title="Browse weekly trend context" aria-label="Browse weekly trend context" '
+                'onclick="return pycmd(\'browseRecent\')">'
+                f"{trend_summary}</a>"
+            )
         density_summary = "Density: no cards yet"
         if total_notes:
             density_summary = f"Density: {total_cards / total_notes:.1f} cards/note"
@@ -828,6 +852,7 @@ class DeckBrowser:
     {gap_summary_markup}
     {range_summary_markup}
     {pace_summary_markup}
+    {trend_summary_markup}
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
     {streak_summary_markup}
     {burst_summary_markup}
@@ -855,6 +880,7 @@ class DeckBrowser:
             gap_summary_markup=gap_summary_markup,
             range_summary_markup=range_summary_markup,
             pace_summary_markup=pace_summary_markup,
+            trend_summary_markup=trend_summary_markup,
             density_summary=density_summary,
             streak_summary_markup=streak_summary_markup,
             burst_summary_markup=burst_summary_markup,
