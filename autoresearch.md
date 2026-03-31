@@ -21,7 +21,7 @@ The script performs a fast Python syntax check and scores whether the deck brows
 - empty/zero state support for dates with no cards
 - card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt, and a keep-capturing shortcut for Today
 - momentum cues such as streaks, busiest-day summaries, and next-step guidance so the panel encourages continuity, not just navigation
-- database-side aggregation so the week summary stays lightweight
+- database-side aggregation so the week summary stays lightweight, ideally with a single recent-cards aggregation query
 - docs that explain the daily timeline UX
 
 ## Files in Scope

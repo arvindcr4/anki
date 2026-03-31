@@ -135,15 +135,23 @@ def _recent_daily_card_groups(
     assert col.db is not None
     rows = col.db.all(
         """
-select days_ago, count(*) as card_count, count(distinct nid) as note_count
-from (
+with recent_cards as (
     select cast((? - id) / ? as integer) as days_ago, nid
     from cards
     where id > ? and id <= ?
+),
+summary as (
+    select count(distinct nid) as recent_unique_notes
+    from recent_cards
 )
-where days_ago >= 0 and days_ago < ?
-group by days_ago
-order by days_ago
+select recent.days_ago,
+       count(*) as card_count,
+       count(distinct recent.nid) as note_count,
+       (select recent_unique_notes from summary) as recent_unique_notes
+from recent_cards as recent
+where recent.days_ago >= 0 and recent.days_ago < ?
+group by recent.days_ago
+order by recent.days_ago
 """,
         next_day_cutoff_ms,
         DAY_MS,
@@ -152,23 +160,12 @@ order by days_ago
         days,
     )
 
-    for days_ago, card_count, note_count in rows:
+    recent_unique_notes = 0
+    for days_ago, card_count, note_count, unique_notes in rows:
         bucket = int(days_ago)
         groups[bucket].card_count = int(card_count)
         groups[bucket].note_count = int(note_count)
-
-    recent_unique_notes = int(
-        col.db.scalar(
-            """
-select count(distinct nid)
-from cards
-where id > ? and id <= ?
-""",
-            window_start,
-            next_day_cutoff_ms,
-        )
-        or 0
-    )
+        recent_unique_notes = int(unique_notes)
     active_groups = [group for group in groups if group.card_count]
     busiest_group = max(
         active_groups,
@@ -410,7 +407,10 @@ class DeckBrowser:
         )
         streak_count = 0
         streak_label = "Current streak"
-        if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+        if (
+            self._render_data.daily_groups
+            and self._render_data.daily_groups[0].card_count
+        ):
             for group in self._render_data.daily_groups:
                 if not group.card_count:
                     break
@@ -431,7 +431,10 @@ class DeckBrowser:
         if streak_count:
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
         guidance = "Create or import cards to start this week's timeline."
-        if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+        if (
+            self._render_data.daily_groups
+            and self._render_data.daily_groups[0].card_count
+        ):
             guidance = (
                 f"You're on a {_count_label(streak_count, 'day')} streak. "
                 "Keep capturing while the topic is fresh."
@@ -465,9 +468,7 @@ class DeckBrowser:
                 )
             else:
                 bar_classes.append("is-empty")
-                bar_markup = (
-                    f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px'></div>"
-                )
+                bar_markup = f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px'></div>"
             activity_bars.append(
                 """
 <div class="daily-cards-bar-column">

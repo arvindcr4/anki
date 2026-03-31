@@ -29,6 +29,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.
+- Prefer a single recent-cards aggregation query over multiple round trips where possible, so richer timeline summaries do not make the deck browser feel sluggish.
 - Keep visible **Create cards** and **Import cards** actions in the panel so the main screen supports both revisiting and generating learning material.
 - For each day, show:
   - a human label like **Today**, **Yesterday**, or weekday

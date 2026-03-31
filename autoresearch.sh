@@ -81,6 +81,8 @@ checks = [
     ('daily-cards-secondary-link', 1, 'visual'),
     ('is-capture-target', 1, 'visual'),
     ('count(distinct nid)', 2, 'query'),
+    ('with recent_cards as', 2, 'query'),
+    ('summary as', 1, 'query'),
     ('group by days_ago', 1, 'query'),
 ]
 for needle, pts, bucket in checks:
