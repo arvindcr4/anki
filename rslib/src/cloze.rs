@@ -104,16 +104,24 @@ fn tokenize(mut text: &str) -> impl Iterator<Item = Token<'_>> {
                 nom::error::ErrorKind::Eof,
             )));
         }
-        // Only check at positions that could start a cloze open '{{' or close '}}'
-        let mut index = text.len();
-        for (idx, byte) in text.bytes().enumerate() {
-            if byte == b'{' || byte == b'}' {
-                let remaining = &text[idx..];
-                if open_cloze(remaining).is_ok() || close_cloze(remaining).is_ok() {
+        let bytes = text.as_bytes();
+        let len = bytes.len();
+        let mut index = len;
+        let mut idx = 0;
+        while idx < len {
+            let byte = bytes[idx];
+            if byte == b'{' && idx + 2 < len && bytes[idx + 1] == b'{' && bytes[idx + 2] == b'c' {
+                // Potential cloze open: {{c
+                if open_cloze(&text[idx..]).is_ok() {
                     index = idx;
                     break;
                 }
+            } else if byte == b'}' && idx + 1 < len && bytes[idx + 1] == b'}' {
+                // Potential cloze close: }}
+                index = idx;
+                break;
             }
+            idx += 1;
         }
         Ok((&text[index..], Token::Text(&text[0..index])))
     }

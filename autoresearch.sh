@@ -81,11 +81,8 @@ checks = [
     ('daily-cards-import', 1, 'capture'),
     ('Most active', 1, 'visual'),
     ('Latest session', 2, 'visual'),
-<<<<<<< Updated upstream
-=======
     ('daily-cards-statuses', 1, 'visual'),
     ('status_badges', 1, 'visual'),
->>>>>>> Stashed changes
     ('is-latest-session', 1, 'visual'),
     ('daily-cards-status', 1, 'visual'),
     ('daily-cards-status-secondary', 1, 'visual'),
@@ -121,6 +118,8 @@ checks = [
     ('daily-cards-strip-legend', 1, 'visual'),
     ('daily-cards-legend-item', 1, 'visual'),
     ('daily-cards-legend-swatch', 1, 'visual'),
+    ('Create here', 1, 'capture'),
+    ('is-capture', 1, 'visual'),
     ('Streak run', 1, 'timeline'),
     ('Tap a bar to browse that day', 2, 'timeline'),
     ('Bars light up as you create or import cards', 2, 'timeline'),
