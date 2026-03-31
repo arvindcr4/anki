@@ -29,6 +29,8 @@ checks = [
     ('daily-cards-bar', 2, 'visual'),
     ('daily-cards-bar-label', 1, 'visual'),
     ('daily-cards-bar-count', 1, 'visual'),
+    ('is-capture-bar', 1, 'visual'),
+    ("Create today's first card from the activity strip", 2, 'capture'),
     ('aria-label', 2, 'visual'),
     ('cards across', 2, 'timeline'),
     ('daily-cards-row', 2, 'visual'),

@@ -228,6 +228,13 @@ body {
     opacity: 0.5;
 }
 
+.daily-cards-bar.is-capture-bar {
+    opacity: 1;
+    border-style: dashed;
+    color: color(fg-link);
+    font-weight: 700;
+}
+
 .daily-cards-bar-count {
     font-size: 0.72rem;
     font-weight: 700;

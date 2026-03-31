@@ -593,10 +593,21 @@ class DeckBrowser:
                 )
             else:
                 bar_classes.append("is-empty")
-                bar_markup = (
-                    f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px' "
-                    f"title='{bar_summary}' aria-label='{bar_summary}'></div>"
-                )
+                if group.days_ago == 0:
+                    bar_classes.append("is-capture-bar")
+                    create_today_summary = html.escape(
+                        "Create today's first card from the activity strip"
+                    )
+                    bar_markup = (
+                        f"<a class='{' '.join(bar_classes)}' style='height:{bar_height}px' "
+                        f"title='{create_today_summary}' aria-label='{create_today_summary}' href=# "
+                        f"onclick='return pycmd(\"addcards\")'>+</a>"
+                    )
+                else:
+                    bar_markup = (
+                        f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px' "
+                        f"title='{bar_summary}' aria-label='{bar_summary}'></div>"
+                    )
             activity_bars.append(
                 """
 <div class="daily-cards-bar-column">
