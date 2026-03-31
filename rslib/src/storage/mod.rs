@@ -7,6 +7,7 @@ mod config;
 mod dbcheck;
 mod deck;
 mod deckconfig;
+pub(crate) mod generated_card;
 mod graves;
 mod note;
 mod notetype;
