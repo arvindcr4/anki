@@ -30,6 +30,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Make the streak pill browseable so momentum is not just decorative: users can reopen the cards from their current or last active run.
 - Make the **busiest day** summary pill directly browseable so the highest-volume capture session doubles as a quick re-entry point.
 - Follow those metrics with a short guidance sentence that answers the next-step question: keep capturing, restart the streak today, or start this week’s timeline.
+- Pair that guidance with context-sensitive actions so the banner can directly offer **Keep the streak going**, **Restart streak today**, **Browse current streak**, or **Create first card** depending on the learner’s recent activity.
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.

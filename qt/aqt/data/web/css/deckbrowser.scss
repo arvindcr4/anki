@@ -242,6 +242,12 @@ body {
     text-align: center;
 }
 
+.daily-cards-guidance-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
 .daily-cards-guidance {
     border-radius: var(--border-radius-medium);
     padding: 0.75rem 0.85rem;
@@ -249,6 +255,12 @@ body {
     color: color(fg-subtle);
     font-size: 0.9rem;
     line-height: 1.4;
+}
+
+.daily-cards-guidance-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
 }
 
 .daily-cards-list {

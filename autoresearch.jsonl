@@ -31,3 +31,4 @@
 {"type":"config","name":"daily_cards_timeline_v13","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
 {"run":19,"commit":"7399b71","metric":109,"metrics":{},"status":"keep","description":"Made the busiest-day summary pill browseable so the strongest recent capture session doubles as a direct jump-back point from the deck screen.","timestamp":1774970876397,"segment":12,"confidence":null,"iterationTokens":103}
 {"type":"config","name":"daily_cards_timeline_v14","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":20,"commit":"08ef959","metric":115,"metrics":{},"status":"keep","description":"Made the streak summary pill browseable so users can reopen the cards from their current or last active run instead of treating streaks as passive status only.","timestamp":1774970977444,"segment":13,"confidence":null,"iterationTokens":103}

@@ -476,6 +476,7 @@ class DeckBrowser:
         heatmap_hint = "Bars light up as you create or import cards."
         if has_recent_cards:
             heatmap_hint = "Tap a bar to browse that day."
+        guidance_actions: list[str] = []
         guidance = "Create or import cards to start this week's timeline."
         if (
             self._render_data.daily_groups
@@ -485,10 +486,31 @@ class DeckBrowser:
                 f"You're on a {_count_label(streak_count, 'day')} streak. "
                 "Keep capturing while the topic is fresh."
             )
+            guidance_actions.append(
+                '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">Keep the streak going</a>'
+            )
+            if latest_active_group:
+                guidance_actions.append(
+                    f"<a class=\"daily-cards-link daily-cards-pill\" href=# onclick=\"return pycmd('browseStreak:{latest_active_group.days_ago},{streak_count}')\">Browse current streak</a>"
+                )
         elif active_day_count:
             guidance = (
                 f"You were active on {_count_label(active_day_count, 'day')}. "
                 "Add a card today to restart the streak."
+            )
+            guidance_actions.append(
+                '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">Restart streak today</a>'
+            )
+            if latest_active_group:
+                guidance_actions.append(
+                    f"<a class=\"daily-cards-link daily-cards-pill\" href=# onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">Browse latest day</a>"
+                )
+        else:
+            guidance_actions.append(
+                '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">Create first card</a>'
+            )
+            guidance_actions.append(
+                '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'importcards\')">Import cards</a>'
             )
         busiest_summary = "Busiest: no recent activity yet"
         busiest_summary_markup = (
@@ -637,7 +659,10 @@ class DeckBrowser:
     {activity_bars}
   </div>
   <div class="daily-cards-strip-hint">{heatmap_hint}</div>
-{panel_state}  <div class="daily-cards-guidance">{guidance}</div>
+{panel_state}  <div class="daily-cards-guidance-block">
+    <div class="daily-cards-guidance">{guidance}</div>
+    <div class="daily-cards-guidance-actions">{guidance_actions}</div>
+  </div>
   <div class="daily-cards-list">
     {rows}
   </div>
@@ -647,11 +672,10 @@ class DeckBrowser:
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             active_day_count_label=_count_label(active_day_count, "active day"),
-            streak_summary=streak_summary,
             streak_summary_markup=streak_summary_markup,
-            busiest_summary=busiest_summary,
             busiest_summary_markup=busiest_summary_markup,
             guidance=guidance,
+            guidance_actions="\n".join(guidance_actions),
             heatmap_hint=heatmap_hint,
             activity_bars="\n".join(activity_bars),
             panel_state=panel_state,
