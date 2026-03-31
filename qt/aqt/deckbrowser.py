@@ -396,6 +396,7 @@ class DeckBrowser:
 
     def _renderDailyCards(self) -> str:
         rows: list[str] = []
+        activity_bars: list[str] = []
         recent_days = len(self._render_data.daily_groups)
         total_cards = sum(group.card_count for group in self._render_data.daily_groups)
         total_notes = self._render_data.recent_unique_notes
@@ -446,7 +447,38 @@ class DeckBrowser:
                 label=html.escape(busiest_group.label),
                 count=_count_label(busiest_group.card_count, "card"),
             )
+        max_cards = max(
+            (group.card_count for group in self._render_data.daily_groups),
+            default=0,
+        )
         for group in self._render_data.daily_groups:
+            bar_height = 16
+            if max_cards and group.card_count:
+                bar_height += int((group.card_count / max_cards) * 44)
+            bar_classes = ["daily-cards-bar"]
+            if group.card_count:
+                bar_classes.append("has-cards")
+                bar_markup = (
+                    f"<a class='{' '.join(bar_classes)}' style='height:{bar_height}px' href=# "
+                    f"onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>"
+                    f"<span class='daily-cards-bar-count'>{group.card_count}</span></a>"
+                )
+            else:
+                bar_classes.append("is-empty")
+                bar_markup = (
+                    f"<div class='{' '.join(bar_classes)}' style='height:{bar_height}px'></div>"
+                )
+            activity_bars.append(
+                """
+<div class="daily-cards-bar-column">
+  {bar_markup}
+  <div class="daily-cards-bar-label">{label}</div>
+</div>
+""".format(
+                    bar_markup=bar_markup,
+                    label=html.escape(group.label),
+                )
+            )
             row_classes = ["daily-cards-row"]
             status_badge = ""
             if group.days_ago == 0:
@@ -526,6 +558,9 @@ class DeckBrowser:
     <div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>
     <div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>
   </div>
+  <div class="daily-cards-heatmap">
+    {activity_bars}
+  </div>
 {panel_state}  <div class="daily-cards-guidance">{guidance}</div>
   <div class="daily-cards-list">
     {rows}
@@ -539,6 +574,7 @@ class DeckBrowser:
             streak_summary=streak_summary,
             busiest_summary=busiest_summary,
             guidance=guidance,
+            activity_bars="\n".join(activity_bars),
             panel_state=panel_state,
             rows="\n".join(rows),
         )

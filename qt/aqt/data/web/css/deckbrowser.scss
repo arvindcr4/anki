@@ -188,6 +188,54 @@ body {
     background: color(canvas);
 }
 
+.daily-cards-heatmap {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: end;
+}
+
+.daily-cards-bar-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.daily-cards-bar {
+    width: 100%;
+    min-height: 16px;
+    border-radius: var(--border-radius-medium);
+    border: 1px solid var(--border-subtle);
+    background: color(canvas);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0.25rem;
+    text-decoration: none;
+}
+
+.daily-cards-bar.has-cards {
+    background: color(fg-link);
+    border-color: color(fg-link);
+    color: white;
+}
+
+.daily-cards-bar.is-empty {
+    opacity: 0.5;
+}
+
+.daily-cards-bar-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.daily-cards-bar-label {
+    font-size: 0.75rem;
+    color: color(fg-subtle);
+    text-align: center;
+}
+
 .daily-cards-guidance {
     border-radius: var(--border-radius-medium);
     padding: 0.75rem 0.85rem;
@@ -316,6 +364,10 @@ body {
 @media (max-width: 760px) {
     .deck-browser-secondary-row {
         grid-template-columns: 1fr;
+    }
+
+    .daily-cards-heatmap {
+        gap: 0.35rem;
     }
 
     .daily-cards-row {

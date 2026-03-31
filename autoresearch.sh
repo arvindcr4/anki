@@ -24,6 +24,10 @@ query_efficiency = 0
 checks = [
     ('DailyCardsGroup', 3, 'timeline'),
     ('daily-cards-panel', 2, 'timeline'),
+    ('daily-cards-heatmap', 2, 'visual'),
+    ('daily-cards-bar', 2, 'visual'),
+    ('daily-cards-bar-label', 1, 'visual'),
+    ('daily-cards-bar-count', 1, 'visual'),
     ('daily-cards-row', 2, 'visual'),
     ('browseAdded', 3, 'browse'),
     ('browseRecent', 2, 'browse'),
