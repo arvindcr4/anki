@@ -11,7 +11,6 @@ use anki_proto::image_occlusion::get_image_occlusion_note_response::ImageOcclusi
 use anki_proto::image_occlusion::get_image_occlusion_note_response::ImageOcclusionShape;
 use htmlescape::encode_attribute;
 use itertools::Itertools;
-use nom::branch::alt;
 use nom::bytes::complete::tag;
 use nom::bytes::complete::take_while;
 use nom::combinator::map;
@@ -331,9 +330,9 @@ fn reveal_cloze(
             buf.push_str(&encode_attribute(&content_buf));
             buf.push_str(r#"" data-ordinal=""#);
             write_ordinals(buf, &cloze.ordinals);
-            buf.push_str(r#"">[""#);
+            buf.push_str("\">[");
             buf.push_str(cloze.hint());
-            buf.push_str(r#"]</span>"#);
+            buf.push_str("]</span>");
         }
         (false, true) => {
             buf.push_str(r#"<span class="cloze" data-ordinal=""#);
