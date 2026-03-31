@@ -118,8 +118,10 @@ mod test {
 
     #[test]
     fn test_cloze_notetype_has_text_field() {
-        let mut nt = Notetype::default();
-        nt.config = Notetype::new_cloze_config();
+        let mut nt = Notetype {
+            config: Notetype::new_cloze_config(),
+            ..Default::default()
+        };
         nt.add_field("Text");
         nt.add_field("Back Extra");
         assert_eq!(nt.fields.len(), 2);
