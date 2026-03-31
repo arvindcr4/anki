@@ -3,8 +3,10 @@
 
 mod models;
 mod notetype;
+mod prompt;
 mod service;
 
 pub use models::*;
 pub use notetype::*;
+pub use prompt::*;
 pub use service::*;
