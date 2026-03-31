@@ -60,6 +60,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - If today already has cards, surface a top-level **Browse today** shortcut because that is often the fastest way to revisit the freshest generated material.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
+- Include the latest session’s date in that shortcut label, so the user can verify the jump target without cross-referencing the strip first.
 - Also mark that most recent active row as **Latest session** so the user can find it at a glance without scanning dates.
 - If the latest session is also the busiest day, show both badges instead of forcing one to win, so the row preserves both meanings.
 - Render multiple badges with real spacing so stacked row states stay readable instead of collapsing into a tight blob.

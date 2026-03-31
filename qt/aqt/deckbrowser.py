@@ -759,10 +759,12 @@ class DeckBrowser:
             )
         latest_day_action = ""
         if latest_active_group and latest_active_group.days_ago > 0:
+            latest_day_label = f"Browse latest day ({latest_active_group.date_label})"
             latest_day_action = (
                 f'<a class="daily-cards-link daily-cards-pill" href=# '
+                f'title="{latest_day_label}" aria-label="{latest_day_label}" '
                 f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
-                "Browse latest day</a>"
+                f"{latest_day_label}</a>"
             )
         panel_state = """
   <div class="daily-cards-actions">
