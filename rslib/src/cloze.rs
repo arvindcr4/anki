@@ -61,13 +61,26 @@ fn tokenize(mut text: &str) -> impl Iterator<Item = Token<'_>> {
         let (text, _opening_brackets_and_c) = tag("{{c")(text)?;
         // following comma-seperated numbers
         let (text, ordinals) = take_while(|c: char| c.is_ascii_digit() || c == ',')(text)?;
-        let ordinals: Vec<u16> = ordinals
-            .split(',')
-            .filter_map(|s| s.parse().ok())
-            .collect::<HashSet<_>>() // deduplicate
-            .into_iter()
-            .sorted() // set conversion can de-order
-            .collect();
+        let ordinals: Vec<u16> = if !ordinals.contains(',') {
+            // Fast path: single ordinal (most common case)
+            match ordinals.parse::<u16>() {
+                Ok(n) => vec![n],
+                Err(_) => {
+                    return Err(nom::Err::Error(nom::error::make_error(
+                        text,
+                        nom::error::ErrorKind::Digit,
+                    )));
+                }
+            }
+        } else {
+            ordinals
+                .split(',')
+                .filter_map(|s| s.parse().ok())
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .sorted()
+                .collect()
+        };
         if ordinals.is_empty() {
             return Err(nom::Err::Error(nom::error::make_error(
                 text,
@@ -91,13 +104,15 @@ fn tokenize(mut text: &str) -> impl Iterator<Item = Token<'_>> {
                 nom::error::ErrorKind::Eof,
             )));
         }
-        let mut other_token = alt((open_cloze, close_cloze));
-        // start with the no-match case
+        // Only check at positions that could start a cloze open '{{' or close '}}'
         let mut index = text.len();
-        for (idx, _) in text.char_indices() {
-            if other_token.parse(&text[idx..]).is_ok() {
-                index = idx;
-                break;
+        for (idx, byte) in text.bytes().enumerate() {
+            if byte == b'{' || byte == b'}' {
+                let remaining = &text[idx..];
+                if open_cloze(remaining).is_ok() || close_cloze(remaining).is_ok() {
+                    index = idx;
+                    break;
+                }
             }
         }
         Ok((&text[index..], Token::Text(&text[0..index])))

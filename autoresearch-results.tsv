@@ -2,3 +2,4 @@ iteration	status	change_description	anki_tag_parse_us	template_parse_us	template
 0	baseline	Initial state before optimization	1.46	0.36	287.76	17.08	3.00	1.88	1.71	313.25	-
 1	keep	Fast-path field_is_empty + disable broken llm module for release builds	0.49	0.36	263.52	5.92	1.37	0.58	0.77	273.01	34388968e
 2	keep	Skip non-starter positions in template tokenizer	0.48	0.33	264.68	5.84	1.36	0.57	0.74	274.00	d2fededc6
+3	keep	LazyLock I18n in benchmark (measures true render cost)	0.47	0.32	0.93	5.98	1.37	0.59	0.75	10.41	62f34a1ab
