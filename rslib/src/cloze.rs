@@ -147,11 +147,14 @@ struct ExtractedCloze<'a> {
 
 /// Generate a string representation of the ordinals for HTML
 fn ordinals_str(ordinals: &[u16]) -> String {
-    ordinals
-        .iter()
-        .map(|o| o.to_string())
-        .collect::<Vec<_>>()
-        .join(",")
+    match ordinals {
+        [single] => single.to_string(),
+        _ => ordinals
+            .iter()
+            .map(|o| o.to_string())
+            .collect::<Vec<_>>()
+            .join(","),
+    }
 }
 
 impl ExtractedCloze<'_> {
@@ -396,7 +399,7 @@ pub fn parse_image_occlusions(text: &str) -> Vec<ImageOcclusion> {
 }
 
 pub fn reveal_cloze_text(text: &str, cloze_ord: u16, question: bool) -> Cow<'_, str> {
-    let mut buf = String::new();
+    let mut buf = String::with_capacity(text.len() + 128);
     let mut active_cloze_found_in_text = false;
     for node in &parse_text_with_clozes(text) {
         match node {
