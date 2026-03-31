@@ -28,10 +28,12 @@ This prototype follows common guidance from strong UX systems and books:
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
 - Add a compact 7-day activity strip so learners can scan recent capture volume before reading the detailed rows.
+- Include each strip bar’s date under the day label so the week can be read at a glance without relying on hover alone.
 - Make the activity strip self-explanatory with hover and assistive labels that include the day, date, and cards-across-notes summary.
 - Add a tiny helper line under the strip so users immediately understand that bars are browseable, and that empty bars will light up as they create or import cards.
 - Make the empty **Today** bar itself a lightweight **create first card** target, so the visual strip can start a capture flow instead of only reflecting past activity.
-- Add compact momentum pills for **active days**, **cards-per-note density**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Add compact momentum pills for **active days**, **quiet days**, **cards-per-note density**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Show **quiet days** explicitly so the panel makes gaps in capture behavior visible, not just productive days.
 - Show **cards-per-note density** to help users distinguish broad note capture from denser card generation such as cloze-heavy sessions or big imports.
 - Make the streak pill browseable so momentum is not just decorative: users can reopen the cards from their current or last active run.
 - Make the **busiest day** summary pill directly browseable so the highest-volume capture session doubles as a quick re-entry point.

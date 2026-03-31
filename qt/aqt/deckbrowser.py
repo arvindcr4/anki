@@ -453,7 +453,12 @@ class DeckBrowser:
                 f" → {self._render_data.daily_groups[0].date_label}"
             )
         active_day_count_label = _count_label(active_day_count, "active day")
+        quiet_day_count = max(0, recent_days - active_day_count)
+        quiet_day_summary = "Quiet days: none"
+        if quiet_day_count:
+            quiet_day_summary = f"Quiet days: {_count_label(quiet_day_count, 'day')}"
         active_day_markup = f'<div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>'
+        quiet_day_markup = f'<div class="daily-cards-pill daily-cards-quiet">{quiet_day_summary}</div>'
         range_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-range">{range_summary}</div>'
         )
@@ -463,6 +468,12 @@ class DeckBrowser:
                 'title="Browse active week" aria-label="Browse active week" '
                 'onclick="return pycmd(\'browseRecent\')">'
                 f"{active_day_count_label} with cards</a>"
+            )
+            quiet_day_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-quiet" href=# '
+                'title="Browse quiet week context" aria-label="Browse quiet week context" '
+                'onclick="return pycmd(\'browseRecent\')">'
+                f"{quiet_day_summary}</a>"
             )
             range_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-range" href=# '
@@ -613,10 +624,12 @@ class DeckBrowser:
 <div class="daily-cards-bar-column">
   {bar_markup}
   <div class="daily-cards-bar-label">{label}</div>
+  <div class="daily-cards-bar-date">{date_label}</div>
 </div>
 """.format(
                     bar_markup=bar_markup,
                     label=html.escape(group.label),
+                    date_label=html.escape(group.date_label),
                 )
             )
             row_classes = ["daily-cards-row"]
@@ -737,6 +750,7 @@ class DeckBrowser:
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
     {active_day_markup}
+    {quiet_day_markup}
     {gap_summary_markup}
     {range_summary_markup}
     <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
@@ -760,6 +774,7 @@ class DeckBrowser:
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             active_day_markup=active_day_markup,
+            quiet_day_markup=quiet_day_markup,
             gap_summary_markup=gap_summary_markup,
             range_summary_markup=range_summary_markup,
             density_summary=density_summary,

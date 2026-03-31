@@ -144,6 +144,7 @@ body {
 }
 
 .daily-cards-activity,
+.daily-cards-quiet,
 .daily-cards-gap,
 .daily-cards-range,
 .daily-cards-density,
@@ -242,6 +243,12 @@ body {
 
 .daily-cards-bar-label {
     font-size: 0.75rem;
+    color: color(fg-subtle);
+    text-align: center;
+}
+
+.daily-cards-bar-date {
+    font-size: 0.68rem;
     color: color(fg-subtle);
     text-align: center;
 }
