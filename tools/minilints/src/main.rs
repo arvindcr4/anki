@@ -36,6 +36,9 @@ const IGNORED_FOLDERS: &[&str] = &[
     ".mypy_cache",
     "./extra",
     "./ts/.svelte-kit",
+    ".venv",
+    "./.venv",
+    "./anki-bookmarks-ext",
 ];
 
 fn main() -> Result<()> {
