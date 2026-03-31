@@ -154,7 +154,13 @@ body {
     color: white;
 }
 
-.daily-cards-create:hover {
+.daily-cards-import {
+    background: color(border-subtle);
+    color: color(fg);
+}
+
+.daily-cards-create:hover,
+.daily-cards-import:hover {
     text-decoration: none;
     filter: brightness(1.05);
 }

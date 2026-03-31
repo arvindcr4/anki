@@ -267,6 +267,8 @@ class DeckBrowser:
             self._browse_recent_cards()
         elif cmd == "addcards":
             self.mw.onAddCard()
+        elif cmd == "importcards":
+            self.mw.onImport()
         return False
 
     def set_current_deck(self, deck_id: DeckId) -> None:
@@ -463,6 +465,7 @@ class DeckBrowser:
         panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
   </div>
   <div class="daily-cards-zero-state">
     Add cards today and they'll appear here for fast date-based browsing.
@@ -472,6 +475,7 @@ class DeckBrowser:
             panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
     <a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
   </div>
 """.format(recent_days=recent_days)

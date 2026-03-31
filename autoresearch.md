@@ -19,7 +19,7 @@ The script performs a fast Python syntax check and scores whether the deck brows
 - clickable browse-by-date action
 - dedicated daily cards panel styling
 - empty/zero state support for dates with no cards
-- card-creation affordances from the daily cards surface, including both a zero-to-first-card prompt and a keep-capturing shortcut for Today
+- card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt, and a keep-capturing shortcut for Today
 - database-side aggregation so the week summary stays lightweight
 - docs that explain the daily timeline UX
 
