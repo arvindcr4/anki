@@ -530,6 +530,21 @@ class DeckBrowser:
                 )
             else:
                 streak_summary_markup = f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
+        legend_items = [
+            '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-today"></span>Today</span>'
+        ]
+        if streak_count:
+            legend_items.append(
+                '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-streak"></span>Streak run</span>'
+            )
+        if latest_active_group and latest_active_group.days_ago > 0:
+            legend_items.append(
+                '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-latest"></span>Latest session</span>'
+            )
+        if busiest_group:
+            legend_items.append(
+                '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-busiest"></span>Most active</span>'
+            )
         heatmap_hint = "Bars light up as you create or import cards."
         if has_recent_cards:
             heatmap_hint = "Tap a bar to browse that day."
@@ -771,6 +786,7 @@ class DeckBrowser:
     {activity_bars}
   </div>
   <div class="daily-cards-strip-hint">{heatmap_hint}</div>
+  <div class="daily-cards-strip-legend">{legend_items}</div>
 {panel_state}  <div class="daily-cards-guidance-block" role="status" aria-live="polite">
     <div class="daily-cards-guidance">{guidance}</div>
     <div class="daily-cards-guidance-actions">{guidance_actions}</div>
@@ -793,6 +809,7 @@ class DeckBrowser:
             guidance=guidance,
             guidance_actions="\n".join(guidance_actions),
             heatmap_hint=heatmap_hint,
+            legend_items="\n".join(legend_items),
             activity_bars="\n".join(activity_bars),
             panel_state=panel_state,
             rows="\n".join(rows),

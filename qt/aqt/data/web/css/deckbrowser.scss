@@ -271,6 +271,46 @@ body {
     text-align: center;
 }
 
+.daily-cards-strip-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.65rem;
+}
+
+.daily-cards-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    color: color(fg-subtle);
+}
+
+.daily-cards-legend-swatch {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background: color(canvas);
+}
+
+.daily-cards-legend-swatch.is-today {
+    background: color(border-subtle);
+}
+
+.daily-cards-legend-swatch.is-streak {
+    background: color(fg-link);
+}
+
+.daily-cards-legend-swatch.is-latest {
+    border-style: dashed;
+}
+
+.daily-cards-legend-swatch.is-busiest {
+    background: color(fg-link);
+    filter: saturate(1.15);
+}
+
 .daily-cards-guidance-block {
     display: flex;
     flex-direction: column;
