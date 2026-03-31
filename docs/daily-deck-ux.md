@@ -25,6 +25,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
 - Add a compact 7-day activity strip so learners can scan recent capture volume before reading the detailed rows.
 - Make the activity strip self-explanatory with hover and assistive labels that include the day, date, and cards-across-notes summary.
+- Add a tiny helper line under the strip so users immediately understand that bars are browseable, and that empty bars will light up as they create or import cards.
 - Add compact momentum pills for **active days**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
 - Follow those metrics with a short guidance sentence that answers the next-step question: keep capturing, restart the streak today, or start this week’s timeline.
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.

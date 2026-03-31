@@ -236,6 +236,12 @@ body {
     text-align: center;
 }
 
+.daily-cards-strip-hint {
+    font-size: 0.8rem;
+    color: color(fg-subtle);
+    text-align: center;
+}
+
 .daily-cards-guidance {
     border-radius: var(--border-radius-medium);
     padding: 0.75rem 0.85rem;

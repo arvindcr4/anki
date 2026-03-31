@@ -23,3 +23,5 @@
 {"type":"config","name":"daily_cards_timeline_v9","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
 {"run":15,"commit":"35f290b","metric":97,"metrics":{},"status":"keep","description":"Collapsed recent-note totals into the same recent-cards aggregation query, keeping the richer daily timeline lightweight while query_efficiency improved again.","timestamp":1774970526631,"segment":8,"confidence":null,"iterationTokens":103}
 {"type":"config","name":"daily_cards_timeline_v10","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":16,"commit":"06195e3","metric":99,"metrics":{},"status":"keep","description":"Added accessible hover/assistive labels to the activity strip so the visual timeline is easier to interpret without sacrificing the compact layout.","timestamp":1774970622980,"segment":9,"confidence":null,"iterationTokens":103}
+{"type":"config","name":"daily_cards_timeline_v11","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}

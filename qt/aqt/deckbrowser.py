@@ -430,6 +430,9 @@ class DeckBrowser:
         streak_summary = f"{streak_label}: none yet"
         if streak_count:
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
+        heatmap_hint = "Bars light up as you create or import cards."
+        if has_recent_cards:
+            heatmap_hint = "Tap a bar to browse that day."
         guidance = "Create or import cards to start this week's timeline."
         if (
             self._render_data.daily_groups
@@ -571,6 +574,7 @@ class DeckBrowser:
   <div class="daily-cards-heatmap">
     {activity_bars}
   </div>
+  <div class="daily-cards-strip-hint">{heatmap_hint}</div>
 {panel_state}  <div class="daily-cards-guidance">{guidance}</div>
   <div class="daily-cards-list">
     {rows}
@@ -584,6 +588,7 @@ class DeckBrowser:
             streak_summary=streak_summary,
             busiest_summary=busiest_summary,
             guidance=guidance,
+            heatmap_hint=heatmap_hint,
             activity_bars="\n".join(activity_bars),
             panel_state=panel_state,
             rows="\n".join(rows),
