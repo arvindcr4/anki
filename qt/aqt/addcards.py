@@ -424,6 +424,7 @@ class AddCards(QMainWindow):
         assert layout is not None
         # layout is a QVBoxLayout per addcards.ui
         from aqt.qt import QVBoxLayout
+
         assert isinstance(layout, QVBoxLayout)
         layout.insertWidget(1, self.intake_frame)
         self._last_source_summary: str | None = None
@@ -496,23 +497,22 @@ class AddCards(QMainWindow):
                 self.intake_frame.set_llm_status(
                     f"LLM status: ready for Summarize, Q&A, or Cloze on {self._last_source_summary} once provider is configured"
                 )
+        elif self._codex_preferred() and self._codex_api_key_present():
+            self.intake_frame.set_llm_status(
+                "LLM status: Codex preferred provider connected • capture a source to start preview-first actions"
+            )
+        elif self._codex_preferred():
+            self.intake_frame.set_llm_status(
+                "LLM status: Codex preferred provider selected • add OPENAI_API_KEY to enable preview-first actions"
+            )
+        elif self._codex_api_key_present():
+            self.intake_frame.set_llm_status(
+                "LLM status: Codex connected • capture a source to start preview-first actions"
+            )
         else:
-            if self._codex_preferred() and self._codex_api_key_present():
-                self.intake_frame.set_llm_status(
-                    "LLM status: Codex preferred provider connected • capture a source to start preview-first actions"
-                )
-            elif self._codex_preferred():
-                self.intake_frame.set_llm_status(
-                    "LLM status: Codex preferred provider selected • add OPENAI_API_KEY to enable preview-first actions"
-                )
-            elif self._codex_api_key_present():
-                self.intake_frame.set_llm_status(
-                    "LLM status: Codex connected • capture a source to start preview-first actions"
-                )
-            else:
-                self.intake_frame.set_llm_status(
-                    "LLM status: provider not configured • preview first with Summarize, Q&A, or Cloze"
-                )
+            self.intake_frame.set_llm_status(
+                "LLM status: provider not configured • preview first with Summarize, Q&A, or Cloze"
+            )
 
     def _update_source_preview(
         self, summary: str, *, selected_action: str | None = None
@@ -662,20 +662,130 @@ class AddCards(QMainWindow):
 
     def _show_llm_action(self, action: str) -> None:
         target = self._last_source_summary or "the current note"
-        if self._codex_preferred():
-            self.intake_frame.set_llm_status(
-                f"LLM status: Codex will handle {action} on {target} in a preview-first flow"
-            )
-        else:
-            self.intake_frame.set_llm_status(
-                f"LLM status: ready for {action} on {target} once provider is configured"
-            )
-        self._update_source_preview(target, selected_action=action)
-        showInfo(
-            f"Preview first: {action} should be the next step after capture.\n\n"
-            f"When provider setup lands, {action} will generate a preview from {target} before writing anything into note fields.",
-            parent=self,
+        # Map UI action names to generation types
+        action_map = {"Summarize": "summarize", "Q&A": "qa", "Cloze": "cloze"}
+        gen_action = action_map.get(action, "qa")
+
+        # Gather source text from current note fields
+        note = self.editor.note
+        if note is None:
+            showWarning("No note loaded.", parent=self)
+            return
+
+        source_text = "\n".join(
+            field for field in note.fields if field.strip()
         )
+        if not source_text.strip():
+            showWarning(
+                "No source text in note fields. Add text to a field first, "
+                "or drop a file/URL.",
+                parent=self,
+            )
+            return
+
+        self.intake_frame.set_llm_status(
+            f"LLM status: generating {action} from {target}…"
+        )
+        self._update_source_preview(target, selected_action=action)
+
+        # Run generation in a thread to avoid blocking the UI
+        from aqt.llm_generate import generate_cards, LLMError, get_api_key
+
+        if not get_api_key():
+            showWarning(
+                "No API key configured.\n\n"
+                "Set OPENAI_API_KEY environment variable to enable LLM generation.",
+                parent=self,
+            )
+            self.intake_frame.set_llm_status(
+                "LLM status: provider not configured"
+            )
+            return
+
+        context = f"Deck: {self.deck_chooser.selected_deck_name()}"
+
+        def do_generate() -> None:
+            try:
+                result = generate_cards(source_text, gen_action, context=context)
+                self.mw.taskman.run_on_main(
+                    lambda: self._apply_llm_result(result, action)
+                )
+            except LLMError as e:
+                self.mw.taskman.run_on_main(
+                    lambda: self._handle_llm_error(str(e))
+                )
+
+        self.mw.taskman.run_in_background(do_generate)
+
+    def _apply_llm_result(self, result: object, action: str) -> None:
+        """Apply LLM generation results to the current note."""
+        from aqt.llm_generate import GenerationResult
+
+        if not isinstance(result, GenerationResult):
+            return
+
+        note = self.editor.note
+        if note is None:
+            return
+
+        if result.action == "qa" and result.cards:
+            # Fill first two fields with first Q&A pair
+            card = result.cards[0]
+            if len(note.fields) >= 1:
+                note.fields[0] = card.front
+            if len(note.fields) >= 2:
+                note.fields[1] = card.back
+
+            # Show preview of all generated cards
+            preview_lines = []
+            for i, c in enumerate(result.cards, 1):
+                preview_lines.append(f"{i}. Q: {c.front}\n   A: {c.back}")
+            preview = "\n\n".join(preview_lines)
+
+            self.intake_frame.set_llm_status(
+                f"LLM status: generated {len(result.cards)} Q&A cards with {result.model_used}"
+            )
+            self.intake_frame.set_source_preview(
+                f"Generated {len(result.cards)} Q&A pairs:\n{preview}"
+            )
+
+        elif result.action == "cloze" and result.clozes:
+            # Fill first field with first cloze
+            if len(note.fields) >= 1:
+                note.fields[0] = result.clozes[0].text
+
+            self.intake_frame.set_llm_status(
+                f"LLM status: generated {len(result.clozes)} cloze cards with {result.model_used}"
+            )
+
+        elif result.action == "summarize" and result.summary:
+            # Fill the back field (or second field) with summary
+            target_idx = 1 if len(note.fields) >= 2 else 0
+            note.fields[target_idx] = result.summary
+
+            self.intake_frame.set_llm_status(
+                f"LLM status: generated summary with {result.model_used}"
+            )
+
+        # Reload the editor to show changes
+        self.editor.loadNote()
+        # Add generation tags
+        current_tags = note.string_tags()
+        if "ai-generated" not in current_tags:
+            note.tags.append("ai-generated")
+            self.editor.loadNote()
+
+        tooltip(
+            f"{action} generated with {result.model_used}",
+            period=2000,
+        )
+
+    def _handle_llm_error(self, error_msg: str) -> None:
+        """Handle LLM generation errors."""
+        self.intake_frame.set_llm_status(
+            f"LLM status: generation failed"
+        )
+        showWarning(f"LLM generation failed:\n\n{error_msg}", parent=self)
 
     def _organize_current_note(self) -> None:
         deck_tag = (
