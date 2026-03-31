@@ -401,6 +401,12 @@ body {
     font-weight: 700;
 }
 
+.daily-cards-statuses {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
 .daily-cards-status {
     border-radius: 999px;
     padding: 0.15rem 0.45rem;

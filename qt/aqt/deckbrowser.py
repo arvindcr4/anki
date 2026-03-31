@@ -727,7 +727,11 @@ class DeckBrowser:
   <div class="daily-cards-date-group">
     <div class="daily-cards-label-row">
       <div class="daily-cards-label">{label}</div>
+<<<<<<< Updated upstream
       {status_badge}
+=======
+      <div class="daily-cards-statuses">{status_badges}</div>
+>>>>>>> Stashed changes
     </div>
     <div class="daily-cards-date">{date_label}</div>
   </div>

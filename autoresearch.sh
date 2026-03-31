@@ -81,6 +81,11 @@ checks = [
     ('daily-cards-import', 1, 'capture'),
     ('Most active', 1, 'visual'),
     ('Latest session', 2, 'visual'),
+<<<<<<< Updated upstream
+=======
+    ('daily-cards-statuses', 1, 'visual'),
+    ('status_badges', 1, 'visual'),
+>>>>>>> Stashed changes
     ('is-latest-session', 1, 'visual'),
     ('daily-cards-status', 1, 'visual'),
     ('daily-cards-status-secondary', 1, 'visual'),
