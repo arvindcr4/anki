@@ -19,6 +19,8 @@ score = 0
 timeline_surface = 0
 browse_by_date = 0
 visual_hierarchy = 0
+capture_support = 0
+query_efficiency = 0
 checks = [
     ('DailyCardsGroup', 3, 'timeline'),
     ('daily-cards-panel', 2, 'timeline'),
@@ -52,6 +54,15 @@ checks = [
     ('scheduler cutoff', 2, 'timeline'),
     ('unique notes across the full range', 1, 'timeline'),
     ('Last 7 days:', 1, 'visual'),
+    ('Create cards', 2, 'capture'),
+    ('addcards', 2, 'capture'),
+    ('daily-cards-create', 1, 'capture'),
+    ('Most active', 1, 'visual'),
+    ('daily-cards-status', 1, 'visual'),
+    ('active day', 2, 'timeline'),
+    ('Busiest:', 2, 'timeline'),
+    ('count(distinct nid)', 2, 'query'),
+    ('group by days_ago', 1, 'query'),
 ]
 for needle, pts, bucket in checks:
     if needle in joined:
@@ -64,9 +75,15 @@ for needle, pts, bucket in checks:
             visual_hierarchy += 1
         elif bucket == 'docs':
             visual_hierarchy += 1
+        elif bucket == 'capture':
+            capture_support += 1
+        elif bucket == 'query':
+            query_efficiency += 1
 print(f'METRIC daily_cards_ux_score={score}')
 print('METRIC syntax_ok=1')
 print(f'METRIC timeline_surface={timeline_surface}')
 print(f'METRIC browse_by_date={browse_by_date}')
 print(f'METRIC visual_hierarchy={visual_hierarchy}')
+print(f'METRIC capture_support={capture_support}')
+print(f'METRIC query_efficiency={query_efficiency}')
 PY

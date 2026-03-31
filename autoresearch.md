@@ -2,12 +2,12 @@
 
 ## Objective
 
-Prototype a Roam-like daily cards view on the main deck browser so learners can navigate not only by deck, but also by date. The deck browser should gain a visually clear daily timeline that groups recently added cards by day and lets the user jump straight into those cards. The UX should emphasize strong hierarchy, low cognitive load, and obvious next steps.
+Prototype a Roam-like daily cards view on the main deck browser so learners can navigate not only by deck, but also by date. The deck browser should gain a visually clear daily timeline that groups recently added cards by day and lets the user jump straight into those cards. The UX should emphasize strong hierarchy, low cognitive load, obvious next steps, and a lightweight path back into card creation.
 
 ## Metrics
 
 - **Primary**: `daily_cards_ux_score` (unitless, higher is better)
-- **Secondary**: `timeline_surface`, `browse_by_date`, `visual_hierarchy`, `syntax_ok`
+- **Secondary**: `timeline_surface`, `browse_by_date`, `visual_hierarchy`, `capture_support`, `query_efficiency`, `syntax_ok`
 
 ## How to Run
 
@@ -19,6 +19,8 @@ The script performs a fast Python syntax check and scores whether the deck brows
 - clickable browse-by-date action
 - dedicated daily cards panel styling
 - empty/zero state support for dates with no cards
+- card-creation affordances from the daily cards surface
+- database-side aggregation so the week summary stays lightweight
 - docs that explain the daily timeline UX
 
 ## Files in Scope
@@ -40,9 +42,11 @@ The script performs a fast Python syntax check and scores whether the deck brows
 - Keep the classic deck tree intact.
 - Keep the daily timeline lightweight and reversible.
 - Prefer date browse affordances over heavy new workflows.
+- Improve responsiveness where possible; do not trade away correctness for a benchmark bump.
 - Fast checks must pass after every kept experiment.
 
 ## What's Been Tried
 
 - Existing work improved Add Cards capture and LLM UX.
 - Current gap: the main deck screen is still organized almost entirely by deck tree. There is no date-based overview of recently created learning material.
+- New gap to close: the daily cards surface should help users both revisit what they added and jump back into creating more cards without slowing the deck browser on large imports.

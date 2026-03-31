@@ -143,6 +143,22 @@ body {
     font-size: 0.9rem;
 }
 
+.daily-cards-activity,
+.daily-cards-busiest {
+    font-size: 0.82rem;
+    color: color(fg-subtle);
+}
+
+.daily-cards-create {
+    background: color(fg-link);
+    color: white;
+}
+
+.daily-cards-create:hover {
+    text-decoration: none;
+    filter: brightness(1.05);
+}
+
 .daily-cards-summary-label {
     font-weight: 700;
 }
@@ -153,6 +169,8 @@ body {
 
 .daily-cards-actions {
     display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
 }
 
 .daily-cards-zero-state {
@@ -184,6 +202,10 @@ body {
     background: color(border-subtle);
 }
 
+.daily-cards-row.is-busiest {
+    border-color: color(fg-link);
+}
+
 .daily-cards-row.is-empty {
     opacity: 0.72;
 }
@@ -201,7 +223,23 @@ body {
     min-width: 0;
 }
 
+.daily-cards-label-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+}
+
 .daily-cards-label {
+    font-weight: 700;
+}
+
+.daily-cards-status {
+    border-radius: 999px;
+    padding: 0.15rem 0.45rem;
+    background: color(fg-link);
+    color: white;
+    font-size: 0.72rem;
     font-weight: 700;
 }
 

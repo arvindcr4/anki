@@ -54,6 +54,8 @@ class RenderData:
     sched_upgrade_required: bool
     daily_groups: list[DailyCardsGroup]
     recent_unique_notes: int
+    active_day_count: int
+    busiest_days_ago: int | None
     rollover_hour: int
 
 
@@ -99,15 +101,13 @@ def _count_label(count: int, singular: str, plural: str | None = None) -> str:
 
 def _recent_daily_card_groups(
     col: Collection, days: int = RECENT_DAYS
-) -> tuple[list[DailyCardsGroup], int]:
+) -> tuple[list[DailyCardsGroup], int, int, int | None]:
     now = datetime.now().astimezone()
     tz = now.tzinfo
     assert tz is not None
     next_day_cutoff = col.sched.day_cutoff
     next_day_cutoff_ms = next_day_cutoff * 1000
     groups: list[DailyCardsGroup] = []
-    notes_by_days_ago: list[set[int]] = [set() for _ in range(days)]
-    all_recent_note_ids: set[int] = set()
 
     for days_ago in range(days):
         midpoint = datetime.fromtimestamp(
@@ -135,26 +135,53 @@ def _recent_daily_card_groups(
     assert col.db is not None
     rows = col.db.all(
         """
-select id, nid
-from cards
-where id > ?
-order by id desc
+select days_ago, count(*) as card_count, count(distinct nid) as note_count
+from (
+    select cast((? - id) / ? as integer) as days_ago, nid
+    from cards
+    where id > ? and id <= ?
+)
+where days_ago >= 0 and days_ago < ?
+group by days_ago
+order by days_ago
 """,
+        next_day_cutoff_ms,
+        DAY_MS,
         window_start,
+        next_day_cutoff_ms,
+        days,
     )
 
-    for card_id, note_id in rows:
-        days_ago = max(0, int((next_day_cutoff_ms - int(card_id)) // DAY_MS))
-        if not 0 <= days_ago < days:
-            continue
-        groups[days_ago].card_count += 1
-        notes_by_days_ago[days_ago].add(int(note_id))
-        all_recent_note_ids.add(int(note_id))
+    for days_ago, card_count, note_count in rows:
+        bucket = int(days_ago)
+        groups[bucket].card_count = int(card_count)
+        groups[bucket].note_count = int(note_count)
 
-    for days_ago, note_ids in enumerate(notes_by_days_ago):
-        groups[days_ago].note_count = len(note_ids)
+    recent_unique_notes = int(
+        col.db.scalar(
+            """
+select count(distinct nid)
+from cards
+where id > ? and id <= ?
+""",
+            window_start,
+            next_day_cutoff_ms,
+        )
+        or 0
+    )
+    active_groups = [group for group in groups if group.card_count]
+    busiest_group = max(
+        active_groups,
+        key=lambda group: (group.card_count, group.note_count, -group.days_ago),
+        default=None,
+    )
 
-    return groups, len(all_recent_note_ids)
+    return (
+        groups,
+        recent_unique_notes,
+        len(active_groups),
+        busiest_group.days_ago if busiest_group else None,
+    )
 
 
 class DeckBrowser:
@@ -238,6 +265,8 @@ class DeckBrowser:
             self._browse_added_cards(arg)
         elif cmd == "browseRecent":
             self._browse_recent_cards()
+        elif cmd == "addcards":
+            self.mw.onAddCard()
         return False
 
     def set_current_deck(self, deck_id: DeckId) -> None:
@@ -298,7 +327,12 @@ class DeckBrowser:
         if not reuse:
 
             def get_data(col: Collection) -> RenderData:
-                daily_groups, recent_unique_notes = _recent_daily_card_groups(col)
+                (
+                    daily_groups,
+                    recent_unique_notes,
+                    active_day_count,
+                    busiest_days_ago,
+                ) = _recent_daily_card_groups(col)
                 return RenderData(
                     tree=col.sched.deck_due_tree(),
                     current_deck_id=col.decks.get_current_id(),
@@ -306,6 +340,8 @@ class DeckBrowser:
                     sched_upgrade_required=not col.v3_scheduler(),
                     daily_groups=daily_groups,
                     recent_unique_notes=recent_unique_notes,
+                    active_day_count=active_day_count,
+                    busiest_days_ago=busiest_days_ago,
                     rollover_hour=int(col.conf.get("rollover", 4)),
                 )
 
@@ -361,11 +397,28 @@ class DeckBrowser:
         recent_days = len(self._render_data.daily_groups)
         total_cards = sum(group.card_count for group in self._render_data.daily_groups)
         total_notes = self._render_data.recent_unique_notes
+        active_day_count = self._render_data.active_day_count
         has_recent_cards = total_cards > 0
+        busiest_days_ago = self._render_data.busiest_days_ago
+        busiest_group = (
+            self._daily_group_for(busiest_days_ago)
+            if busiest_days_ago is not None
+            else None
+        )
+        busiest_summary = "Busiest: no recent activity yet"
+        if busiest_group:
+            busiest_summary = "Busiest: {label} ({count})".format(
+                label=html.escape(busiest_group.label),
+                count=_count_label(busiest_group.card_count, "card"),
+            )
         for group in self._render_data.daily_groups:
             row_classes = ["daily-cards-row"]
+            status_badge = ""
             if group.days_ago == 0:
                 row_classes.append("is-today")
+            if group.days_ago == busiest_days_ago and group.card_count:
+                row_classes.append("is-busiest")
+                status_badge = '<span class="daily-cards-status">Most active</span>'
             if group.card_count:
                 action = f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
                 row_classes.append("has-cards")
@@ -376,7 +429,10 @@ class DeckBrowser:
                 """
 <div class="{row_classes}">
   <div class="daily-cards-date-group">
-    <div class="daily-cards-label">{label}</div>
+    <div class="daily-cards-label-row">
+      <div class="daily-cards-label">{label}</div>
+      {status_badge}
+    </div>
     <div class="daily-cards-date">{date_label}</div>
   </div>
   <div class="daily-cards-metric">{card_count_label}</div>
@@ -386,6 +442,7 @@ class DeckBrowser:
 """.format(
                     row_classes=" ".join(row_classes),
                     label=html.escape(group.label),
+                    status_badge=status_badge,
                     date_label=html.escape(group.date_label),
                     card_count_label=_count_label(group.card_count, "card"),
                     note_count_label=_count_label(group.note_count, "note"),
@@ -393,6 +450,9 @@ class DeckBrowser:
                 )
             )
         panel_state = """
+  <div class="daily-cards-actions">
+    <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
+  </div>
   <div class="daily-cards-zero-state">
     Add cards today and they'll appear here for fast date-based browsing.
   </div>
@@ -400,6 +460,7 @@ class DeckBrowser:
         if has_recent_cards:
             panel_state = """
   <div class="daily-cards-actions">
+    <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
     <a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd('browseRecent')">Browse last {recent_days} days</a>
   </div>
 """.format(recent_days=recent_days)
@@ -413,6 +474,8 @@ class DeckBrowser:
       <span class="daily-cards-summary-label">Last 7 days:</span>
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
+    <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
+    <div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>
   </div>
 {panel_state}  <div class="daily-cards-list">
     {rows}
@@ -422,6 +485,8 @@ class DeckBrowser:
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
+            active_day_count_label=_count_label(active_day_count, "active day"),
+            busiest_summary=busiest_summary,
             panel_state=panel_state,
             rows="\n".join(rows),
         )
