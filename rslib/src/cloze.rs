@@ -528,7 +528,34 @@ fn add_cloze_numbers_in_text_with_clozes(nodes: &[TextOrCloze], set: &mut HashSe
 /// Add to `set` the cloze numbers as they appear in `field`.
 #[allow(clippy::implicit_hasher)]
 pub fn add_cloze_numbers_in_string(field: &str, set: &mut HashSet<u16>) {
-    add_cloze_numbers_in_text_with_clozes(&parse_text_with_clozes(field), set)
+    // Fast path: scan for {{c<digits>:: patterns without building full AST
+    let bytes = field.as_bytes();
+    let len = bytes.len();
+    let mut i = 0;
+    while i + 4 < len {
+        // Look for {{c
+        if bytes[i] == b'{' && bytes[i + 1] == b'{' && bytes[i + 2] == b'c' {
+            i += 3;
+            // Parse comma-separated ordinals
+            let start = i;
+            while i < len && (bytes[i].is_ascii_digit() || bytes[i] == b',') {
+                i += 1;
+            }
+            // Must be followed by ::
+            if i > start && i + 1 < len && bytes[i] == b':' && bytes[i + 1] == b':' {
+                let ordinal_str = &field[start..i];
+                for part in ordinal_str.split(',') {
+                    if let Ok(n) = part.parse::<u16>() {
+                        if n != 0 {
+                            set.insert(n);
+                        }
+                    }
+                }
+            }
+        } else {
+            i += 1;
+        }
+    }
 }
 
 /// The set of cloze numbers as they appear in any of the fields from `fields`.
