@@ -22,6 +22,7 @@ pub mod flashcard;
 pub mod i18n;
 pub mod image_occlusion;
 pub mod import_export;
+pub mod ingestion;
 pub mod latex;
 pub mod links;
 // pub mod llm; // WIP: disabled until compilation errors are fixed
