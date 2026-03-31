@@ -234,6 +234,10 @@ pub fn strip_html(html: &str) -> Cow<'_, str> {
 }
 
 pub fn strip_html_preserving_entities(html: &str) -> Cow<'_, str> {
+    // Fast path: if no < character, there's no HTML to strip
+    if !html.contains('<') {
+        return Cow::Borrowed(html);
+    }
     HTML.replace_all(html, "")
 }
 
