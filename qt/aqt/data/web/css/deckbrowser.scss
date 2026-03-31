@@ -299,6 +299,11 @@ body {
     background: color(border-subtle);
 }
 
+.daily-cards-legend-swatch.is-capture {
+    border-style: dashed;
+    color: color(fg-link);
+}
+
 .daily-cards-legend-swatch.is-streak {
     background: color(fg-link);
 }
