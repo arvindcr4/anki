@@ -23,7 +23,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Surface the rollover explicitly with a small hint like **Day resets at 4 AM** so users understand why late-night cards stay grouped together.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
-- Add compact momentum pills for **active days** and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Add compact momentum pills for **active days**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.

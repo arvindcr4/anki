@@ -407,6 +407,28 @@ class DeckBrowser:
             if busiest_days_ago is not None
             else None
         )
+        streak_count = 0
+        streak_label = "Current streak"
+        if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+            for group in self._render_data.daily_groups:
+                if not group.card_count:
+                    break
+                streak_count += 1
+        else:
+            streak_label = "Last streak"
+            streak_started = False
+            for group in self._render_data.daily_groups:
+                if not streak_started:
+                    if group.card_count:
+                        streak_started = True
+                        streak_count = 1
+                    continue
+                if not group.card_count:
+                    break
+                streak_count += 1
+        streak_summary = f"{streak_label}: none yet"
+        if streak_count:
+            streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
         busiest_summary = "Busiest: no recent activity yet"
         if busiest_group:
             busiest_summary = "Busiest: {label} ({count})".format(
@@ -490,6 +512,7 @@ class DeckBrowser:
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
     <div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>
+    <div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>
     <div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>
   </div>
 {panel_state}  <div class="daily-cards-list">
@@ -501,6 +524,7 @@ class DeckBrowser:
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
             active_day_count_label=_count_label(active_day_count, "active day"),
+            streak_summary=streak_summary,
             busiest_summary=busiest_summary,
             panel_state=panel_state,
             rows="\n".join(rows),

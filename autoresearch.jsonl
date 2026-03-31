@@ -13,3 +13,5 @@
 {"type":"config","name":"daily_cards_timeline_v4","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
 {"run":10,"commit":"14bda2c","metric":71,"metrics":{},"status":"keep","description":"Added a keep-capturing shortcut to Today’s active row so users can browse what they created and immediately create another card from the same context.","timestamp":1774970075037,"segment":3,"confidence":null,"iterationTokens":103}
 {"type":"config","name":"daily_cards_timeline_v5","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
+{"run":11,"commit":"d086e7f","metric":76,"metrics":{},"status":"keep","description":"Added an Import cards shortcut beside create/browse actions so the daily timeline supports both fresh capture and bulk learning-material generation from the main deck screen.","timestamp":1774970155050,"segment":4,"confidence":null,"iterationTokens":103}
+{"type":"config","name":"daily_cards_timeline_v6","metricName":"daily_cards_ux_score","metricUnit":"","bestDirection":"higher"}
