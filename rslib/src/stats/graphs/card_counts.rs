@@ -52,3 +52,90 @@ fn increment_counts(counts: &mut Counts, card: &Card) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn card_with_type_and_interval(ctype: CardType, interval: u32) -> Card {
+        let mut card = Card::default();
+        card.ctype = ctype;
+        card.interval = interval;
+        card
+    }
+
+    #[test]
+    fn new_card_counted() {
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::New, 0);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.new_cards, 1);
+        assert_eq!(counts.learn, 0);
+        assert_eq!(counts.young, 0);
+        assert_eq!(counts.mature, 0);
+        assert_eq!(counts.relearn, 0);
+    }
+
+    #[test]
+    fn learn_card_counted() {
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::Learn, 0);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.learn, 1);
+    }
+
+    #[test]
+    fn review_young_card() {
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::Review, 20);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.young, 1);
+        assert_eq!(counts.mature, 0);
+    }
+
+    #[test]
+    fn review_mature_card() {
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::Review, 21);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.young, 0);
+        assert_eq!(counts.mature, 1);
+    }
+
+    #[test]
+    fn review_boundary_card() {
+        // interval exactly 21 should be mature
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::Review, 21);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.mature, 1);
+
+        // interval 20 should be young
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::Review, 20);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.young, 1);
+    }
+
+    #[test]
+    fn relearn_card_counted() {
+        let mut counts = Counts::default();
+        let card = card_with_type_and_interval(CardType::Relearn, 5);
+        increment_counts(&mut counts, &card);
+        assert_eq!(counts.relearn, 1);
+    }
+
+    #[test]
+    fn multiple_cards_accumulate() {
+        let mut counts = Counts::default();
+        increment_counts(&mut counts, &card_with_type_and_interval(CardType::New, 0));
+        increment_counts(&mut counts, &card_with_type_and_interval(CardType::New, 0));
+        increment_counts(&mut counts, &card_with_type_and_interval(CardType::Review, 30));
+        increment_counts(&mut counts, &card_with_type_and_interval(CardType::Review, 10));
+        increment_counts(&mut counts, &card_with_type_and_interval(CardType::Learn, 0));
+        assert_eq!(counts.new_cards, 2);
+        assert_eq!(counts.mature, 1);
+        assert_eq!(counts.young, 1);
+        assert_eq!(counts.learn, 1);
+    }
+}
