@@ -59,3 +59,35 @@ pub(crate) fn increment_count_for_hour(hour: &mut Hour, correct: bool) {
         hour.correct += 1;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn increment_correct() {
+        let mut hour = Hour::default();
+        increment_count_for_hour(&mut hour, true);
+        assert_eq!(hour.total, 1);
+        assert_eq!(hour.correct, 1);
+    }
+
+    #[test]
+    fn increment_incorrect() {
+        let mut hour = Hour::default();
+        increment_count_for_hour(&mut hour, false);
+        assert_eq!(hour.total, 1);
+        assert_eq!(hour.correct, 0);
+    }
+
+    #[test]
+    fn increment_multiple_reviews() {
+        let mut hour = Hour::default();
+        increment_count_for_hour(&mut hour, true);
+        increment_count_for_hour(&mut hour, true);
+        increment_count_for_hour(&mut hour, false);
+        increment_count_for_hour(&mut hour, true);
+        assert_eq!(hour.total, 4);
+        assert_eq!(hour.correct, 3);
+    }
+}

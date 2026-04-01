@@ -72,4 +72,44 @@ mod tests {
         assert_eq!(percent_to_bin(99.9, 5), 95);
         assert_eq!(percent_to_bin(100.0, 5), 95);
     }
+
+    #[test]
+    fn bins_with_size_one() {
+        assert_eq!(percent_to_bin(0.0, 1), 0);
+        assert_eq!(percent_to_bin(0.5, 1), 0);
+        assert_eq!(percent_to_bin(1.0, 1), 1);
+        assert_eq!(percent_to_bin(50.0, 1), 50);
+        assert_eq!(percent_to_bin(99.9, 1), 99);
+        assert_eq!(percent_to_bin(100.0, 1), 99);
+    }
+
+    #[test]
+    fn median_empty() {
+        assert_eq!(median(&mut []), 0.0);
+    }
+
+    #[test]
+    fn median_single() {
+        assert_eq!(median(&mut [5.0]), 5.0);
+    }
+
+    #[test]
+    fn median_odd_count() {
+        assert_eq!(median(&mut [3.0, 1.0, 2.0]), 2.0);
+    }
+
+    #[test]
+    fn median_even_count() {
+        assert_eq!(median(&mut [4.0, 1.0, 3.0, 2.0]), 2.5);
+    }
+
+    #[test]
+    fn median_with_duplicates() {
+        assert_eq!(median(&mut [5.0, 5.0, 5.0]), 5.0);
+    }
+
+    #[test]
+    fn median_unsorted_input() {
+        assert_eq!(median(&mut [10.0, 1.0, 5.0, 3.0, 8.0]), 5.0);
+    }
 }
