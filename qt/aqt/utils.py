@@ -461,16 +461,16 @@ class ButtonedDialog(QMessageBox):
             buttons.append(tr.actions_help())
 
     def run(self) -> str:
-        self.exec()
-        clicked_button = self.clickedButton()
-        assert clicked_button is not None
-        txt = clicked_button.text()
-        if txt == "Help":
-            # FIXME stop dialog closing?
-            assert self.help is not None
-            openHelp(self.help)
-        # work around KDE 'helpfully' adding accelerators to button text of Qt apps
-        return txt.replace("&", "")
+        while True:
+            self.exec()
+            clicked_button = self.clickedButton()
+            assert clicked_button is not None
+            if self.buttonRole(clicked_button) == QMessageBox.ButtonRole.HelpRole:
+                assert self.help is not None
+                openHelp(self.help)
+                continue
+            # work around KDE 'helpfully' adding accelerators to button text of Qt apps
+            return clicked_button.text().replace("&", "")
 
     def setDefault(self, idx: int) -> None:
         self.setDefaultButton(self._buttons[idx])

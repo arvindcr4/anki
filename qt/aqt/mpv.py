@@ -294,13 +294,11 @@ class MPVBase:
     #
     def _compose_message(self, message):
         """Return a json representation from a message dictionary."""
-        # XXX may be strict is too strict ;-)
         data = json.dumps(message)
         return data.encode("utf8", "strict") + b"\n"
 
     def _parse_message(self, data):
         """Return a message dictionary from a json representation."""
-        # XXX may be strict is too strict ;-)
         data = data.decode("utf8", "strict")
         return json.loads(data)
 
@@ -575,8 +573,8 @@ class MPV(MPVBase):
         # Property changes are normally not sent over the connection unless they
         # are requested using the 'observe_property' command.
 
-        # XXX We manually have to check for the existence of the property name.
-        # Apparently observe_property does not check it :-(
+        # Manually check property existence since observe_property does not
+        # validate property names.
         proplist = self.command("get_property", "property-list", timeout=5)
         if name not in proplist:
             raise MPVError(f"no such property {name!r}")
