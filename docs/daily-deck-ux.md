@@ -47,6 +47,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When today already has activity, include today’s cards-across-notes summary in that pill too, so the learner can tell whether the day reflects a single quick capture or a broader batch without dropping into the row list.
 - When the week already has recent activity but today is empty, let that same pill say **Today: ready to restart** so it reads like continuity language, not a first-time setup prompt.
 - When today is also the busiest session, let the Today pill say so directly instead of forcing the learner to infer that from the separate busiest-day metadata.
+- Give the Today pill lightweight stateful styling too, so ready-to-capture, ready-to-restart, and most-active-today states are visually legible before the learner reads the full text.
 - Show **consistency percentage** so learners can judge week-over-week capture reliability without mentally converting active and quiet day counts into a ratio.
 - Show **trend** to indicate whether recent capture is rising, steady, cooling, or just starting, instead of forcing the learner to mentally compare the strip bars.
 - Show **burst share** to reveal whether the week reflects steady capture or one dominant import/generation session.

@@ -165,6 +165,23 @@ body {
     color: white;
 }
 
+.daily-cards-today.has-today-cards {
+    background: var(--canvas-glass);
+}
+
+.daily-cards-today.is-most-active-today {
+    border-color: color(fg-link);
+}
+
+.daily-cards-today.is-ready-to-capture,
+.daily-cards-today.is-ready-to-restart {
+    border-style: dashed;
+}
+
+.daily-cards-today.is-ready-to-restart {
+    border-color: color(fg-link);
+}
+
 .daily-cards-import {
     background: color(border-subtle);
     color: color(fg);

@@ -488,18 +488,23 @@ class DeckBrowser:
                 f" → {self._render_data.daily_groups[0].date_label}"
             )
         today_summary = "Today: no cards yet"
+        today_summary_classes = "daily-cards-pill daily-cards-today"
         today_summary_markup = (
-            f'<div class="daily-cards-pill daily-cards-today">{today_summary}</div>'
+            f'<div class="{today_summary_classes}">{today_summary}</div>'
         )
         if self._render_data.daily_groups:
             today_group = self._render_data.daily_groups[0]
             if today_group.card_count:
+                today_summary_classes = (
+                    "daily-cards-link daily-cards-pill daily-cards-today has-today-cards"
+                )
                 today_summary = (
                     "Today: "
                     f"{_count_label(today_group.card_count, 'card')} across "
                     f"{_count_label(today_group.note_count, 'note')}"
                 )
                 if busiest_group and busiest_group.days_ago == 0:
+                    today_summary_classes += " is-most-active-today"
                     today_summary = (
                         "Today: "
                         f"{_count_label(today_group.card_count, 'card')} across "
@@ -507,18 +512,24 @@ class DeckBrowser:
                         "(most active)"
                     )
                 today_summary_markup = (
-                    f'<a class="daily-cards-link daily-cards-pill daily-cards-today" href=# '
+                    f'<a class="{today_summary_classes}" href=# '
                     'title="Browse today" aria-label="Browse today" '
                     "onclick=\"return pycmd('browseAdded:0')\">"
                     f"{today_summary}</a>"
                 )
             else:
+                today_summary_classes = (
+                    "daily-cards-link daily-cards-pill daily-cards-today is-ready-to-capture"
+                )
                 today_summary = "Today: ready to capture"
+                today_title = "Create today's first card"
                 if latest_active_group and latest_active_group.days_ago > 0:
                     today_summary = "Today: ready to restart"
+                    today_summary_classes += " is-ready-to-restart"
+                    today_title = "Restart today"
                 today_summary_markup = (
-                    f'<a class="daily-cards-link daily-cards-pill daily-cards-today" href=# '
-                    'title="Create today\'s first card" aria-label="Create today\'s first card" '
+                    f'<a class="{today_summary_classes}" href=# '
+                    f'title="{today_title}" aria-label="{today_title}" '
                     "onclick=\"return pycmd('addcards')\">"
                     f"{today_summary}</a>"
                 )
