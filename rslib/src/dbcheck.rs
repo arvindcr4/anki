@@ -255,7 +255,8 @@ impl Collection {
             let mut group = group.peekable();
             let mut nt = match self.get_notetype(ntid)? {
                 None => {
-                    let first_note = self.storage.get_note(group.peek().unwrap().1)?.unwrap();
+                    let first_nid = group.peek().or_invalid("empty notetype group")?.1;
+                    let first_note = self.storage.get_note(first_nid)?.or_invalid("note not found")?;
                     out.notetypes_recovered += 1;
                     self.recover_notetype(stamp_millis, first_note.fields().len(), ntid)?
                 }
