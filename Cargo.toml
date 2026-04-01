@@ -180,4 +180,3 @@ lto = true
 [profile.release]
 lto = "fat"
 strip = true
-opt-level = 2
