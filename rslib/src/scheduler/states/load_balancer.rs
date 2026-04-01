@@ -468,9 +468,51 @@ mod tests {
 
     #[test]
     fn constants_are_reasonable() {
-        const {
-            assert!(LOAD_BALANCE_DAYS > MAX_LOAD_BALANCE_INTERVAL);
-        }
         assert_eq!(MAX_LOAD_BALANCE_INTERVAL, 90);
+        assert!(LOAD_BALANCE_DAYS > MAX_LOAD_BALANCE_INTERVAL);
+    }
+
+    #[test]
+    fn parse_easy_days_empty_returns_all_normal() {
+        let result = parse_easy_days_percentages(&[]).unwrap();
+        assert!(result.iter().all(|d| *d == EasyDay::Normal));
+    }
+
+    #[test]
+    fn parse_easy_days_all_normal() {
+        let result = parse_easy_days_percentages(&[1.0; 7]).unwrap();
+        assert!(result.iter().all(|d| *d == EasyDay::Normal));
+    }
+
+    #[test]
+    fn parse_easy_days_all_minimum() {
+        let result = parse_easy_days_percentages(&[0.0; 7]).unwrap();
+        assert!(result.iter().all(|d| *d == EasyDay::Minimum));
+    }
+
+    #[test]
+    fn parse_easy_days_mixed() {
+        let input = [1.0, 0.0, 0.5, 1.0, 0.0, 0.5, 1.0];
+        let result = parse_easy_days_percentages(&input).unwrap();
+        assert_eq!(result[0], EasyDay::Normal);
+        assert_eq!(result[1], EasyDay::Minimum);
+        assert_eq!(result[2], EasyDay::Reduced);
+        assert_eq!(result[3], EasyDay::Normal);
+    }
+
+    #[test]
+    fn parse_easy_days_wrong_length_fails() {
+        let result = parse_easy_days_percentages(&[1.0; 5]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn interval_to_weekday_produces_valid_day() {
+        // any interval should produce a weekday 0-6
+        let next_day_at = TimestampSecs(1_700_000_000);
+        for interval in 1..=365 {
+            let weekday = interval_to_weekday(interval, next_day_at);
+            assert!(weekday < 7, "weekday {} out of range for interval {}", weekday, interval);
+        }
     }
 }
