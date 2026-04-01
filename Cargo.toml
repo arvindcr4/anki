@@ -185,3 +185,4 @@ panic = 'abort'
 overflow-checks = false
 codegen-units = 1
 function-sections = true
+data-sections = true
