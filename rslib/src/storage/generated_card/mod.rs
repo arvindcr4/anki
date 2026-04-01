@@ -83,7 +83,7 @@ impl StoredCard {
             tags: if self.tags.is_empty() {
                 Vec::new()
             } else {
-                self.tags.split(',').map(|s| s.to_string()).collect()
+                self.tags.split('\x1f').map(|s| s.to_string()).collect()
             },
             source_type: self.source_type,
             source_url: self.source_url,
@@ -95,7 +95,7 @@ impl StoredCard {
         if self.tags.is_empty() {
             Vec::new()
         } else {
-            self.tags.split(',').map(|s| s.to_string()).collect()
+            self.tags.split('\x1f').map(|s| s.to_string()).collect()
         }
     }
 }
@@ -123,7 +123,7 @@ impl GeneratedCardStorage {
     /// Add a new flashcard to storage.
     /// Returns the ID of the inserted card.
     pub fn add_card(&self, card: &Flashcard) -> Result<i64> {
-        let tags = card.tags.join(",");
+        let tags = card.tags.join("\x1f");
         let source_type = match &card.source_type {
             SourceType::Text => "text",
             SourceType::Url => "url",
@@ -262,11 +262,20 @@ fn row_to_stored_card(row: &rusqlite::Row) -> SqliteResult<StoredCard> {
         "audio" => SourceType::Audio,
         "video" => SourceType::Video,
         "code" => SourceType::Code,
-        _ => SourceType::Text,
+        other => {
+            tracing::warn!("Unknown source_type in generated_card DB: {:?}, defaulting to Text", other);
+            SourceType::Text
+        }
     };
 
     let sync_status_str: String = row.get(6)?;
-    let sync_status = SyncStatus::from_str(&sync_status_str).unwrap_or(SyncStatus::Pending);
+    let sync_status = match SyncStatus::from_str(&sync_status_str) {
+        Some(s) => s,
+        None => {
+            tracing::warn!("Unknown sync_status in generated_card DB: {:?}, defaulting to Pending", sync_status_str);
+            SyncStatus::Pending
+        }
+    };
 
     Ok(StoredCard {
         id: row.get(0)?,

@@ -38,7 +38,6 @@ const IGNORED_FOLDERS: &[&str] = &[
     "./ts/.svelte-kit",
     ".venv",
     "./.venv",
-    "./anki-bookmarks-ext",
 ];
 
 fn main() -> Result<()> {

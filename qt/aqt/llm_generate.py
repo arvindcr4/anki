@@ -67,8 +67,12 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
 
 
 def get_api_key() -> str | None:
-    """Get the API key from environment."""
-    return os.environ.get("OPENAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+    """Get the API key from environment.
+
+    Only supports OpenAI-compatible API endpoints. For Anthropic,
+    use an OpenAI-compatible proxy (e.g., LiteLLM) and set OPENAI_API_KEY.
+    """
+    return os.environ.get("OPENAI_API_KEY")
 
 
 def get_api_base() -> str:

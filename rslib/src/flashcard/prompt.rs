@@ -297,6 +297,23 @@ pub fn parse_flashcards_json(json_str: &str) -> Result<Vec<Flashcard>, String> {
                 let card = Flashcard::new(front, back).with_tags(tags);
                 flashcards.push(card);
             }
+        } else if let Some(text) = item.get("text") {
+            // Handle cloze format: {"text": "{{c1::answer}} in context"}
+            let text = text.as_str().unwrap_or("").to_string();
+            if !text.is_empty() {
+                let tags: Vec<String> = item
+                    .get("tags")
+                    .and_then(|t| t.as_array())
+                    .map(|arr| {
+                        arr.iter()
+                            .filter_map(|v| v.as_str().map(String::from))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+
+                let card = Flashcard::new(text, String::new()).with_tags(tags);
+                flashcards.push(card);
+            }
         }
     }
 

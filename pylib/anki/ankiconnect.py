@@ -106,6 +106,9 @@ class AnkiConnectClient:
             AnkiConnectRateLimit: If rate limited (429 response)
             AnkiConnectAPIError: If AnkiConnect returns an error
         """
+        if self.session is None:
+            raise AnkiConnectUnavailable("Client has been closed.")
+
         payload: dict[str, Any] = {"action": action, "version": self.version}
         if params:
             payload["params"] = params
@@ -126,8 +129,19 @@ class AnkiConnectClient:
                         "Rate limited by AnkiConnect (429). Please try again later."
                     )
 
-                response.raise_for_status()
-                result = response.json()
+                try:
+                    response.raise_for_status()
+                except Exception as e:
+                    raise AnkiConnectAPIError(
+                        f"HTTP error {response.status_code} from AnkiConnect"
+                    ) from e
+
+                try:
+                    result = response.json()
+                except Exception as e:
+                    raise AnkiConnectAPIError(
+                        f"Invalid JSON response from AnkiConnect"
+                    ) from e
 
                 if result.get("error"):
                     raise AnkiConnectAPIError(

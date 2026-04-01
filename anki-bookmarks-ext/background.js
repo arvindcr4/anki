@@ -259,9 +259,9 @@ async function processBookmarks(onlyNew = true) {
                     mode: result.mode,
                     error: result.error,
                 });
+            } else {
+                newProcessed.push(bookmark.url);
             }
-
-            newProcessed.push(bookmark.url);
 
             // Save progress every 5 bookmarks (to local storage — no quota issues)
             if (progress.current % 5 === 0) {

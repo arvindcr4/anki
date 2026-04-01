@@ -730,7 +730,20 @@ class AnkiHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _cors_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
+        # WARNING: Only allow localhost origins to prevent cross-site request forgery
+        origin = self.headers.get("Origin", "")
+        allowed_origins = {
+            "http://localhost",
+            "http://127.0.0.1",
+            "https://localhost",
+            "https://127.0.0.1",
+        }
+        # Match origin with any port
+        origin_base = origin.rsplit(":", 1)[0] if "://" in origin else origin
+        if origin_base in allowed_origins or origin in allowed_origins:
+            self.send_header("Access-Control-Allow-Origin", origin)
+        else:
+            self.send_header("Access-Control-Allow-Origin", "http://localhost:8765")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 

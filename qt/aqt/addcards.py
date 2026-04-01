@@ -696,8 +696,8 @@ class AddCards(QMainWindow):
         if not get_api_key():
             showWarning(
                 "No API key configured.\n\n"
-                "Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable "
-                "to enable LLM generation.",
+                "Set OPENAI_API_KEY environment variable to enable LLM generation.\n"
+                "For Anthropic models, use an OpenAI-compatible proxy like LiteLLM.",
                 parent=self,
             )
             self.intake_frame.set_llm_status("LLM status: provider not configured")
@@ -750,8 +750,22 @@ class AddCards(QMainWindow):
             )
 
         elif result.action == "cloze" and result.clozes:
-            # For cloze, we need a Cloze notetype
-            # Fill the current note with the first cloze as a preview
+            # Switch to a Cloze notetype if current notetype isn't one
+            current_nt = note.note_type()
+            if current_nt and not any(
+                "cloze" in t["qfmt"].lower() or "cloze" in t.get("afmt", "").lower()
+                for t in current_nt.get("tmpls", [])
+            ):
+                # Try to find and switch to the built-in Cloze notetype
+                for nt in self.col.models.all_names_and_ids():
+                    if "cloze" in nt.name.lower():
+                        self.notetype_chooser.selected_notetype_id = nt.id
+                        self.on_notetype_change(nt.id)
+                        note = self.editor.note
+                        if note is None:
+                            return
+                        break
+
             if len(note.fields) >= 1:
                 note.fields[0] = result.clozes[0].text
             self.editor.loadNote()
@@ -772,7 +786,7 @@ class AddCards(QMainWindow):
         if added_count > 0:
             # Reset editor for next note
             self.mw.reset()
-            self.set_note(self.col.new_note(note.note_type()), self)
+            self.set_note(self.col.new_note(note.note_type()), None)
             tooltip(
                 f"Added {added_count} {action} cards to deck",
                 period=2000,

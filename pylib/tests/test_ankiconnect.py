@@ -25,7 +25,7 @@ from anki.ankiconnect import (
 
 
 class MockResponse:
-    """Mock HTTP response for requests."""
+    """Mock HTTP response for testing."""
 
     def __init__(self, json_data: dict, status_code: int = 200):
         self._json_data = json_data
@@ -36,7 +36,8 @@ class MockResponse:
 
     def raise_for_status(self) -> None:
         if self.status_code >= 400:
-            raise Exception(f"HTTP {self.status_code}")
+            from requests.exceptions import HTTPError
+            raise HTTPError(f"HTTP {self.status_code}", response=self)
 
 
 def make_success_response(result: Any) -> MockResponse:

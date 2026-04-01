@@ -104,13 +104,23 @@ impl GeminiClient {
         file_uri: &str,
         prompt: &str,
     ) -> Result<GenerateContentResponse> {
+        // Infer mime type from file URI extension
+        let mime_type = match file_uri.rsplit('.').next().unwrap_or("").to_lowercase().as_str() {
+            "mp3" | "wav" | "ogg" | "flac" | "m4a" | "aac" => "audio/*",
+            "mp4" | "webm" | "avi" | "mov" | "mkv" => "video/*",
+            "pdf" => "application/pdf",
+            "png" | "jpg" | "jpeg" | "gif" | "webp" => "image/*",
+            "txt" | "md" => "text/plain",
+            _ => "application/octet-stream",
+        };
+
         let request = GenerateContentRequest {
             contents: vec![ContentPart {
                 parts: vec![Part {
                     text: Some(prompt.to_string()),
                     inline_data: None,
                     file_data: Some(FileData {
-                        mime_type: "audio/*".to_string(),
+                        mime_type: mime_type.to_string(),
                         file_uri: file_uri.to_string(),
                     }),
                 }],
@@ -149,13 +159,13 @@ impl GeminiClient {
         }
     }
 
-    async fn call_url_context_api(&self, url: &str, _model: &str) -> Result<UrlContextResponse> {
+    async fn call_url_context_api(&self, url: &str, model: &str) -> Result<UrlContextResponse> {
         // Build URL for the Gemini urlContext tool
         // Note: In production, this would call the actual Gemini API
         // For now, we implement a simple fetch as placeholder
         let fetch_url = format!(
             "{}/v1beta/{}:generateContent?key={}",
-            GEMINI_API_BASE, "models/gemini-2.0-flash", self.api_key
+            GEMINI_API_BASE, model, self.api_key
         );
 
         let request_body = serde_json::json!({
