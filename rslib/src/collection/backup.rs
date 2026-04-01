@@ -369,8 +369,8 @@ mod test {
         // monthly backups from the last day of the month
         for _ in 0..limits.monthly {
             for backup in backup_iter.by_ref() {
-                if backup.datetime.month()
-                    != backup.datetime.date_naive().succ_opt().unwrap().month()
+                if backup.datetime.date_naive().succ_opt().is_some_and(|next|
+                    backup.datetime.month() != next.month())
                 {
                     break;
                 } else {

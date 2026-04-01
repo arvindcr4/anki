@@ -314,11 +314,12 @@ impl MediaCopier {
     }
 
     fn encoder(&mut self) -> Option<RawEncoder<'static>> {
-        self.encoding.then(|| {
-            self.encoder
-                .take()
-                .unwrap_or_else(|| RawEncoder::with_dictionary(0, &[]).unwrap())
-        })
+        if !self.encoding {
+            return None;
+        }
+        self.encoder
+            .take()
+            .or_else(|| RawEncoder::with_dictionary(0, &[]).ok())
     }
 
     /// Returns size and sha1 hash of the copied data.
