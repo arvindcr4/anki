@@ -62,3 +62,103 @@ pub(crate) fn immediate_parent_name_unicase(tag_name: UniCase<&str>) -> Option<U
 fn immediate_parent_name_str(tag_name: &str) -> Option<&str> {
     tag_name.rsplit_once("::").map(|t| t.0)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn split_tags_basic() {
+        let tags: Vec<&str> = split_tags(" foo bar baz ").collect();
+        assert_eq!(tags, vec!["foo", "bar", "baz"]);
+    }
+
+    #[test]
+    fn split_tags_empty() {
+        let tags: Vec<&str> = split_tags("").collect();
+        assert!(tags.is_empty());
+    }
+
+    #[test]
+    fn split_tags_whitespace_only() {
+        let tags: Vec<&str> = split_tags("   ").collect();
+        assert!(tags.is_empty());
+    }
+
+    #[test]
+    fn split_tags_single() {
+        let tags: Vec<&str> = split_tags("hello").collect();
+        assert_eq!(tags, vec!["hello"]);
+    }
+
+    #[test]
+    fn split_tags_cjk_separator() {
+        let tags: Vec<&str> = split_tags("foo\u{3000}bar").collect();
+        assert_eq!(tags, vec!["foo", "bar"]);
+    }
+
+    #[test]
+    fn join_tags_basic() {
+        let tags = vec!["foo".to_string(), "bar".to_string()];
+        assert_eq!(join_tags(&tags), " foo bar ");
+    }
+
+    #[test]
+    fn join_tags_empty() {
+        let tags: Vec<String> = vec![];
+        assert_eq!(join_tags(&tags), "");
+    }
+
+    #[test]
+    fn join_tags_single() {
+        let tags = vec!["hello".to_string()];
+        assert_eq!(join_tags(&tags), " hello ");
+    }
+
+    #[test]
+    fn is_tag_separator_space() {
+        assert!(is_tag_separator(' '));
+    }
+
+    #[test]
+    fn is_tag_separator_cjk() {
+        assert!(is_tag_separator('\u{3000}'));
+    }
+
+    #[test]
+    fn is_tag_separator_other() {
+        assert!(!is_tag_separator('a'));
+        assert!(!is_tag_separator(':'));
+        assert!(!is_tag_separator('\t'));
+    }
+
+    #[test]
+    fn immediate_parent_with_parent() {
+        assert_eq!(immediate_parent_name_str("foo::bar::baz"), Some("foo::bar"));
+    }
+
+    #[test]
+    fn immediate_parent_single_level() {
+        assert_eq!(immediate_parent_name_str("foo::bar"), Some("foo"));
+    }
+
+    #[test]
+    fn immediate_parent_no_parent() {
+        assert_eq!(immediate_parent_name_str("foo"), None);
+    }
+
+    #[test]
+    fn tag_new() {
+        let tag = Tag::new("test::tag".to_string(), Usn(5));
+        assert_eq!(tag.name, "test::tag");
+        assert_eq!(tag.usn, Usn(5));
+        assert!(!tag.expanded);
+    }
+
+    #[test]
+    fn tag_set_modified() {
+        let mut tag = Tag::new("foo".to_string(), Usn(1));
+        tag.set_modified(Usn(10));
+        assert_eq!(tag.usn, Usn(10));
+    }
+}
