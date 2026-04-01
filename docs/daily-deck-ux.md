@@ -50,7 +50,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When the week is burst-heavy, offer a **Review burst day** action so users can revisit the dominant session before generating more material.
 - Mirror burst-heavy weeks in the strip and row badges with a **Burst session** marker so users can spot the dominant day without cross-referencing the summary pills.
 - Follow those metrics with a short guidance sentence that answers the next-step question: keep capturing, restart the streak today, or start this week’s timeline.
-- Add a short **Insight** line above the guidance actions so the panel explains what kind of week this is: a single burst, a rising trend, cooling activity, a paused timeline with a current gap, or steady consistency.
+- Add a short **Insight** line above the guidance actions so the panel explains what kind of week this is: a single burst, a rising trend, cooling activity, a paused timeline with a current gap, a week that just started moving, or steady consistency.
 - Make that insight itself browseable so users can jump from the interpretation straight into the relevant burst day, latest capture, or recent trend view.
 - Give that insight line stateful styling so bursty, rising, cooling, and consistent weeks are visually distinguishable before the user reads the full sentence.
 - Pair that guidance with context-sensitive actions so the banner can directly offer **Keep the streak going**, **Restart streak today**, **Browse current streak**, or **Create first card** depending on the learner’s recent activity.

@@ -357,6 +357,11 @@ body {
     border-color: color(fg-link);
 }
 
+.daily-cards-insight.is-starting {
+    border-color: color(border);
+    background: var(--canvas-glass);
+}
+
 .daily-cards-insight.is-cooling {
     border-style: dashed;
 }

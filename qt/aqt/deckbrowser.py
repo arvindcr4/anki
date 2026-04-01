@@ -790,6 +790,17 @@ class DeckBrowser:
                     f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                     f"{insight_summary}</a>"
                 )
+            elif trend_summary == "Trend: just started":
+                insight_class = "daily-cards-insight is-starting"
+                insight_summary = (
+                    "Insight: this week's capture just started and is ready to turn into a streak."
+                )
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    'title="Browse recent trend" aria-label="Browse recent trend" '
+                    "onclick=\"return pycmd('browseRecent')\">"
+                    f"{insight_summary}</a>"
+                )
             elif trend_summary == "Trend: rising":
                 insight_class = "daily-cards-insight is-rising"
                 insight_summary = "Insight: recent capture is accelerating."
