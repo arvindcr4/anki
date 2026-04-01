@@ -1190,6 +1190,15 @@ class DeckBrowser:
                 busiest_day_action=busiest_day_action,
                 browse_recent_label=browse_recent_label,
             )
+        guidance_block_class = "daily-cards-guidance-block"
+        if latest_active_group and latest_active_group.days_ago > 1:
+            guidance_block_class += " is-gap"
+        elif burst_pct >= 60:
+            guidance_block_class += " is-burst"
+        elif trend_summary == "Trend: just started":
+            guidance_block_class += " is-starting"
+        elif active_day_count >= recent_days - 1:
+            guidance_block_class += " is-consistent"
         return """
 <div class="daily-cards-panel deck-browser-card">
   <div class="deck-browser-card-label">Daily cards</div>
@@ -1218,7 +1227,7 @@ class DeckBrowser:
   <div class="daily-cards-strip-hint">{heatmap_hint}</div>
   <div class="daily-cards-strip-legend">{legend_items}</div>
   {insight_markup}
-{panel_state}  <div class="daily-cards-guidance-block" role="status" aria-live="polite">
+{panel_state}  <div class="{guidance_block_class}" role="status" aria-live="polite">
     <div class="daily-cards-guidance">{guidance}</div>
     <div class="daily-cards-guidance-actions">{guidance_actions}</div>
   </div>
@@ -1249,6 +1258,7 @@ class DeckBrowser:
             insight_summary=insight_summary,
             activity_bars="\n".join(activity_bars),
             panel_state=panel_state,
+            guidance_block_class=guidance_block_class,
             rows="\n".join(rows),
         )
 

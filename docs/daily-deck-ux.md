@@ -56,6 +56,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Make that insight itself browseable so users can jump from the interpretation straight into the relevant burst day, latest capture, or recent trend view.
 - Give that insight line stateful styling so bursty, rising, cooling, and consistent weeks are visually distinguishable before the user reads the full sentence.
 - Pair that guidance with context-sensitive actions so the banner can directly offer **Keep the streak going**, **Restart streak today**, **Browse current streak**, or **Create first card** depending on the learner’s recent activity.
+- Give that guidance block lightweight stateful styling too, so recovery, burst, just-started, and consistency states are visually legible before the learner reads the full sentence.
 - Let the guidance react to the weekly trend as well: for example, suggest **Extend rising trend** when momentum is building, or **Reverse cooling trend** when activity is fading.
 - When the trend is cooling, pair the restart CTA with **Import to rebuild momentum** so the user can recover with either manual capture or a larger generated/imported batch.
 - When the week is already highly consistent but today is blank, switch to a **Keep consistency going** prompt so the user understands the main risk is breaking continuity, not lack of momentum.

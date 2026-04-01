@@ -412,6 +412,22 @@ body {
     line-height: 1.4;
 }
 
+.daily-cards-guidance-block.is-gap .daily-cards-guidance {
+    border: 1px dashed color(fg-link);
+}
+
+.daily-cards-guidance-block.is-burst .daily-cards-guidance {
+    border: 1px solid color(fg-link);
+}
+
+.daily-cards-guidance-block.is-starting .daily-cards-guidance {
+    background: var(--canvas-glass);
+}
+
+.daily-cards-guidance-block.is-consistent .daily-cards-guidance {
+    border: 1px solid var(--border-subtle);
+}
+
 .daily-cards-guidance-actions {
     display: flex;
     flex-wrap: wrap;
