@@ -149,7 +149,7 @@ impl Collection {
                 self.storage.update_card(c)?;
             }
         }
-        let days_elapsed = self.timing_today().unwrap().days_elapsed as i32;
+        let days_elapsed = self.timing_today()?.days_elapsed as i32;
         let new_cards = cards
             .iter()
             .filter(|c| c.ctype == CardType::New && c.queue != CardQueue::Suspended)
