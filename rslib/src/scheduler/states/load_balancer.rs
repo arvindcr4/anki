@@ -401,3 +401,76 @@ pub(crate) fn interval_to_weekday(interval: u32, next_day_at: TimestampSecs) -> 
         .unwrap();
     target_datetime.weekday().num_days_from_monday() as usize
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn easy_day_from_normal() {
+        assert_eq!(EasyDay::from(1.0), EasyDay::Normal);
+    }
+
+    #[test]
+    fn easy_day_from_minimum() {
+        assert_eq!(EasyDay::from(0.0), EasyDay::Minimum);
+    }
+
+    #[test]
+    fn easy_day_from_reduced() {
+        assert_eq!(EasyDay::from(0.5), EasyDay::Reduced);
+        assert_eq!(EasyDay::from(0.3), EasyDay::Reduced);
+        assert_eq!(EasyDay::from(0.75), EasyDay::Reduced);
+    }
+
+    #[test]
+    fn easy_day_load_modifier() {
+        assert_eq!(EasyDay::Normal.load_modifier(), 1.0);
+        assert_eq!(EasyDay::Reduced.load_modifier(), 0.5);
+        assert!((EasyDay::Minimum.load_modifier() - 0.0001).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn load_balancer_day_add_and_has_sibling() {
+        let mut day = LoadBalancerDay::default();
+        let nid = NoteId(100);
+        day.add(CardId(1), nid);
+        assert!(day.has_sibling(&nid));
+        assert!(!day.has_sibling(&NoteId(999)));
+    }
+
+    #[test]
+    fn load_balancer_day_remove() {
+        let mut day = LoadBalancerDay::default();
+        let nid = NoteId(100);
+        day.add(CardId(1), nid);
+        day.add(CardId(2), nid);
+        assert_eq!(day.cards.len(), 2);
+
+        day.remove(CardId(1));
+        assert_eq!(day.cards.len(), 1);
+        // note still present because card 2 has same note
+        assert!(day.has_sibling(&nid));
+
+        day.remove(CardId(2));
+        assert_eq!(day.cards.len(), 0);
+        // note removed when all cards removed
+        assert!(!day.has_sibling(&nid));
+    }
+
+    #[test]
+    fn load_balancer_day_remove_nonexistent() {
+        let mut day = LoadBalancerDay::default();
+        day.add(CardId(1), NoteId(100));
+        day.remove(CardId(999)); // should not panic
+        assert_eq!(day.cards.len(), 1);
+    }
+
+    #[test]
+    fn constants_are_reasonable() {
+        const {
+            assert!(LOAD_BALANCE_DAYS > MAX_LOAD_BALANCE_INTERVAL);
+        }
+        assert_eq!(MAX_LOAD_BALANCE_INTERVAL, 90);
+    }
+}
