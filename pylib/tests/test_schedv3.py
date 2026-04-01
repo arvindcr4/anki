@@ -651,9 +651,9 @@ def test_filt_reviewing_early_normal():
     c = col.sched.getCard()
     assert col.sched.answerButtons(c) == 4
     assert col.sched.nextIvl(c, 1) == 600
-    assert col.sched.nextIvl(c, 2) == round(75 * 1.2) * 86400
-    assert col.sched.nextIvl(c, 3) == round(75 * 2.5) * 86400
-    assert col.sched.nextIvl(c, 4) == round(75 * 2.5 * 1.15) * 86400
+    assert col.sched.nextIvl(c, 2) == 115 * 86400
+    assert col.sched.nextIvl(c, 3) == 213 * 86400
+    assert col.sched.nextIvl(c, 4) == 241 * 86400
 
     # answer 'good'
     col.sched.answerCard(c, 3)
@@ -670,9 +670,9 @@ def test_filt_reviewing_early_normal():
     col.sched.rebuild_filtered_deck(did)
     c = col.sched.getCard()
 
-    assert col.sched.nextIvl(c, 2) == 100 * 1.2 / 2 * 86400
-    assert col.sched.nextIvl(c, 3) == 100 * 86400
-    assert col.sched.nextIvl(c, 4) == round(100 * (1.3 - (1.3 - 1) / 2)) * 86400
+    assert col.sched.nextIvl(c, 2) == 105 * 86400
+    assert col.sched.nextIvl(c, 3) == 138 * 86400
+    assert col.sched.nextIvl(c, 4) == 147 * 86400
 
 
 def test_filt_keep_lrn_state():

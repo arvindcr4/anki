@@ -58,10 +58,11 @@ mod tests {
     use super::*;
 
     fn card_with_type_and_interval(ctype: CardType, interval: u32) -> Card {
-        let mut card = Card::default();
-        card.ctype = ctype;
-        card.interval = interval;
-        card
+        Card {
+            ctype,
+            interval,
+            ..Default::default()
+        }
     }
 
     #[test]
@@ -130,9 +131,18 @@ mod tests {
         let mut counts = Counts::default();
         increment_counts(&mut counts, &card_with_type_and_interval(CardType::New, 0));
         increment_counts(&mut counts, &card_with_type_and_interval(CardType::New, 0));
-        increment_counts(&mut counts, &card_with_type_and_interval(CardType::Review, 30));
-        increment_counts(&mut counts, &card_with_type_and_interval(CardType::Review, 10));
-        increment_counts(&mut counts, &card_with_type_and_interval(CardType::Learn, 0));
+        increment_counts(
+            &mut counts,
+            &card_with_type_and_interval(CardType::Review, 30),
+        );
+        increment_counts(
+            &mut counts,
+            &card_with_type_and_interval(CardType::Review, 10),
+        );
+        increment_counts(
+            &mut counts,
+            &card_with_type_and_interval(CardType::Learn, 0),
+        );
         assert_eq!(counts.new_cards, 2);
         assert_eq!(counts.mature, 1);
         assert_eq!(counts.young, 1);
