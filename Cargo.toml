@@ -180,7 +180,7 @@ lto = true
 [profile.release]
 lto = "fat"
 strip = true
-opt-level = "z"
+opt-level = 3
 panic = 'abort'
 overflow-checks = false
 codegen-units = 1
