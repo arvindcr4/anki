@@ -98,4 +98,73 @@ mod test {
             MaybeInvalid { field: None }
         );
     }
+
+    #[test]
+    fn is_default_true() {
+        assert!(is_default(&0_i32));
+        assert!(is_default(&0_u32));
+        assert!(is_default(&false));
+        assert!(is_default(&String::new()));
+    }
+
+    #[test]
+    fn is_default_false() {
+        assert!(!is_default(&1_i32));
+        assert!(!is_default(&42_u32));
+        assert!(!is_default(&true));
+        assert!(!is_default(&"hello".to_string()));
+    }
+
+    #[test]
+    fn from_i64_i32() {
+        assert_eq!(i32::from_i64(42), 42_i32);
+        assert_eq!(i32::from_i64(-100), -100_i32);
+    }
+
+    #[test]
+    fn from_i64_u32_clamps_negative() {
+        assert_eq!(u32::from_i64(42), 42_u32);
+        assert_eq!(u32::from_i64(-5), 0_u32); // clamped to 0
+        assert_eq!(u32::from_i64(0), 0_u32);
+    }
+
+    #[test]
+    fn from_i64_identity() {
+        assert_eq!(i64::from_i64(123_456_789), 123_456_789_i64);
+        assert_eq!(i64::from_i64(-999), -999_i64);
+    }
+
+    #[test]
+    fn from_i64_timestamp() {
+        let ts = TimestampSecs::from_i64(1_700_000_000);
+        assert_eq!(ts, TimestampSecs(1_700_000_000));
+    }
+
+    #[test]
+    fn deserialize_int_from_float() {
+        #[derive(Deserialize, Debug, PartialEq, Eq)]
+        struct HasInt {
+            #[serde(deserialize_with = "deserialize_int_from_number")]
+            val: i32,
+        }
+        // float value should be truncated to int
+        let parsed: HasInt = serde_json::from_str(r#"{"val": 3.7}"#).unwrap();
+        assert_eq!(parsed.val, 3);
+
+        // int value should pass through
+        let parsed: HasInt = serde_json::from_str(r#"{"val": 42}"#).unwrap();
+        assert_eq!(parsed.val, 42);
+    }
+
+    #[test]
+    fn deserialize_u32_from_negative_float() {
+        #[derive(Deserialize, Debug, PartialEq, Eq)]
+        struct HasU32 {
+            #[serde(deserialize_with = "deserialize_int_from_number")]
+            val: u32,
+        }
+        // negative should clamp to 0
+        let parsed: HasU32 = serde_json::from_str(r#"{"val": -5.0}"#).unwrap();
+        assert_eq!(parsed.val, 0);
+    }
 }
