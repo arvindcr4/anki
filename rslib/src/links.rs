@@ -50,3 +50,64 @@ impl crate::services::LinksService for Collection {
         Ok(help_page_to_link(HelpPage::try_from(input.page).unwrap_or(HelpPage::Index)).into())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn help_page_link_index() {
+        let link = help_page_to_link(HelpPage::Index);
+        assert_eq!(link, "https://docs.ankiweb.net/");
+    }
+
+    #[test]
+    fn help_page_link_browsing() {
+        let link = help_page_to_link(HelpPage::Browsing);
+        assert_eq!(link, "https://docs.ankiweb.net/browsing.html");
+    }
+
+    #[test]
+    fn help_page_link_templates() {
+        let link = help_page_to_link(HelpPage::Templates);
+        assert_eq!(link, "https://docs.ankiweb.net/templates/intro.html");
+    }
+
+    #[test]
+    fn help_page_suffix_note_type() {
+        assert_eq!(
+            help_page_link_suffix(HelpPage::NoteType),
+            "getting-started.html#note-types"
+        );
+    }
+
+    #[test]
+    fn help_page_suffix_deck_options() {
+        assert_eq!(
+            help_page_link_suffix(HelpPage::DeckOptions),
+            "deck-options.html"
+        );
+    }
+
+    #[test]
+    fn help_page_suffix_filtered_deck() {
+        assert_eq!(
+            help_page_link_suffix(HelpPage::FilteredDeck),
+            "filtered-decks.html"
+        );
+    }
+
+    #[test]
+    fn help_page_link_starts_with_site() {
+        // all links should start with the help site
+        for page in [
+            HelpPage::Index,
+            HelpPage::Browsing,
+            HelpPage::Editing,
+            HelpPage::Preferences,
+            HelpPage::Latex,
+        ] {
+            assert!(help_page_to_link(page).starts_with("https://docs.ankiweb.net/"));
+        }
+    }
+}
