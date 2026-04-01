@@ -3,9 +3,13 @@
 
 import os
 import sys
+from pathlib import Path
 
-qrc_file = os.path.abspath(sys.argv[1])
-icons = sys.argv[2:]
+if len(sys.argv) < 3:
+    raise SystemExit("usage: build_qrc.py <output.qrc> <icon> [<icon> ...]")
+
+qrc_file = Path(sys.argv[1]).resolve()
+icons = [Path(icon) for icon in sys.argv[2:]]
 
 file_skeleton = """
 <RCC>
@@ -18,10 +22,10 @@ FILES
 indent = " " * 8
 lines = []
 for icon in icons:
-    base = os.path.basename(icon)
-    path = os.path.relpath(icon, start=os.path.dirname(qrc_file))
+    base = icon.name
+    path = os.path.relpath(icon, start=qrc_file.parent)
     line = f'{indent}<file alias="icons/{base}">{path}</file>'
     lines.append(line)
 
-with open(qrc_file, "w") as file:
+with qrc_file.open("w") as file:
     file.write(file_skeleton.replace("FILES", "\n".join(lines)))

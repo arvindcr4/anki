@@ -47,9 +47,9 @@ class DBProxy:
             self._backend.db_begin()
             op()
             self._backend.db_commit()
-        except BaseException as e:
+        except BaseException:
             self._backend.db_rollback()
-            raise e
+            raise
 
     # Querying
     ################
@@ -78,17 +78,11 @@ class DBProxy:
 
     def first(self, sql: str, *args: ValueForDB, **kwargs: ValueForDB) -> Row | None:
         rows = self._query(sql, *args, first_row_only=True, **kwargs)
-        if rows:
-            return rows[0]
-        else:
-            return None
+        return rows[0] if rows else None
 
     def scalar(self, sql: str, *args: ValueForDB, **kwargs: ValueForDB) -> ValueFromDB:
         rows = self._query(sql, *args, first_row_only=True, **kwargs)
-        if rows:
-            return rows[0][0]
-        else:
-            return None
+        return rows[0][0] if rows else None
 
     # execute used to return a pysqlite cursor, but now is synonymous
     # with .all()

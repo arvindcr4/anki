@@ -43,7 +43,9 @@ class AnkiPackageImporter(Anki2Importer):
             raise MediaMapInvalid() from exc
         for k, v in list(media_dict.items()):
             path = os.path.abspath(os.path.join(dir, v))
-            if os.path.commonprefix([path, dir]) != dir:
+            # Use a path-aware prefix check so sibling paths like /foo/barista
+            # do not slip through when /foo/bar is the media directory.
+            if os.path.commonpath([path, dir]) != dir:
                 raise Exception("Invalid file")
 
             self.nameToNum[unicodedata.normalize("NFC", v)] = k

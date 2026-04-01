@@ -7,6 +7,9 @@ import os
 import shutil
 import tempfile
 import time
+from collections.abc import Callable
+
+import pytest
 
 from anki.collection import Collection as aopen
 
@@ -23,13 +26,9 @@ else:
     orig_time = None
 
 
-def assertException(exception, func):
-    found = False
-    try:
+def assertException(exception: type[BaseException], func: Callable[[], object]) -> None:
+    with pytest.raises(exception):
         func()
-    except exception:
-        found = True
-    assert found
 
 
 # Creating new decks is expensive. Just do it once, and then spin off

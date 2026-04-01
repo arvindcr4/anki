@@ -30,11 +30,11 @@ class Importer:
 
     def open(self) -> None:
         "Open file and ensure it's in the right format."
-        return
+        pass
 
     def close(self) -> None:
         "Closes the open file."
-        return
+        pass
 
     # Timestamps
     ######################################################################
