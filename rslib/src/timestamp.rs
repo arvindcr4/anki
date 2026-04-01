@@ -118,3 +118,118 @@ fn elapsed() -> time::Duration {
             .unwrap()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn timestamp_secs_zero() {
+        assert_eq!(TimestampSecs::zero().0, 0);
+    }
+
+    #[test]
+    fn elapsed_secs_since_positive() {
+        let a = TimestampSecs(1000);
+        let b = TimestampSecs(600);
+        assert_eq!(a.elapsed_secs_since(b), 400);
+    }
+
+    #[test]
+    fn elapsed_secs_since_negative() {
+        let a = TimestampSecs(500);
+        let b = TimestampSecs(800);
+        assert_eq!(a.elapsed_secs_since(b), -300);
+    }
+
+    #[test]
+    fn elapsed_secs_since_same() {
+        let a = TimestampSecs(1000);
+        assert_eq!(a.elapsed_secs_since(a), 0);
+    }
+
+    #[test]
+    fn elapsed_days_since() {
+        let a = TimestampSecs(86_400 * 10);
+        let b = TimestampSecs(86_400 * 3);
+        assert_eq!(a.elapsed_days_since(b), 7);
+    }
+
+    #[test]
+    fn elapsed_days_since_partial_day() {
+        let a = TimestampSecs(86_400 * 3 + 43_200); // 3.5 days
+        let b = TimestampSecs(0);
+        assert_eq!(a.elapsed_days_since(b), 3); // floors
+    }
+
+    #[test]
+    fn elapsed_days_since_negative_clamped() {
+        let a = TimestampSecs(0);
+        let b = TimestampSecs(86_400);
+        assert_eq!(a.elapsed_days_since(b), 0); // .max(0)
+    }
+
+    #[test]
+    fn as_millis() {
+        let ts = TimestampSecs(1_700_000);
+        assert_eq!(ts.as_millis(), TimestampMillis(1_700_000_000));
+    }
+
+    #[test]
+    fn as_millis_zero() {
+        assert_eq!(TimestampSecs(0).as_millis(), TimestampMillis(0));
+    }
+
+    #[test]
+    fn adding_secs() {
+        let ts = TimestampSecs(1000);
+        assert_eq!(ts.adding_secs(500), TimestampSecs(1500));
+        assert_eq!(ts.adding_secs(-200), TimestampSecs(800));
+        assert_eq!(ts.adding_secs(0), TimestampSecs(1000));
+    }
+
+    #[test]
+    fn timestamp_millis_zero() {
+        assert_eq!(TimestampMillis::zero().0, 0);
+    }
+
+    #[test]
+    fn millis_as_secs() {
+        assert_eq!(
+            TimestampMillis(1_700_000_000).as_secs(),
+            TimestampSecs(1_700_000)
+        );
+    }
+
+    #[test]
+    fn millis_as_secs_truncates() {
+        assert_eq!(
+            TimestampMillis(1_700_000_999).as_secs(),
+            TimestampSecs(1_700_000)
+        );
+    }
+
+    #[test]
+    fn millis_adding_secs() {
+        let ts = TimestampMillis(5000);
+        assert_eq!(ts.adding_secs(3), TimestampMillis(8000));
+        assert_eq!(ts.adding_secs(-1), TimestampMillis(4000));
+    }
+
+    #[test]
+    fn date_string_valid() {
+        // Use a known timestamp (2023-01-15 in UTC)
+        let ts = TimestampSecs(1673740800);
+        let s = ts.date_string();
+        // Should produce a valid date format YYYY-mm-dd
+        assert_eq!(s.len(), 10);
+        assert!(s.contains('-'));
+    }
+
+    #[test]
+    fn date_and_time_string_format() {
+        let ts = TimestampSecs(1673740800);
+        let s = ts.date_and_time_string();
+        assert!(s.contains(" @ "));
+    }
+}
