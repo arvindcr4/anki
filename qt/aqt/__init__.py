@@ -199,7 +199,7 @@ class DialogManager:
             - define a `dialog.closeWithCallback()` method that is called when closed
               by the dialog manager
 
-        TODO?: Implement more restrictive type check to ensure these requirements
+        Note: A more restrictive type check could ensure these requirements
         are met
 
         Arguments:

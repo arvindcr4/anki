@@ -81,7 +81,7 @@ class ForeignCard:
     ease_factor  --  decimal fraction (2.5 corresponds to default ease)
     """
 
-    # TODO: support new and learning cards?
+    # Only review card state is supported; new/learning cards keep defaults.
     due: int = 0
     interval: int = 1
     ease_factor: float = STARTING_FACTOR_FRACTION
