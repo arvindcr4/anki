@@ -78,4 +78,79 @@ mod test {
     fn test_unqualified_lowercase_type_name() {
         assert_eq!(unqualified_lowercase_type_name::<CardId>(), "card id");
     }
+
+    #[test]
+    fn not_found_error_context() {
+        let err = NotFoundError {
+            type_name: "deck".into(),
+            identifier: "42".into(),
+            backtrace: None,
+        };
+        assert_eq!(err.context(), "No such deck: '42'");
+    }
+
+    #[test]
+    fn not_found_error_message() {
+        let tr = I18n::template_only();
+        let err = NotFoundError {
+            type_name: "card".into(),
+            identifier: "123".into(),
+            backtrace: None,
+        };
+        let msg = err.message(&tr);
+        assert!(msg.contains("card"));
+        assert!(msg.contains("123"));
+    }
+
+    #[test]
+    fn not_found_error_equality() {
+        let a = NotFoundError {
+            type_name: "card".into(),
+            identifier: "1".into(),
+            backtrace: None,
+        };
+        let b = NotFoundError {
+            type_name: "card".into(),
+            identifier: "1".into(),
+            backtrace: None,
+        };
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn not_found_error_inequality() {
+        let a = NotFoundError {
+            type_name: "card".into(),
+            identifier: "1".into(),
+            backtrace: None,
+        };
+        let b = NotFoundError {
+            type_name: "deck".into(),
+            identifier: "1".into(),
+            backtrace: None,
+        };
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn or_not_found_some() {
+        let result: Result<i32> = Some(42).or_not_found(DeckId(1));
+        assert_eq!(result.unwrap(), 42);
+    }
+
+    #[test]
+    fn or_not_found_none() {
+        let result: Result<i32> = None.or_not_found(DeckId(999));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn unqualified_name_simple() {
+        assert_eq!(unqualified_lowercase_type_name::<String>(), "string");
+    }
+
+    #[test]
+    fn unqualified_name_deck_id() {
+        assert_eq!(unqualified_lowercase_type_name::<DeckId>(), "deck id");
+    }
 }
