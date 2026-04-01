@@ -93,9 +93,11 @@ impl CollectionBuilder {
     /// use different paths, so the backend must continue to use
     /// [set_media_paths].
     pub fn with_desktop_media_paths(&mut self) -> &mut Self {
-        let col_path = self.collection_path.as_ref().unwrap();
+        let col_path = self.collection_path.as_ref().expect("collection path required");
         let media_folder = col_path.with_extension("media");
-        create_dir_all(&media_folder).expect("creating media folder");
+        if let Err(e) = create_dir_all(&media_folder) {
+            eprintln!("warning: failed to create media folder: {e}");
+        }
         let media_db = col_path.with_extension("mdb");
         self.set_media_paths(media_folder, media_db)
     }
