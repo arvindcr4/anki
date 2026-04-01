@@ -214,7 +214,10 @@ mod tests {
         let nt = empty_stock(NotetypeKind::Normal, OriginalStockKind::Basic, "Test");
         assert_eq!(nt.name, "Test");
         assert_eq!(nt.config.kind, NotetypeKind::Normal as i32);
-        assert_eq!(nt.config.original_stock_kind, OriginalStockKind::Basic as i32);
+        assert_eq!(
+            nt.config.original_stock_kind,
+            OriginalStockKind::Basic as i32
+        );
     }
 
     #[test]

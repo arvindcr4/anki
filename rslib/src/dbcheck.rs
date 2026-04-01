@@ -355,7 +355,9 @@ impl Collection {
                     // fix note then fetch again
                     self.storage.fix_invalid_utf8_in_note(nid)?;
                     out.invalid_utf8 += 1;
-                    self.storage.get_note(nid)?.or_invalid("note missing after UTF-8 fix")
+                    self.storage
+                        .get_note(nid)?
+                        .or_invalid("note missing after UTF-8 fix")
                 }
                 // other errors are unhandled
                 _ => Err(err),
