@@ -985,6 +985,17 @@ class DeckBrowser:
                         '<div class="daily-cards-empty-summary">No cards added</div>'
                     )
                     action = '<span class="daily-cards-empty">—</span>'
+                    if group.days_ago == 1 and latest_active_group and latest_active_group.days_ago > 1:
+                        row_classes.append("is-current-gap")
+                        status_badges.append(
+                            '<span class="daily-cards-status daily-cards-status-secondary">Current gap</span>'
+                        )
+                        action = """
+<div class="daily-cards-action-stack">
+  <a class='daily-cards-link daily-cards-quiet-day-restart' href=# onclick="return pycmd('addcards')">Restart after quiet day</a>
+  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('browseRecent')">Browse week context</a>
+</div>
+"""
             rows.append(
                 """
 <div class="{row_classes}">
