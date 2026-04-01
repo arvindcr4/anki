@@ -105,3 +105,78 @@ impl DbError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn db_error_message_corrupt() {
+        let tr = I18n::template_only();
+        let err = DbError {
+            info: "corruption details".into(),
+            kind: DbErrorKind::Corrupt,
+        };
+        assert_eq!(err.message(&tr), "corruption details");
+    }
+
+    #[test]
+    fn db_error_message_locked() {
+        let tr = I18n::template_only();
+        let err = DbError {
+            info: "".into(),
+            kind: DbErrorKind::Locked,
+        };
+        assert_eq!(
+            err.message(&tr),
+            "Anki already open, or media currently syncing."
+        );
+    }
+
+    #[test]
+    fn db_error_message_other_uses_debug() {
+        let tr = I18n::template_only();
+        let err = DbError {
+            info: "some info".into(),
+            kind: DbErrorKind::Other,
+        };
+        let msg = err.message(&tr);
+        assert!(msg.contains("some info"));
+    }
+
+    #[test]
+    fn db_error_display() {
+        let err = DbError {
+            info: "test".into(),
+            kind: DbErrorKind::FileTooNew,
+        };
+        let display = format!("{err}");
+        assert!(display.contains("test"));
+        assert!(display.contains("FileTooNew"));
+    }
+
+    #[test]
+    fn anki_error_db_error_constructor() {
+        let err = AnkiError::db_error("info", DbErrorKind::Corrupt);
+        assert!(matches!(err, AnkiError::DbError { .. }));
+    }
+
+    #[test]
+    fn db_error_equality() {
+        let a = DbError {
+            info: "x".into(),
+            kind: DbErrorKind::Locked,
+        };
+        let b = DbError {
+            info: "x".into(),
+            kind: DbErrorKind::Locked,
+        };
+        assert_eq!(a, b);
+
+        let c = DbError {
+            info: "x".into(),
+            kind: DbErrorKind::Other,
+        };
+        assert_ne!(a, c);
+    }
+}

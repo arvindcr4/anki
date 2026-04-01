@@ -41,3 +41,54 @@ impl CustomStudyError {
         .into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn filtered_deck_error_messages_not_empty() {
+        let tr = I18n::template_only();
+        assert!(!FilteredDeckError::MustBeLeafNode.message(&tr).is_empty());
+        assert!(!FilteredDeckError::CanNotMoveCardsInto
+            .message(&tr)
+            .is_empty());
+        assert!(!FilteredDeckError::SearchReturnedNoCards
+            .message(&tr)
+            .is_empty());
+        assert!(!FilteredDeckError::FilteredDeckRequired
+            .message(&tr)
+            .is_empty());
+    }
+
+    #[test]
+    fn custom_study_error_messages_not_empty() {
+        let tr = I18n::template_only();
+        assert!(!CustomStudyError::NoMatchingCards.message(&tr).is_empty());
+        assert!(!CustomStudyError::ExistingDeck.message(&tr).is_empty());
+    }
+
+    #[test]
+    fn filtered_deck_error_equality() {
+        assert_eq!(
+            FilteredDeckError::MustBeLeafNode,
+            FilteredDeckError::MustBeLeafNode
+        );
+        assert_ne!(
+            FilteredDeckError::MustBeLeafNode,
+            FilteredDeckError::FilteredDeckRequired
+        );
+    }
+
+    #[test]
+    fn custom_study_error_equality() {
+        assert_eq!(
+            CustomStudyError::NoMatchingCards,
+            CustomStudyError::NoMatchingCards
+        );
+        assert_ne!(
+            CustomStudyError::NoMatchingCards,
+            CustomStudyError::ExistingDeck
+        );
+    }
+}
