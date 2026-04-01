@@ -115,6 +115,7 @@ checks = [
     ('Gap:', 2, 'timeline'),
     ('captured today', 1, 'timeline'),
     ('last capture', 1, 'timeline'),
+    ('last capture on', 1, 'timeline'),
     ('daily-cards-range', 1, 'visual'),
     ('Range:', 2, 'timeline'),
     ('daily-cards-pace', 1, 'visual'),

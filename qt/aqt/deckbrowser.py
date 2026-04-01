@@ -435,7 +435,11 @@ class DeckBrowser:
             if latest_active_group.days_ago == 0:
                 gap_summary = "Gap: captured today"
             else:
-                gap_summary = f"Gap: last capture {_count_label(latest_active_group.days_ago, 'day')} ago"
+                gap_summary = (
+                    "Gap: last capture on "
+                    f"{latest_active_group.date_label} "
+                    f"({_count_label(latest_active_group.days_ago, 'day')} ago)"
+                )
         gap_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-gap">{gap_summary}</div>'
         )
