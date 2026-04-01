@@ -382,4 +382,37 @@ mod test {
         card.schedule_as_new(1, true, false);
         assert_eq!((card.due, card.reps, card.lapses), (1, 0, 0));
     }
+
+    #[test]
+    fn original_or_current_due_not_filtered() {
+        let mut card = Card::new(NoteId(0), 0, DeckId(1), 42);
+        // not in filtered deck
+        assert_eq!(card.original_or_current_due(), 42);
+    }
+
+    #[test]
+    fn original_or_current_due_in_filtered() {
+        let mut card = Card::new(NoteId(0), 0, DeckId(2), 100);
+        card.original_deck_id = DeckId(1); // marks as filtered
+        card.original_due = 42;
+        card.due = 100;
+        assert_eq!(card.original_or_current_due(), 42);
+    }
+
+    #[test]
+    fn schedule_as_new_in_filtered_deck() {
+        let mut card = Card::new(NoteId(0), 0, DeckId(2), 42);
+        card.original_deck_id = DeckId(1);
+        card.original_due = 10;
+        card.ctype = CardType::Review;
+        card.queue = CardQueue::Review;
+        card.interval = 30;
+        card.schedule_as_new(5, true, false);
+        // should be back to new state
+        assert_eq!(card.ctype, CardType::New);
+        assert_eq!(card.due, 5);
+        assert_eq!(card.reps, 0);
+        assert_eq!(card.lapses, 0);
+        assert_eq!(card.interval, 0);
+    }
 }
