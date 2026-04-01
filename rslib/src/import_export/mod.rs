@@ -87,3 +87,62 @@ impl ImportError {
         .into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn import_error_message_corrupt() {
+        let tr = I18n::template_only();
+        let msg = ImportError::Corrupt.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn import_error_message_too_new() {
+        let tr = I18n::template_only();
+        let msg = ImportError::TooNew.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn import_error_message_media_failed() {
+        let tr = I18n::template_only();
+        let msg = ImportError::MediaImportFailed {
+            info: "test.mp3".to_string(),
+        }
+        .message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn import_error_message_no_field_column() {
+        let tr = I18n::template_only();
+        let msg = ImportError::NoFieldColumn.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn import_error_message_empty_file() {
+        let tr = I18n::template_only();
+        let msg = ImportError::EmptyFile.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn import_error_equality() {
+        assert_eq!(ImportError::Corrupt, ImportError::Corrupt);
+        assert_ne!(ImportError::Corrupt, ImportError::TooNew);
+    }
+
+    #[test]
+    fn import_progress_default() {
+        assert_eq!(ImportProgress::default(), ImportProgress::Extracting);
+    }
+
+    #[test]
+    fn export_progress_default() {
+        assert_eq!(ExportProgress::default(), ExportProgress::File);
+    }
+}
