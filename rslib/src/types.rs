@@ -83,3 +83,79 @@ impl IntoNewtypeVec for Vec<i64> {
         self.into_iter().map(func).collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prelude::*;
+
+    #[test]
+    fn usn_default_is_zero() {
+        assert_eq!(Usn::default(), Usn(0));
+    }
+
+    #[test]
+    fn usn_display() {
+        assert_eq!(format!("{}", Usn(42)), "42");
+        assert_eq!(format!("{}", Usn(-1)), "-1");
+    }
+
+    #[test]
+    fn usn_from_str() {
+        assert_eq!("42".parse::<Usn>().unwrap(), Usn(42));
+        assert_eq!("-5".parse::<Usn>().unwrap(), Usn(-5));
+        assert!("abc".parse::<Usn>().is_err());
+    }
+
+    #[test]
+    fn usn_from_i32() {
+        let usn: Usn = 99.into();
+        assert_eq!(usn, Usn(99));
+    }
+
+    #[test]
+    fn usn_into_i32() {
+        let val: i32 = Usn(77).into();
+        assert_eq!(val, 77);
+    }
+
+    #[test]
+    fn usn_ordering() {
+        assert!(Usn(1) < Usn(2));
+        assert!(Usn(-1) < Usn(0));
+        assert_eq!(Usn(5), Usn(5));
+    }
+
+    #[test]
+    fn card_id_newtype() {
+        let id = CardId(12345);
+        assert_eq!(format!("{}", id), "12345");
+        assert_eq!("999".parse::<CardId>().unwrap(), CardId(999));
+    }
+
+    #[test]
+    fn deck_id_newtype() {
+        let id: DeckId = 42.into();
+        assert_eq!(id, DeckId(42));
+        let val: i64 = id.into();
+        assert_eq!(val, 42);
+    }
+
+    #[test]
+    fn note_id_newtype() {
+        let id = NoteId(0);
+        assert_eq!(id, NoteId::default());
+    }
+
+    #[test]
+    fn into_newtype_vec() {
+        let ids: Vec<CardId> = vec![1_i64, 2, 3].into_newtype(CardId);
+        assert_eq!(ids, vec![CardId(1), CardId(2), CardId(3)]);
+    }
+
+    #[test]
+    fn into_newtype_vec_empty() {
+        let ids: Vec<CardId> = vec![].into_newtype(CardId);
+        assert!(ids.is_empty());
+    }
+}
