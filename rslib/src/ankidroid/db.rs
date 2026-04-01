@@ -209,18 +209,12 @@ fn get_next_result(
     let result_map = map.get(&col.id_for_db_cache())?;
     let current_result = result_map.get(sequence_number)?;
 
-    // TODO: This shouldn't need to exist
-    let tmp: Vec<Row> = Vec::new();
-    let next_rows = current_result
+    let rows = current_result
         .result
         .as_ref()
-        .map(|x| x.rows.iter())
-        .unwrap_or_else(|| tmp.iter());
+        .map_or(&[] as &[Row], |x| &x.rows);
 
-    let skipped_rows = next_rows.clone().skip(start_index as usize).collect_vec();
-    println!("{}", skipped_rows.len());
-
-    let filtered_rows = select_next_slice(next_rows.skip(start_index as usize));
+    let filtered_rows = select_next_slice(rows.iter().skip(start_index as usize));
 
     let result = DbResult {
         rows: filtered_rows,
