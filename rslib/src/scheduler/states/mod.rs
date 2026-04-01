@@ -220,4 +220,136 @@ mod test {
         assert_eq!(ctx.min_and_max_review_intervals(2), (2, 3));
         assert_eq!(ctx.min_and_max_review_intervals(4), (3, 3));
     }
+
+    #[test]
+    fn card_state_from_new() {
+        let new = NewState { position: 5 };
+        let state: CardState = new.into();
+        assert!(matches!(
+            state,
+            CardState::Normal(NormalState::New(NewState { position: 5 }))
+        ));
+    }
+
+    #[test]
+    fn card_state_from_review() {
+        let review = ReviewState {
+            scheduled_days: 10,
+            elapsed_days: 10,
+            ease_factor: 2.5,
+            lapses: 0,
+            leeched: false,
+            memory_state: None,
+        };
+        let state: CardState = review.into();
+        assert!(matches!(state, CardState::Normal(NormalState::Review(_))));
+    }
+
+    #[test]
+    fn card_state_from_preview() {
+        let preview = PreviewState {
+            scheduled_secs: 60,
+            finished: false,
+        };
+        let state: CardState = preview.into();
+        assert!(matches!(
+            state,
+            CardState::Filtered(FilteredState::Preview(_))
+        ));
+    }
+
+    #[test]
+    fn card_state_interval_kind_normal() {
+        let state: CardState = NewState { position: 0 }.into();
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn card_state_interval_kind_filtered() {
+        let state: CardState = PreviewState {
+            scheduled_secs: 120,
+            finished: false,
+        }
+        .into();
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(120));
+    }
+
+    #[test]
+    fn card_state_review_state_none_for_new() {
+        let state: CardState = NewState { position: 0 }.into();
+        assert!(state.review_state().is_none());
+    }
+
+    #[test]
+    fn card_state_review_state_some_for_review() {
+        let review = ReviewState {
+            scheduled_days: 10,
+            elapsed_days: 10,
+            ease_factor: 2.5,
+            lapses: 0,
+            leeched: false,
+            memory_state: None,
+        };
+        let state: CardState = review.into();
+        assert!(state.review_state().is_some());
+    }
+
+    #[test]
+    fn card_state_leeched_false() {
+        let state: CardState = NewState { position: 0 }.into();
+        assert!(!state.leeched());
+    }
+
+    #[test]
+    fn card_state_leeched_true() {
+        let review = ReviewState {
+            scheduled_days: 10,
+            elapsed_days: 10,
+            ease_factor: 2.5,
+            lapses: 9,
+            leeched: true,
+            memory_state: None,
+        };
+        let state: CardState = review.into();
+        assert!(state.leeched());
+    }
+
+    #[test]
+    fn new_position_from_normal_new() {
+        let state: CardState = NewState { position: 42 }.into();
+        assert_eq!(state.new_position(), Some(42));
+    }
+
+    #[test]
+    fn new_position_from_review_is_none() {
+        let state: CardState = ReviewState {
+            scheduled_days: 10,
+            elapsed_days: 10,
+            ease_factor: 2.5,
+            lapses: 0,
+            leeched: false,
+            memory_state: None,
+        }
+        .into();
+        assert_eq!(state.new_position(), None);
+    }
+
+    #[test]
+    fn new_position_from_rescheduling_new() {
+        let state: CardState = ReschedulingFilterState {
+            original_state: NormalState::New(NewState { position: 99 }),
+        }
+        .into();
+        assert_eq!(state.new_position(), Some(99));
+    }
+
+    #[test]
+    fn new_position_from_preview_is_none() {
+        let state: CardState = PreviewState {
+            scheduled_secs: 0,
+            finished: true,
+        }
+        .into();
+        assert_eq!(state.new_position(), None);
+    }
 }
