@@ -20,11 +20,11 @@ from unittest.mock import Mock, patch
 import pytest
 
 from anki.offline_queue import (
+    MAX_BATCH_SIZE,
+    QUEUE_FILENAME,
     OfflineSyncQueue,
     QueuedCard,
     QueueStatus,
-    QUEUE_FILENAME,
-    MAX_BATCH_SIZE,
 )
 
 
@@ -227,7 +227,7 @@ class TestSyncNow:
         """Test that successfully synced cards are removed from queue."""
         self.queue.add_card(front="Q", back="A", local_id=1)
 
-        with patch("anki.ankiconnect.AnkiConnectClient") as MockClient:
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
             mock_instance = Mock()
             MockClient.return_value = mock_instance
             mock_instance.discover.return_value = True
@@ -243,7 +243,7 @@ class TestSyncNow:
         """Test that failed cards remain in queue with error set."""
         self.queue.add_card(front="Q", back="A", local_id=1)
 
-        with patch("anki.ankiconnect.AnkiConnectClient") as MockClient:
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
             mock_instance = Mock()
             MockClient.return_value = mock_instance
             mock_instance.discover.return_value = True
@@ -262,7 +262,7 @@ class TestSyncNow:
         self.queue.add_card(front="Q1", back="A1")
         self.queue.add_card(front="Q2", back="A2")
 
-        with patch("anki.ankiconnect.AnkiConnectClient") as MockClient:
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
             mock_instance = Mock()
             MockClient.return_value = mock_instance
             mock_instance.discover.return_value = False  # Not available
@@ -278,7 +278,7 @@ class TestSyncNow:
         """Test that each sync attempt increments the counter."""
         self.queue.add_card(front="Q", back="A", local_id=1)
 
-        with patch("anki.ankiconnect.AnkiConnectClient") as MockClient:
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
             mock_instance = Mock()
             MockClient.return_value = mock_instance
             mock_instance.discover.return_value = True
@@ -300,7 +300,7 @@ class TestAutoSync:
         self.queue_path = Path(self.temp_dir) / QUEUE_FILENAME
         self.queue = OfflineSyncQueue(
             queue_path=self.queue_path,
-            retry_interval=0.1,  # Very fast for tests
+            retry_interval=1,  # Fast for tests
             deck="Test Deck",
         )
 
@@ -324,7 +324,10 @@ class TestAutoSync:
         time.sleep(0.05)
         self.queue.stop_auto_sync()
         # Thread should be stopped
-        assert self.queue._monitor_thread is None or not self.queue._monitor_thread.is_alive()
+        assert (
+            self.queue._monitor_thread is None
+            or not self.queue._monitor_thread.is_alive()
+        )
 
     def test_multiple_start_calls_dont_create_multiple_threads(self) -> None:
         """Test that calling start multiple times is idempotent."""

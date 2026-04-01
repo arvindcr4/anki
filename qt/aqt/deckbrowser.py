@@ -412,9 +412,11 @@ class DeckBrowser:
 </div>
 """.format(self._render_data.studied_today)
 
-    def _renderDailyCards(self) -> str:  # noqa: PLR0912
+    def _renderDailyCards(self) -> str:  # noqa: PLR0912, PLR0915
         rows: list[str] = []
         activity_bars: list[str] = []
+        bursty_week = False
+        burst_pct = 0
         recent_days = len(self._render_data.daily_groups)
         total_cards = sum(group.card_count for group in self._render_data.daily_groups)
         total_notes = self._render_data.recent_unique_notes
@@ -452,9 +454,7 @@ class DeckBrowser:
                     f"{latest_active_group.date_label} "
                     f"({_count_label(latest_active_group.days_ago, 'day')} ago)"
                 )
-        gap_summary_markup = (
-            f'<div class="{gap_summary_classes}">{gap_summary}</div>'
-        )
+        gap_summary_markup = f'<div class="{gap_summary_classes}">{gap_summary}</div>'
         if latest_active_group:
             gap_summary_markup = (
                 f'<a class="daily-cards-link {gap_summary_classes}" href=# '
@@ -469,14 +469,9 @@ class DeckBrowser:
         )
         if latest_active_group:
             latest_suffix = f"({_count_label(latest_active_group.card_count, 'card')})"
-            if (
-                busiest_group
-                and latest_active_group.days_ago == busiest_group.days_ago
-            ):
+            if busiest_group and latest_active_group.days_ago == busiest_group.days_ago:
                 latest_summary_classes += " is-most-active-latest"
-                latest_suffix = (
-                    f"({_count_label(latest_active_group.card_count, 'card')}, most active)"
-                )
+                latest_suffix = f"({_count_label(latest_active_group.card_count, 'card')}, most active)"
             latest_summary = (
                 "Latest: "
                 f"{latest_active_group.label} {latest_active_group.date_label} "
@@ -502,9 +497,7 @@ class DeckBrowser:
         if self._render_data.daily_groups:
             today_group = self._render_data.daily_groups[0]
             if today_group.card_count:
-                today_summary_classes = (
-                    "daily-cards-link daily-cards-pill daily-cards-today has-today-cards"
-                )
+                today_summary_classes = "daily-cards-link daily-cards-pill daily-cards-today has-today-cards"
                 today_summary = (
                     "Today: "
                     f"{_count_label(today_group.card_count, 'card')} across "
@@ -525,9 +518,7 @@ class DeckBrowser:
                     f"{today_summary}</a>"
                 )
             else:
-                today_summary_classes = (
-                    "daily-cards-link daily-cards-pill daily-cards-today is-ready-to-capture"
-                )
+                today_summary_classes = "daily-cards-link daily-cards-pill daily-cards-today is-ready-to-capture"
                 today_summary = "Today: ready to capture"
                 today_title = "Create today's first card"
                 if latest_active_group and latest_active_group.days_ago > 0:
@@ -554,9 +545,7 @@ class DeckBrowser:
         quiet_day_markup = (
             f'<div class="daily-cards-pill daily-cards-quiet">{quiet_day_summary}</div>'
         )
-        consistency_markup = (
-            f'<div class="daily-cards-pill daily-cards-consistency">{consistency_summary}</div>'
-        )
+        consistency_markup = f'<div class="daily-cards-pill daily-cards-consistency">{consistency_summary}</div>'
         range_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-range">{range_summary}</div>'
         )
@@ -674,7 +663,9 @@ class DeckBrowser:
             if latest_active_group:
                 streak_start = latest_active_group.days_ago
                 streak_days_ago = set(range(streak_start, streak_start + streak_count))
-                streak_end_group = self._daily_group_for(streak_start + streak_count - 1)
+                streak_end_group = self._daily_group_for(
+                    streak_start + streak_count - 1
+                )
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
             if latest_active_group:
                 if streak_end_group:
@@ -780,7 +771,9 @@ class DeckBrowser:
                 "Add a card today to restart the streak."
             )
             restart_label = "Restart streak today"
-            current_gap_days = latest_active_group.days_ago if latest_active_group else 0
+            current_gap_days = (
+                latest_active_group.days_ago if latest_active_group else 0
+            )
             if current_gap_days > 1 and latest_active_group:
                 guidance = (
                     f"You're in a {_count_label(current_gap_days, 'day')} current gap since "
@@ -848,11 +841,12 @@ class DeckBrowser:
         )
         if busiest_group:
             busiest_suffix = f"({_count_label(busiest_group.card_count, 'card')})"
-            if latest_active_group and busiest_group.days_ago == latest_active_group.days_ago:
+            if (
+                latest_active_group
+                and busiest_group.days_ago == latest_active_group.days_ago
+            ):
                 busiest_summary_classes += " is-latest-busiest"
-                busiest_suffix = (
-                    f"({_count_label(busiest_group.card_count, 'card')}, latest session)"
-                )
+                busiest_suffix = f"({_count_label(busiest_group.card_count, 'card')}, latest session)"
             busiest_summary = "Busiest: {label} {date} {suffix}".format(
                 label=html.escape(busiest_group.label),
                 date=html.escape(busiest_group.date_label),
@@ -881,7 +875,11 @@ class DeckBrowser:
         insight_summary = "Insight: no recent capture yet."
         insight_markup = f'<div class="{insight_class}">{insight_summary}</div>'
         if total_cards:
-            if latest_active_group and latest_active_group.days_ago > 1 and burst_pct >= 60:
+            if (
+                latest_active_group
+                and latest_active_group.days_ago > 1
+                and burst_pct >= 60
+            ):
                 insight_class = "daily-cards-insight is-gap-burst"
                 insight_summary = (
                     "Insight: one big capture session was followed by a current gap."
@@ -889,14 +887,12 @@ class DeckBrowser:
                 insight_markup = (
                     f'<a class="{insight_class} daily-cards-insight-link" href=# '
                     f'title="Review burst-heavy week" aria-label="Review burst-heavy week" '
-                    f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
+                    f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"  # type: ignore[union-attr]
                     f"{insight_summary}</a>"
                 )
             elif latest_active_group and latest_active_group.days_ago > 1:
                 insight_class = "daily-cards-insight is-gap"
-                insight_summary = (
-                    f"Insight: capture has paused since {latest_active_group.date_label}."
-                )
+                insight_summary = f"Insight: capture has paused since {latest_active_group.date_label}."
                 insight_markup = (
                     f'<a class="{insight_class} daily-cards-insight-link" href=# '
                     f'title="Browse latest capture" aria-label="Browse latest capture" '
@@ -911,14 +907,12 @@ class DeckBrowser:
                 insight_markup = (
                     f'<a class="{insight_class} daily-cards-insight-link" href=# '
                     f'title="Review burst-heavy week" aria-label="Review burst-heavy week" '
-                    f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
+                    f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"  # type: ignore[union-attr]
                     f"{insight_summary}</a>"
                 )
             elif trend_summary == "Trend: just started":
                 insight_class = "daily-cards-insight is-starting"
-                insight_summary = (
-                    "Insight: this week's capture just started and is ready to turn into a streak."
-                )
+                insight_summary = "Insight: this week's capture just started and is ready to turn into a streak."
                 insight_markup = (
                     f'<a class="{insight_class} daily-cards-insight-link" href=# '
                     'title="Browse recent trend" aria-label="Browse recent trend" '
@@ -1034,7 +1028,11 @@ class DeckBrowser:
             empty_run: list[DailyCardsGroup] = []
             if not group.card_count and group.days_ago != 0:
                 previous_group = groups[index - 1] if index > 0 else None
-                if previous_group and not previous_group.card_count and previous_group.days_ago != 0:
+                if (
+                    previous_group
+                    and not previous_group.card_count
+                    and previous_group.days_ago != 0
+                ):
                     continue
                 scan_index = index
                 while (
@@ -1098,7 +1096,7 @@ class DeckBrowser:
                         extra_today_action = (
                             '  <a class="daily-cards-link daily-cards-secondary-link '
                             'daily-cards-burst-import" href=# '
-                            'onclick="return pycmd(\'importcards\')">Import more</a>\n'
+                            "onclick=\"return pycmd('importcards')\">Import more</a>\n"
                         )
                     action = f"""
 <div class="daily-cards-action-stack">
@@ -1135,8 +1133,8 @@ class DeckBrowser:
                         resume_today_action = (
                             '  <a class="daily-cards-link daily-cards-secondary-link '
                             'daily-cards-empty-resume" href=# '
-                            f'onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">'
-                            f'Resume last capture ({latest_active_group.date_label})</a>\n'
+                            f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
+                            f"Resume last capture ({latest_active_group.date_label})</a>\n"
                         )
                     action = """
 <div class="daily-cards-action-stack">
@@ -1166,7 +1164,7 @@ class DeckBrowser:
                             extra_recovery_action = (
                                 '  <a class="daily-cards-link daily-cards-secondary-link '
                                 'daily-cards-quiet-import" href=# onclick="return pycmd(\'importcards\')">'
-                                'Import to rebuild momentum</a>\n'
+                                "Import to rebuild momentum</a>\n"
                             )
                         resume_capture_label = (
                             f"Resume last capture ({latest_active_group.date_label})"
@@ -1191,7 +1189,11 @@ class DeckBrowser:
                         '<div class="daily-cards-empty-summary">No cards added</div>'
                     )
                     action = '<span class="daily-cards-empty">—</span>'
-                    if group.days_ago == 1 and latest_active_group and latest_active_group.days_ago > 1:
+                    if (
+                        group.days_ago == 1
+                        and latest_active_group
+                        and latest_active_group.days_ago > 1
+                    ):
                         row_classes.append("is-current-gap")
                         status_badges.append(
                             '<span class="daily-cards-status daily-cards-status-secondary">Current gap</span>'
@@ -1257,10 +1259,15 @@ class DeckBrowser:
         if (
             busiest_group
             and busiest_group.days_ago > 0
-            and (not latest_active_group or busiest_group.days_ago != latest_active_group.days_ago)
+            and (
+                not latest_active_group
+                or busiest_group.days_ago != latest_active_group.days_ago
+            )
         ):
             busiest_day_label = f"Browse busiest day ({busiest_group.date_label})"
-            busiest_day_classes = "daily-cards-link daily-cards-pill daily-cards-busiest-shortcut"
+            busiest_day_classes = (
+                "daily-cards-link daily-cards-pill daily-cards-busiest-shortcut"
+            )
             if bursty_week:
                 busiest_day_label = f"Review burst day ({busiest_group.date_label})"
                 busiest_day_classes += " daily-cards-burst-shortcut"
@@ -1298,7 +1305,10 @@ class DeckBrowser:
             if latest_active_group and latest_active_group.days_ago > 2:
                 import_action_label = "Import to rebuild momentum"
                 import_action_title = "Import to rebuild momentum"
-            if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+            if (
+                self._render_data.daily_groups
+                and self._render_data.daily_groups[0].card_count
+            ):
                 create_action_label = "Create another"
         panel_state = """
   <div class="daily-cards-actions">
@@ -1412,7 +1422,6 @@ class DeckBrowser:
             heatmap_hint=heatmap_hint,
             legend_items="\n".join(legend_items),
             insight_markup=insight_markup,
-            insight_summary=insight_summary,
             activity_bars="\n".join(activity_bars),
             panel_state=panel_state,
             guidance_block_class=guidance_block_class,

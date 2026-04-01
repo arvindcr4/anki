@@ -105,7 +105,13 @@ impl GeminiClient {
         prompt: &str,
     ) -> Result<GenerateContentResponse> {
         // Infer mime type from file URI extension
-        let mime_type = match file_uri.rsplit('.').next().unwrap_or("").to_lowercase().as_str() {
+        let mime_type = match file_uri
+            .rsplit('.')
+            .next()
+            .unwrap_or("")
+            .to_lowercase()
+            .as_str()
+        {
             "mp3" | "wav" | "ogg" | "flac" | "m4a" | "aac" => "audio/*",
             "mp4" | "webm" | "avi" | "mov" | "mkv" => "video/*",
             "pdf" => "application/pdf",

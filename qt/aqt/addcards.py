@@ -491,7 +491,7 @@ class AddCards(QMainWindow):
                 )
             elif self._codex_preferred():
                 self.intake_frame.set_llm_status(
-                    f"LLM status: Codex preferred provider selected • add OPENAI_API_KEY to enable Summarize, Q&A, and Cloze previews"
+                    "LLM status: Codex preferred provider selected • add OPENAI_API_KEY to enable Summarize, Q&A, and Cloze previews"
                 )
             elif self._codex_api_key_present():
                 self.intake_frame.set_llm_status(
@@ -665,10 +665,16 @@ class AddCards(QMainWindow):
             )
 
     def _show_llm_action(self, action: str) -> None:
+        from aqt.llm_generate import ActionType
+
         target = self._last_source_summary or "the current note"
         # Map UI action names to generation types
-        action_map = {"Summarize": "summarize", "Q&A": "qa", "Cloze": "cloze"}
-        gen_action = action_map.get(action, "qa")
+        action_map: dict[str, ActionType] = {
+            "Summarize": "summarize",
+            "Q&A": "qa",
+            "Cloze": "cloze",
+        }
+        gen_action: ActionType = action_map.get(action, "qa")
 
         # Gather source text from current note fields
         note = self.editor.note
@@ -691,7 +697,12 @@ class AddCards(QMainWindow):
         self._update_source_preview(target, selected_action=action)
 
         # Run generation in a thread to avoid blocking the UI
-        from aqt.llm_generate import LLMError, generate_cards, get_api_key, is_local_available
+        from aqt.llm_generate import (
+            LLMError,
+            generate_cards,
+            get_api_key,
+            is_local_available,
+        )
 
         if not get_api_key() and not is_local_available():
             showWarning(
@@ -735,8 +746,11 @@ class AddCards(QMainWindow):
                 self.mw.taskman.run_on_main(
                     lambda: self._apply_llm_result(result, action)
                 )
-            except LLMError as e:
-                self.mw.taskman.run_on_main(lambda: self._handle_llm_error(str(e)))
+            except LLMError as llm_err:
+                err_msg = str(llm_err)
+                self.mw.taskman.run_on_main(
+                    lambda err=err_msg: self._handle_llm_error(err)  # type: ignore[misc]
+                )
 
         self.mw.taskman.run_in_background(do_generate)
 
@@ -755,7 +769,7 @@ class AddCards(QMainWindow):
 
         if result.action == "qa" and result.cards:
             # Add all generated Q&A pairs as separate notes
-            deck_id = self.deck_chooser.selected_deck_id()
+            deck_id = self.deck_chooser.selected_deck_id
             for card in result.cards:
                 new_note = self.col.new_note(note.note_type())
                 if len(new_note.fields) >= 1:
@@ -783,8 +797,8 @@ class AddCards(QMainWindow):
                 # Try to find and switch to the built-in Cloze notetype
                 for nt in self.col.models.all_names_and_ids():
                     if "cloze" in nt.name.lower():
-                        self.notetype_chooser.selected_notetype_id = nt.id
-                        self.on_notetype_change(nt.id)
+                        self.notetype_chooser.selected_notetype_id = NotetypeId(nt.id)
+                        self.on_notetype_change(NotetypeId(nt.id))
                         note = self.editor.note
                         if note is None:
                             return
@@ -829,7 +843,7 @@ class AddCards(QMainWindow):
 
     def _handle_llm_error(self, error_msg: str) -> None:
         """Handle LLM generation errors."""
-        self.intake_frame.set_llm_status(f"LLM status: generation failed")
+        self.intake_frame.set_llm_status("LLM status: generation failed")
         showWarning(f"LLM generation failed:\n\n{error_msg}", parent=self)
 
     def _organize_current_note(self) -> None:

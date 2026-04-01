@@ -13,18 +13,13 @@ use super::models::Flashcard;
 use super::models::SourceType;
 
 /// Format for flashcard generation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum FlashcardFormat {
     /// Basic question/answer format with front and back
+    #[default]
     Basic,
     /// Cloze deletion format with {{c1::text}} syntax
     Cloze,
-}
-
-impl Default for FlashcardFormat {
-    fn default() -> Self {
-        FlashcardFormat::Basic
-    }
 }
 
 /// Target card count based on content length.
@@ -43,7 +38,7 @@ impl CardCount {
     ///
     /// Approximately 1 card per 100 words, with min 1 and max 50.
     pub fn from_word_count(word_count: usize) -> Self {
-        let target = (word_count / 100).max(1).min(50);
+        let target = (word_count / 100).clamp(1, 50);
         CardCount {
             min: 1,
             max: 50,
@@ -88,9 +83,9 @@ Rules:
     );
 
     // Add card count guidance
-    prompt.push_str(&format!(
-        "\n- Generate approximately 1 card per 100 words of content (minimum 1, maximum 50)"
-    ));
+    prompt.push_str(
+        "\n- Generate approximately 1 card per 100 words of content (minimum 1, maximum 50)",
+    );
 
     // Add subject focus if provided
     if let Some(ref focus) = config.subject_focus {
@@ -392,7 +387,7 @@ mod test {
     #[test]
     fn test_extract_keywords_stops_common_words() {
         let content = "the quick brown fox jumps over the lazy dog the quick brown";
-        let keywords = extract_keywords(&content, 3);
+        let keywords = extract_keywords(content, 3);
         // "the" should be filtered out as a stop word
         assert!(!keywords.iter().any(|k| k == "the"));
     }

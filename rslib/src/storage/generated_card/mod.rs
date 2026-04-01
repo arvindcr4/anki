@@ -74,6 +74,7 @@ pub struct StoredCard {
     pub tags: String,
 }
 
+#[allow(dead_code)]
 impl StoredCard {
     /// Convert to a Flashcard struct.
     pub fn into_flashcard(self) -> Flashcard {
@@ -146,7 +147,7 @@ impl GeneratedCardStorage {
                     &tags,
                 ],
             )
-            .map_err(|e| AnkiError::from(e))?;
+            .map_err(AnkiError::from)?;
 
         Ok(self.db.last_insert_rowid())
     }
@@ -263,7 +264,10 @@ fn row_to_stored_card(row: &rusqlite::Row) -> SqliteResult<StoredCard> {
         "video" => SourceType::Video,
         "code" => SourceType::Code,
         other => {
-            tracing::warn!("Unknown source_type in generated_card DB: {:?}, defaulting to Text", other);
+            tracing::warn!(
+                "Unknown source_type in generated_card DB: {:?}, defaulting to Text",
+                other
+            );
             SourceType::Text
         }
     };
@@ -272,7 +276,10 @@ fn row_to_stored_card(row: &rusqlite::Row) -> SqliteResult<StoredCard> {
     let sync_status = match SyncStatus::from_str(&sync_status_str) {
         Some(s) => s,
         None => {
-            tracing::warn!("Unknown sync_status in generated_card DB: {:?}, defaulting to Pending", sync_status_str);
+            tracing::warn!(
+                "Unknown sync_status in generated_card DB: {:?}, defaulting to Pending",
+                sync_status_str
+            );
             SyncStatus::Pending
         }
     };
@@ -440,7 +447,7 @@ mod test {
             source_type: SourceType::Url,
             created_at: 1234567890,
             sync_status: SyncStatus::Pending,
-            tags: "tag1,tag2,tag3".into(),
+            tags: "tag1\x1ftag2\x1ftag3".into(),
         };
 
         let flashcard = stored.into_flashcard();
@@ -494,7 +501,7 @@ mod test {
             source_type: SourceType::Text,
             created_at: 0,
             sync_status: SyncStatus::Pending,
-            tags: "one,two,three".into(),
+            tags: "one\x1ftwo\x1fthree".into(),
         };
 
         let tags = stored.tags_vec();

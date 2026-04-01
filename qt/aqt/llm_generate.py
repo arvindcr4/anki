@@ -16,7 +16,8 @@ from __future__ import annotations
 
 import json
 import os
-import re
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from typing import Literal
 
@@ -100,7 +101,8 @@ def get_model() -> str:
 def is_local_available() -> bool:
     """Check if local MLX inference is available."""
     try:
-        import mlx_lm  # noqa: F401
+        import mlx_lm  # type: ignore[import-not-found]  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -121,7 +123,7 @@ def generate_cards(
 
     if backend == "local" or (backend == "auto" and is_local_available()):
         return _generate_local(source_text, action, num_cards, context)
-    elif backend == "api" or backend == "auto":
+    elif backend in {"api", "auto"}:
         api_key = get_api_key()
         if not api_key:
             raise LLMError(
@@ -151,7 +153,7 @@ def _get_local_model():
         return _local_model, _local_tokenizer
 
     try:
-        import mlx_lm
+        import mlx_lm  # type: ignore[import-not-found]
     except ImportError:
         raise LLMError(
             "mlx-lm is not installed. Install it with:\n"
@@ -185,7 +187,7 @@ def _get_local_model():
 def _download_model(model_name: str) -> None:
     """Download a model from HuggingFace Hub."""
     try:
-        from huggingface_hub import snapshot_download
+        from huggingface_hub import snapshot_download  # type: ignore[import-not-found]
     except ImportError:
         raise LLMError(
             f"Model '{model_name}' not found locally and huggingface_hub "
@@ -238,7 +240,7 @@ def _generate_local(
     source_text: str, action: ActionType, num_cards: int, context: str
 ) -> GenerationResult:
     """Generate cards using local MLX inference."""
-    import mlx_lm
+    import mlx_lm  # type: ignore[import-not-found]
 
     model, tokenizer = _get_local_model()
 
@@ -351,6 +353,7 @@ def _parse_response(
     # Strip thinking tags from reasoning models (e.g., Qwen3, DeepSeek)
     if "<think>" in text:
         import re
+
         text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
     # Strip markdown code fences if present

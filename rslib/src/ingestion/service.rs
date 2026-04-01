@@ -39,9 +39,10 @@ impl IngestionService {
 
     /// Create a new IngestionService with API key.
     pub fn with_api_key(api_key: impl Into<String>) -> Self {
-        let mut config = IngestionConfig::default();
-        config.gemini_api_key = Some(api_key.into());
-        Self::new(config)
+        Self::new(IngestionConfig {
+            gemini_api_key: Some(api_key.into()),
+            ..Default::default()
+        })
     }
 
     /// Check if the service is configured with a Gemini API key.
@@ -270,8 +271,6 @@ fn extract_text_from_response(response: &crate::ingestion::api::GenerateContentR
 
 #[cfg(test)]
 mod test {
-    use std::path::PathBuf;
-
     use super::*;
 
     #[test]

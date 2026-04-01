@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import threading
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -43,9 +43,9 @@ class QueuedCard:
     # Target deck name
     deck: str
     # Optional tags
-    tags: list[str]
+    tags: list[str] = field(default_factory=list)
     # When the card was queued (Unix timestamp)
-    queued_at: int
+    queued_at: int = 0
     # Number of sync attempts
     attempt_count: int = 0
     # Last error message if any
@@ -292,7 +292,9 @@ class OfflineSyncQueue:
                     if note_id is not None:
                         # Success - remove from queue
                         with self._lock:
-                            self._cards = [c for c in self._cards if c.local_id != card.local_id]
+                            self._cards = [
+                                c for c in self._cards if c.local_id != card.local_id
+                            ]
                             self._last_success = int(time.time())
                         success_count += 1
                     else:
@@ -306,7 +308,9 @@ class OfflineSyncQueue:
                     # AnkiConnect went offline - stop processing
                     with self._lock:
                         self._last_error = "AnkiConnect unavailable during sync"
-                    return success_count, failed_count + len(cards_to_process) - cards_to_process.index(card) - 1
+                    return success_count, failed_count + len(
+                        cards_to_process
+                    ) - cards_to_process.index(card) - 1
 
                 except Exception as e:
                     with self._lock:

@@ -32,16 +32,19 @@ RATE_LIMIT_BACKOFF_SECONDS = 1
 
 class AnkiConnectError(Exception):
     """Base exception for AnkiConnect errors."""
+
     pass
 
 
 class AnkiConnectUnavailable(AnkiConnectError):
     """Raised when AnkiConnect is not available (Anki not running or addon not installed)."""
+
     pass
 
 
 class AnkiConnectRateLimit(AnkiConnectError):
     """Raised when AnkiConnect returns a 429 rate limit response."""
+
     pass
 
 
@@ -144,9 +147,7 @@ class AnkiConnectClient:
                     ) from e
 
                 if result.get("error"):
-                    raise AnkiConnectAPIError(
-                        f"AnkiConnect error: {result['error']}"
-                    )
+                    raise AnkiConnectAPIError(f"AnkiConnect error: {result['error']}")
 
                 return result.get("result")
 

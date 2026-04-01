@@ -9,20 +9,22 @@ These tests can be run without the full anki build environment.
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import Mock, patch
-
 # Skip the problematic imports and import only what we need
 import sys
+from typing import Any
+from unittest.mock import Mock, patch
+
+import pytest
+
 sys.path.insert(0, ".")
 
 from anki.ankiconnect import (
-    AnkiConnectClient,
-    AnkiConnectUnavailable,
-    AnkiConnectRateLimit,
-    AnkiConnectAPIError,
     DEFAULT_URL,
     MAX_RETRIES,
+    AnkiConnectAPIError,
+    AnkiConnectClient,
+    AnkiConnectRateLimit,
+    AnkiConnectUnavailable,
 )
 
 
@@ -41,7 +43,7 @@ class MockResponse:
             raise Exception(f"HTTP {self.status_code}")
 
 
-def make_success_response(result: any) -> MockResponse:
+def make_success_response(result: Any) -> MockResponse:
     """Create a successful AnkiConnect response."""
     return MockResponse({"result": result, "error": None})
 
@@ -241,7 +243,15 @@ class TestRateLimit:
             # Use _invoke() directly to test rate limit exception propagation
             # add_note() catches errors and returns None, but _invoke() raises them
             with pytest.raises(AnkiConnectRateLimit):
-                client._invoke("addNote", {"note": {"deckName": "Test", "fields": {"Front": "A", "Back": "B"}}})
+                client._invoke(
+                    "addNote",
+                    {
+                        "note": {
+                            "deckName": "Test",
+                            "fields": {"Front": "A", "Back": "B"},
+                        }
+                    },
+                )
 
 
 class TestGetDeckNamesAndIds:
@@ -294,9 +304,7 @@ class TestAddNotesBatch:
         with patch("requests.Session") as MockSession:
             mock_session = Mock()
             MockSession.return_value = mock_session
-            mock_session.post.return_value = make_success_response(
-                [123, 456, 789]
-            )
+            mock_session.post.return_value = make_success_response([123, 456, 789])
 
             client = AnkiConnectClient()
             notes = [
@@ -317,9 +325,7 @@ class TestAddNotesBatch:
         with patch("requests.Session") as MockSession:
             mock_session = Mock()
             MockSession.return_value = mock_session
-            mock_session.post.return_value = make_success_response(
-                [123, None, 456]
-            )
+            mock_session.post.return_value = make_success_response([123, None, 456])
 
             client = AnkiConnectClient()
             result = client.add_notes_batch(
