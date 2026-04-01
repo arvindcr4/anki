@@ -898,4 +898,105 @@ mod test {
         assert_eq!(nt_cloze.templates[0].config.q_format, "front {{cloze:foo}}");
         assert_eq!(nt_cloze.templates[0].config.a_format, "back {{cloze:foo}}");
     }
+
+    #[test]
+    fn new_config_has_css() {
+        let config = Notetype::new_config();
+        assert!(!config.css.is_empty());
+        assert!(!config.latex_pre.is_empty());
+        assert!(!config.latex_post.is_empty());
+    }
+
+    #[test]
+    fn new_cloze_config_has_cloze_kind() {
+        let config = Notetype::new_cloze_config();
+        assert_eq!(config.kind, NotetypeKind::Cloze as i32);
+        // cloze config should have extra CSS
+        assert!(config.css.len() > Notetype::new_config().css.len());
+    }
+
+    #[test]
+    fn add_field_and_template() {
+        let mut nt = Notetype::default();
+        nt.add_field("Front");
+        nt.add_field("Back");
+        assert_eq!(nt.fields.len(), 2);
+        assert_eq!(nt.fields[0].name, "Front");
+        assert_eq!(nt.fields[1].name, "Back");
+
+        nt.add_template("Card 1", "{{Front}}", "{{Back}}");
+        assert_eq!(nt.templates.len(), 1);
+        assert_eq!(nt.templates[0].name, "Card 1");
+    }
+
+    #[test]
+    fn get_field_ord_found() {
+        let mut nt = Notetype::default();
+        nt.add_field("Front");
+        nt.add_field("Back");
+        assert_eq!(nt.get_field_ord("Front"), Some(0));
+        assert_eq!(nt.get_field_ord("Back"), Some(1));
+    }
+
+    #[test]
+    fn get_field_ord_case_insensitive() {
+        let mut nt = Notetype::default();
+        nt.add_field("Front");
+        assert_eq!(nt.get_field_ord("front"), Some(0));
+        assert_eq!(nt.get_field_ord("FRONT"), Some(0));
+    }
+
+    #[test]
+    fn get_field_ord_not_found() {
+        let mut nt = Notetype::default();
+        nt.add_field("Front");
+        assert_eq!(nt.get_field_ord("Back"), None);
+    }
+
+    #[test]
+    fn is_cloze_false() {
+        let nt = Notetype::default();
+        assert!(!nt.is_cloze());
+    }
+
+    #[test]
+    fn is_cloze_true() {
+        let nt = Notetype {
+            config: Notetype::new_cloze_config(),
+            ..Default::default()
+        };
+        assert!(nt.is_cloze());
+    }
+
+    #[test]
+    fn get_template_normal() {
+        let mut nt = Notetype::default();
+        nt.add_template("Card 1", "q1", "a1");
+        nt.add_template("Card 2", "q2", "a2");
+        assert_eq!(nt.get_template(0).unwrap().name, "Card 1");
+        assert_eq!(nt.get_template(1).unwrap().name, "Card 2");
+        assert!(nt.get_template(2).is_err());
+    }
+
+    #[test]
+    fn get_template_cloze_always_first() {
+        let mut nt = Notetype {
+            config: Notetype::new_cloze_config(),
+            ..Default::default()
+        };
+        nt.add_template("Cloze", "{{cloze:Text}}", "{{cloze:Text}}");
+        // cloze always returns first template regardless of ordinal
+        assert_eq!(nt.get_template(0).unwrap().name, "Cloze");
+        assert_eq!(nt.get_template(5).unwrap().name, "Cloze");
+        assert_eq!(nt.get_template(99).unwrap().name, "Cloze");
+    }
+
+    #[test]
+    fn notetype_default() {
+        let nt = Notetype::default();
+        assert_eq!(nt.id, NotetypeId(0));
+        assert!(nt.name.is_empty());
+        assert!(nt.fields.is_empty());
+        assert!(nt.templates.is_empty());
+    }
 }
