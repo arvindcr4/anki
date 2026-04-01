@@ -738,4 +738,151 @@ mod test {
             );
         }
     }
+
+    #[test]
+    fn is_html_true() {
+        assert!(is_html("<b>bold</b>"));
+        assert!(is_html("<div>text</div>"));
+        assert!(is_html("before<br>after"));
+        assert!(is_html("<img src=foo.jpg>"));
+    }
+
+    #[test]
+    fn is_html_false() {
+        assert!(!is_html("plain text"));
+        assert!(!is_html("no tags here"));
+        assert!(!is_html("1 < 2"));
+    }
+
+    #[test]
+    fn decode_entities_basic() {
+        assert_eq!(decode_entities("&amp;"), "&");
+        assert_eq!(decode_entities("&lt;"), "<");
+        assert_eq!(decode_entities("&gt;"), ">");
+    }
+
+    #[test]
+    fn decode_entities_no_entities() {
+        assert!(matches!(decode_entities("plain"), Cow::Borrowed(_)));
+    }
+
+    #[test]
+    fn decode_entities_nbsp_to_space() {
+        assert_eq!(decode_entities("&nbsp;"), " ");
+    }
+
+    #[test]
+    fn newlines_to_spaces_converts() {
+        assert_eq!(newlines_to_spaces("a\nb\nc").as_ref(), "a b c");
+    }
+
+    #[test]
+    fn newlines_to_spaces_no_newlines() {
+        assert!(matches!(
+            newlines_to_spaces("no newlines"),
+            Cow::Borrowed(_)
+        ));
+    }
+
+    #[test]
+    fn strip_html_preserving_entities_no_html() {
+        assert!(matches!(
+            strip_html_preserving_entities("no html"),
+            Cow::Borrowed(_)
+        ));
+    }
+
+    #[test]
+    fn strip_html_preserving_entities_with_html() {
+        assert_eq!(
+            strip_html_preserving_entities("<b>bold</b> &amp; text").as_ref(),
+            "bold &amp; text"
+        );
+    }
+
+    #[test]
+    fn html_to_text_line_basic() {
+        assert_eq!(
+            html_to_text_line("<b>hello</b> world", false).as_ref(),
+            "hello world"
+        );
+    }
+
+    #[test]
+    fn html_to_text_line_preserves_media() {
+        let result = html_to_text_line("<img src=foo.jpg>text", true);
+        assert!(result.contains("foo.jpg"));
+    }
+
+    #[test]
+    fn html_to_text_line_strips_sound() {
+        let result = html_to_text_line("[sound:bar.mp3]text", false);
+        assert!(!result.contains("sound"));
+        assert!(result.contains("text"));
+    }
+
+    #[test]
+    fn strip_html_for_tts_replaces_br() {
+        let result = strip_html_for_tts("hello<br>world");
+        assert!(result.contains("hello"));
+        assert!(result.contains("world"));
+        assert!(!result.contains("<br>"));
+    }
+
+    #[test]
+    fn cow_mapping_borrowed_stays_borrowed() {
+        let cow: Cow<'_, str> = Cow::Borrowed("hello");
+        let mapped = cow.map_cow(|s| {
+            if s.contains('x') {
+                Cow::Owned(s.replace('x', "y"))
+            } else {
+                Cow::Borrowed(s)
+            }
+        });
+        assert!(matches!(mapped, Cow::Borrowed(_)));
+    }
+
+    #[test]
+    fn cow_mapping_transforms() {
+        let cow: Cow<'_, str> = Cow::Borrowed("hello x world");
+        let mapped = cow.map_cow(|s| {
+            if s.contains('x') {
+                Cow::Owned(s.replace('x', "y"))
+            } else {
+                Cow::Borrowed(s)
+            }
+        });
+        assert_eq!(mapped.as_ref(), "hello y world");
+    }
+
+    #[test]
+    fn to_re_escapes() {
+        assert_eq!(&to_re("[test]"), r"\[test\]");
+        assert_eq!(&to_re("plain"), "plain");
+    }
+
+    #[test]
+    fn to_sql_converts() {
+        assert_eq!(&to_sql("fo_o*"), r"fo_o%");
+        assert_eq!(&to_sql("%special"), r"\%special");
+    }
+
+    #[test]
+    fn to_text_unescapes() {
+        assert_eq!(&to_text(r"\*test\_"), "*test_");
+    }
+
+    #[test]
+    fn is_glob_detects() {
+        assert!(is_glob("foo*"));
+        assert!(is_glob("foo_bar"));
+        assert!(!is_glob("plain"));
+        assert!(!is_glob(r"foo\*bar"));
+    }
+
+    #[test]
+    fn escape_anki_wildcards_basic() {
+        assert_eq!(escape_anki_wildcards("foo*bar"), r"foo\*bar");
+        assert_eq!(escape_anki_wildcards("no_wild"), r"no\_wild");
+    }
 }

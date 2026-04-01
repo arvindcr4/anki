@@ -403,13 +403,19 @@ mod tests {
 
     #[test]
     fn limit_if_today_matches() {
-        let limit = DayLimit { limit: 50, today: 100 };
+        let limit = DayLimit {
+            limit: 50,
+            today: 100,
+        };
         assert_eq!(limit_if_today(limit, 100), Some(50));
     }
 
     #[test]
     fn limit_if_today_different_day() {
-        let limit = DayLimit { limit: 50, today: 100 };
+        let limit = DayLimit {
+            limit: 50,
+            today: 100,
+        };
         assert_eq!(limit_if_today(limit, 101), None);
     }
 

@@ -385,7 +385,7 @@ mod test {
 
     #[test]
     fn original_or_current_due_not_filtered() {
-        let mut card = Card::new(NoteId(0), 0, DeckId(1), 42);
+        let card = Card::new(NoteId(0), 0, DeckId(1), 42);
         // not in filtered deck
         assert_eq!(card.original_or_current_due(), 42);
     }

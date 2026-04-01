@@ -92,58 +92,72 @@ mod tests {
 
     #[test]
     fn restore_queue_new() {
-        let mut card = Card::default();
-        card.ctype = CardType::New;
+        let mut card = Card {
+            ctype: CardType::New,
+            ..Default::default()
+        };
         card.restore_queue_from_type();
         assert_eq!(card.queue, CardQueue::New);
     }
 
     #[test]
     fn restore_queue_review() {
-        let mut card = Card::default();
-        card.ctype = CardType::Review;
+        let mut card = Card {
+            ctype: CardType::Review,
+            ..Default::default()
+        };
         card.restore_queue_from_type();
         assert_eq!(card.queue, CardQueue::Review);
     }
 
     #[test]
     fn restore_queue_learn_unix_timestamp() {
-        let mut card = Card::default();
-        card.ctype = CardType::Learn;
-        card.due = 1_700_000_000; // unix timestamp
+        let mut card = Card {
+            ctype: CardType::Learn,
+            due: 1_700_000_000, // unix timestamp
+            ..Default::default()
+        };
         card.restore_queue_from_type();
         assert_eq!(card.queue, CardQueue::Learn);
     }
 
     #[test]
     fn restore_queue_learn_day_number() {
-        let mut card = Card::default();
-        card.ctype = CardType::Learn;
-        card.due = 100; // day number
+        let mut card = Card {
+            ctype: CardType::Learn,
+            due: 100, // day number
+            ..Default::default()
+        };
         card.restore_queue_from_type();
         assert_eq!(card.queue, CardQueue::DayLearn);
     }
 
     #[test]
     fn original_or_current_deck_id_no_original() {
-        let mut card = Card::default();
-        card.deck_id = DeckId(5);
-        card.original_deck_id = DeckId(0);
+        let card = Card {
+            deck_id: DeckId(5),
+            original_deck_id: DeckId(0),
+            ..Default::default()
+        };
         assert_eq!(card.original_or_current_deck_id(), DeckId(5));
     }
 
     #[test]
     fn original_or_current_deck_id_has_original() {
-        let mut card = Card::default();
-        card.deck_id = DeckId(5);
-        card.original_deck_id = DeckId(10);
+        let card = Card {
+            deck_id: DeckId(5),
+            original_deck_id: DeckId(10),
+            ..Default::default()
+        };
         assert_eq!(card.original_or_current_deck_id(), DeckId(10));
     }
 
     #[test]
     fn is_filtered_true() {
-        let mut card = Card::default();
-        card.original_deck_id = DeckId(1);
+        let card = Card {
+            original_deck_id: DeckId(1),
+            ..Default::default()
+        };
         assert!(card.is_filtered());
     }
 
@@ -155,10 +169,12 @@ mod tests {
 
     #[test]
     fn remove_from_filtered_restores_deck() {
-        let mut card = Card::default();
-        card.deck_id = DeckId(99); // filtered deck
-        card.original_deck_id = DeckId(1); // home deck
-        card.original_due = 50;
+        let mut card = Card {
+            deck_id: DeckId(99),         // filtered deck
+            original_deck_id: DeckId(1), // home deck
+            original_due: 50,
+            ..Default::default()
+        };
         card.remove_from_filtered_deck_before_reschedule();
         assert_eq!(card.deck_id, DeckId(1));
         assert_eq!(card.original_deck_id, DeckId(0));
@@ -167,22 +183,26 @@ mod tests {
 
     #[test]
     fn remove_from_filtered_noop_when_not_filtered() {
-        let mut card = Card::default();
-        card.deck_id = DeckId(1);
-        card.original_deck_id = DeckId(0);
+        let mut card = Card {
+            deck_id: DeckId(1),
+            original_deck_id: DeckId(0),
+            ..Default::default()
+        };
         card.remove_from_filtered_deck_before_reschedule();
         assert_eq!(card.deck_id, DeckId(1)); // unchanged
     }
 
     #[test]
     fn remove_restoring_queue() {
-        let mut card = Card::default();
-        card.ctype = CardType::Review;
-        card.deck_id = DeckId(99);
-        card.original_deck_id = DeckId(1);
-        card.original_due = 50;
-        card.due = -100;
-        card.queue = CardQueue::Review;
+        let mut card = Card {
+            ctype: CardType::Review,
+            deck_id: DeckId(99),
+            original_deck_id: DeckId(1),
+            original_due: 50,
+            due: -100,
+            queue: CardQueue::Review,
+            ..Default::default()
+        };
         card.remove_from_filtered_deck_restoring_queue();
         assert_eq!(card.deck_id, DeckId(1));
         assert_eq!(card.due, 50);

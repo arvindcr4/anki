@@ -313,7 +313,8 @@ class OfflineSyncQueue:
                 cards_to_process = list(self._cards)
                 pending_count = len(cards_to_process)
                 self._last_error = None
-            cards_to_process = cards_to_process[:MAX_BATCH_SIZE]
+            if not cards_to_process:
+                return 0, 0
 
             with AnkiConnectClient() as client:
                 # Check if AnkiConnect is available
@@ -323,55 +324,56 @@ class OfflineSyncQueue:
                     return 0, pending_count
 
                 # Process cards in batches
-                for index, card in enumerate(cards_to_process):
-                    with self._lock:
-                        card.attempt_count += 1
+                for batch_start in range(0, pending_count, MAX_BATCH_SIZE):
+                    batch = cards_to_process[batch_start : batch_start + MAX_BATCH_SIZE]
+                    for card in batch:
+                        with self._lock:
+                            card.attempt_count += 1
 
-                    note = {
-                        "deckName": card.deck,
-                        "modelName": "Basic",
-                        "fields": {
-                            "Front": card.front,
-                            "Back": card.back,
-                        },
-                    }
-                    if card.tags:
-                        note["tags"] = card.tags
+                        note = {
+                            "deckName": card.deck,
+                            "modelName": "Basic",
+                            "fields": {
+                                "Front": card.front,
+                                "Back": card.back,
+                            },
+                        }
+                        if card.tags:
+                            note["tags"] = card.tags
 
-                    try:
-                        note_id = client._invoke("addNote", {"note": note})
+                        try:
+                            note_id = client._invoke("addNote", {"note": note})
 
-                        if note_id is not None:
-                            # Success - remove the exact queued entry that synced.
+                            if note_id is not None:
+                                # Success - remove the exact queued entry that synced.
+                                with self._lock:
+                                    self._remove_card_instance(card)
+                                    self._last_success = int(time.time())
+                                success_count += 1
+                            else:
+                                with self._lock:
+                                    card.last_error = "Anki returned null"
+                                failed_count += 1
+
+                        except (AnkiConnectUnavailable, AnkiConnectRateLimit) as e:
                             with self._lock:
-                                self._remove_card_instance(card)
-                                self._last_success = int(time.time())
-                            success_count += 1
-                        else:
+                                card.last_error = str(e)
+                                self._last_error = str(e)
+                                # Persist partial progress before returning early.
+                                self._save_queue()
+                            return success_count, pending_count - success_count
+
+                        except AnkiConnectAPIError as e:
                             with self._lock:
-                                card.last_error = "Anki returned null"
+                                card.last_error = str(e)
+                                self._last_error = str(e)
                             failed_count += 1
 
-                    except (AnkiConnectUnavailable, AnkiConnectRateLimit) as e:
-                        with self._lock:
-                            card.last_error = str(e)
-                            self._last_error = str(e)
-                            # Persist partial progress before returning early.
-                            self._save_queue()
-                        remaining_cards = len(cards_to_process) - index
-                        return success_count, failed_count + remaining_cards
-
-                    except AnkiConnectAPIError as e:
-                        with self._lock:
-                            card.last_error = str(e)
-                            self._last_error = str(e)
-                        failed_count += 1
-
-                    except Exception as e:
-                        with self._lock:
-                            card.last_error = str(e)
-                            self._last_error = str(e)
-                        failed_count += 1
+                        except Exception as e:
+                            with self._lock:
+                                card.last_error = str(e)
+                                self._last_error = str(e)
+                            failed_count += 1
 
             # Save state after sync attempt
             self._save_queue()

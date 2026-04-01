@@ -249,14 +249,38 @@ mod tests {
     fn sync_error_messages_not_empty() {
         let tr = I18n::template_only();
         let errors = vec![
-            SyncError { info: "".into(), kind: SyncErrorKind::Conflict },
-            SyncError { info: "".into(), kind: SyncErrorKind::ServerError },
-            SyncError { info: "".into(), kind: SyncErrorKind::ClientTooOld },
-            SyncError { info: "".into(), kind: SyncErrorKind::AuthFailed },
-            SyncError { info: "".into(), kind: SyncErrorKind::ResyncRequired },
-            SyncError { info: "".into(), kind: SyncErrorKind::ClockIncorrect },
-            SyncError { info: "".into(), kind: SyncErrorKind::DatabaseCheckRequired },
-            SyncError { info: "".into(), kind: SyncErrorKind::SyncNotStarted },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::Conflict,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::ServerError,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::ClientTooOld,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::AuthFailed,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::ResyncRequired,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::ClockIncorrect,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::DatabaseCheckRequired,
+            },
+            SyncError {
+                info: "".into(),
+                kind: SyncErrorKind::SyncNotStarted,
+            },
         ];
         for err in &errors {
             assert!(!err.message(&tr).is_empty());

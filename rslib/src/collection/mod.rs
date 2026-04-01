@@ -225,7 +225,6 @@ impl Collection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::prelude::*;
 
     #[test]
     fn collection_new_creates_in_memory() {

@@ -22,7 +22,10 @@ mod tests {
 
     #[test]
     fn bold() {
-        assert_eq!(render_markdown("**bold**"), "<p><strong>bold</strong></p>\n");
+        assert_eq!(
+            render_markdown("**bold**"),
+            "<p><strong>bold</strong></p>\n"
+        );
     }
 
     #[test]

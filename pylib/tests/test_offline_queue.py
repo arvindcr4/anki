@@ -308,6 +308,23 @@ class TestSyncNow:
         assert failed == total_cards
         assert len(self.queue) == total_cards
 
+    def test_sync_success_processes_all_pending_cards_across_batches(self) -> None:
+        """Test that one sync attempt drains every queued card, not just the first batch."""
+        total_cards = MAX_BATCH_SIZE + 2
+        for local_id in range(1, total_cards + 1):
+            self.queue.add_card(
+                front=f"Q{local_id}", back=f"A{local_id}", local_id=local_id
+            )
+
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
+            MockClient.return_value = _FakeAnkiConnectClient(invoke_return=12345)
+
+            success, failed = self.queue.sync_now()
+
+        assert success == total_cards
+        assert failed == 0
+        assert len(self.queue) == 0
+
     def test_sync_increments_attempt_count(self) -> None:
         """Test that each sync attempt increments the counter."""
         self.queue.add_card(front="Q", back="A", local_id=1)
@@ -369,6 +386,39 @@ class TestSyncNow:
         reloaded = OfflineSyncQueue(queue_path=self.queue_path, deck="Test Deck")
         remaining_ids = [card.local_id for card in reloaded.get_queue()]
         assert remaining_ids == [2, 3]
+
+    @pytest.mark.parametrize(
+        "error_type,error_message",
+        [
+            (AnkiConnectUnavailable, "temporary outage"),
+            (AnkiConnectRateLimit, "rate limited"),
+        ],
+    )
+    def test_sync_unavailable_mid_batch_reports_all_remaining_cards_across_batches(
+        self,
+        error_type: type[Exception],
+        error_message: str,
+    ) -> None:
+        """Test that a mid-batch outage counts cards still queued beyond the current batch."""
+        total_cards = MAX_BATCH_SIZE + 2
+        for local_id in range(1, total_cards + 1):
+            self.queue.add_card(
+                front=f"Q{local_id}", back=f"A{local_id}", local_id=local_id
+            )
+
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
+            MockClient.return_value = _FakeAnkiConnectClient(
+                invoke_side_effect=[12345, error_type(error_message)]
+            )
+
+            success, failed = self.queue.sync_now()
+
+        assert success == 1
+        assert failed == total_cards - 1
+
+        reloaded = OfflineSyncQueue(queue_path=self.queue_path, deck="Test Deck")
+        remaining_ids = [card.local_id for card in reloaded.get_queue()]
+        assert remaining_ids == list(range(2, total_cards + 1))
 
     def test_generated_local_ids_remain_unique_when_clock_stalls(self) -> None:
         """Test that auto-generated local IDs do not collide on a fixed clock."""

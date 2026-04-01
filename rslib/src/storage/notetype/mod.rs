@@ -206,6 +206,13 @@ impl SqliteStorage {
             .collect()
     }
 
+    pub(crate) fn note_ids_for_notetype(&self, ntid: NotetypeId) -> Result<Vec<NoteId>> {
+        self.db
+            .prepare_cached("select id from notes where mid = ? order by id")?
+            .query_and_then([ntid], |r| Ok(r.get(0)?))?
+            .collect()
+    }
+
     fn update_notetype_templates(
         &self,
         ntid: NotetypeId,
@@ -295,7 +302,8 @@ impl SqliteStorage {
         self.db
             .prepare_cached(concat!(
                 include_str!("existing_cards.sql"),
-                " where c.nid in (select id from notes where mid=?)"
+                " where c.nid in (select id from notes where mid=?)",
+                " order by nid, ord, id"
             ))?
             .query_and_then([ntid], row_to_existing_card)?
             .collect()
@@ -308,7 +316,8 @@ impl SqliteStorage {
         self.db
             .prepare_cached(concat!(
                 include_str!("existing_cards.sql"),
-                " where c.nid = ?"
+                " where c.nid = ?",
+                " order by nid, ord, id"
             ))?
             .query_and_then([nid], row_to_existing_card)?
             .collect()

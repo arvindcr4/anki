@@ -191,7 +191,7 @@ impl Collection {
                 } else {
                     // The removed revlog is in the middle of the revlog, so we use the memory
                     // state for the previous revlog entry
-                    Some(memory_states[revlog_index].into())
+                    Some(memory_states[revlog_index - 1].into())
                 };
                 stats_entry.memory_state = memory_state.map(|s| s.into());
                 result.push(stats_entry);
@@ -234,6 +234,8 @@ fn stats_revlog_entry(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::revlog::RevlogReviewKind;
+    use crate::scheduler::fsrs::params::tests::revlog;
     use crate::search::SortMode;
 
     #[test]
@@ -247,6 +249,61 @@ mod test {
         let cid = col.search_cards("", SortMode::NoOrder)?[0];
         let _report = col.card_stats(cid)?;
         //println!("report {}", report);
+
+        Ok(())
+    }
+
+    #[test]
+    fn filtered_middle_revlog_uses_previous_memory_state() -> Result<()> {
+        let mut col = Collection::new();
+
+        let nt = col.get_notetype_by_name("Basic")?.unwrap();
+        let mut note = nt.new_note();
+        col.add_note(&mut note, DeckId(1))?;
+
+        let cid = col.search_cards("", SortMode::NoOrder)?[0];
+        let card = col.storage.get_card(cid)?.unwrap();
+
+        let revlog = vec![
+            RevlogEntry {
+                cid,
+                ..revlog(RevlogReviewKind::Learning, 10)
+            },
+            RevlogEntry {
+                cid,
+                ..revlog(RevlogReviewKind::Review, 9)
+            },
+            RevlogEntry {
+                cid,
+                ease_factor: 100,
+                ..revlog(RevlogReviewKind::Manual, 7)
+            },
+            RevlogEntry {
+                cid,
+                ..revlog(RevlogReviewKind::Review, 4)
+            },
+        ];
+
+        let stats = col.stats_revlog_entries_with_memory_state(&card, revlog)?;
+        let manual = stats
+            .iter()
+            .find(|entry| entry.review_kind == RevlogReviewKind::Manual as i32)
+            .unwrap();
+        let prior_review = stats
+            .iter()
+            .find(|entry| {
+                entry.review_kind == RevlogReviewKind::Review as i32 && entry.time < manual.time
+            })
+            .unwrap();
+        let later_review = stats
+            .iter()
+            .find(|entry| {
+                entry.review_kind == RevlogReviewKind::Review as i32 && entry.time > manual.time
+            })
+            .unwrap();
+
+        assert_eq!(manual.memory_state, prior_review.memory_state);
+        assert_ne!(manual.memory_state, later_review.memory_state);
 
         Ok(())
     }

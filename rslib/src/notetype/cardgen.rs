@@ -242,8 +242,23 @@ impl Collection {
         ctx: &CardGenContext<impl Deref<Target = Notetype>>,
         note: &Note,
     ) -> Result<()> {
+        self.generate_cards_for_existing_note_with_target_deck(ctx, note, None)
+    }
+
+    pub(crate) fn generate_cards_for_existing_note_with_target_deck(
+        &mut self,
+        ctx: &CardGenContext<impl Deref<Target = Notetype>>,
+        note: &Note,
+        target_deck_id: Option<DeckId>,
+    ) -> Result<()> {
         let existing = self.storage.existing_cards_for_note(note.id)?;
-        self.generate_cards_for_note(ctx, note, &existing, ctx.last_deck, &mut Default::default())?;
+        self.generate_cards_for_note(
+            ctx,
+            note,
+            &existing,
+            target_deck_id.or(ctx.last_deck),
+            &mut Default::default(),
+        )?;
         Ok(())
     }
 
@@ -267,10 +282,15 @@ impl Collection {
         &mut self,
         ctx: &CardGenContext<impl Deref<Target = Notetype>>,
     ) -> Result<()> {
+        let note_ids = self.storage.note_ids_for_notetype(ctx.notetype.id)?;
         let existing_cards = self.storage.existing_cards_for_notetype(ctx.notetype.id)?;
-        let by_note = group_generated_cards_by_note(existing_cards);
+        let mut by_note: HashMap<NoteId, Vec<AlreadyGeneratedCardInfo>> =
+            group_generated_cards_by_note(existing_cards)
+                .into_iter()
+                .collect();
         let mut cache = CardGenCache::default();
-        for (nid, existing_cards) in by_note {
+        for nid in note_ids {
+            let existing_cards = by_note.remove(&nid).unwrap_or_default();
             if ctx.notetype.config.kind() == NotetypeKind::Normal
                 && existing_cards.len() == ctx.notetype.templates.len()
             {

@@ -9,6 +9,7 @@ use std::collections::HashSet;
 use super::CardGenContext;
 use super::Notetype;
 use super::NotetypeKind;
+use crate::notes::UpdateNoteInnerWithoutCardsArgs;
 use crate::prelude::*;
 use crate::search::JoinSearches;
 use crate::search::Node;
@@ -219,6 +220,7 @@ impl Collection {
         );
 
         let usn = self.usn()?;
+        let deck_ids = self.preserved_deck_ids_for_notes(&input.note_ids)?;
         self.set_schema_modified()?;
         if let Some(new_templates) = input.new_templates {
             let old_notetype = self
@@ -241,6 +243,7 @@ impl Collection {
             &input.note_ids,
             &input.new_fields,
             input.new_notetype_id,
+            &deck_ids,
             usn,
         )?;
 
@@ -257,6 +260,7 @@ impl Collection {
         note_ids: &[NoteId],
         new_fields: &[Option<usize>],
         new_notetype_id: NotetypeId,
+        deck_ids: &HashMap<NoteId, Option<DeckId>>,
         usn: Usn,
     ) -> Result<()> {
         let notetype = self
@@ -270,12 +274,45 @@ impl Collection {
             let original = note.clone();
             remap_fields(note.fields_mut(), new_fields);
             note.notetype_id = new_notetype_id;
-            self.update_note_inner_generating_cards(
-                &ctx, &mut note, &original, true, false, false,
+            self.update_note_inner_without_cards(UpdateNoteInnerWithoutCardsArgs {
+                note: &mut note,
+                original: &original,
+                notetype: notetype.as_ref(),
+                usn,
+                mark_note_modified: true,
+                normalize_text: false,
+                update_tags: false,
+            })?;
+            self.generate_cards_for_existing_note_with_target_deck(
+                &ctx,
+                &note,
+                deck_ids.get(nid).copied().flatten(),
             )?;
         }
 
         Ok(())
+    }
+
+    fn preserved_deck_ids_for_notes(
+        &self,
+        note_ids: &[NoteId],
+    ) -> Result<HashMap<NoteId, Option<DeckId>>> {
+        let mut out = HashMap::with_capacity(note_ids.len());
+        for nid in note_ids {
+            let mut deck_ids = HashSet::new();
+            for card in self.storage.existing_cards_for_note(*nid)? {
+                deck_ids.insert(card.original_deck_id);
+            }
+            out.insert(
+                *nid,
+                if deck_ids.len() == 1 {
+                    deck_ids.into_iter().next()
+                } else {
+                    None
+                },
+            );
+        }
+        Ok(out)
     }
 
     fn update_cards_for_new_notetype(
@@ -550,6 +587,33 @@ mod test {
         col.change_notetype_of_notes(input)?;
         let cards = col.storage.all_cards_of_note(note.id)?;
         assert_eq!(cards.len(), 1);
+
+        Ok(())
+    }
+
+    #[test]
+    fn preserves_deck_when_all_cards_are_recreated() -> Result<()> {
+        let mut col = Collection::new();
+        let deck = col.get_or_create_normal_deck("target")?;
+        let basic = col.get_notetype_by_name("Basic")?.unwrap();
+        let mut note = basic.new_note();
+        note.set_field(0, "1")?;
+        note.set_field(1, "2")?;
+        col.add_note(&mut note, deck.id)?;
+
+        let basic2 = col
+            .get_notetype_by_name("Basic (and reversed card)")?
+            .unwrap();
+        let input = ChangeNotetypeInput {
+            note_ids: vec![note.id],
+            new_templates: Some(vec![None, None]),
+            ..col.notetype_change_info(basic.id, basic2.id)?.input
+        };
+        col.change_notetype_of_notes(input)?;
+
+        let cards = col.storage.all_cards_of_note(note.id)?;
+        assert_eq!(cards.len(), 2);
+        assert!(cards.iter().all(|card| card.deck_id == deck.id));
 
         Ok(())
     }

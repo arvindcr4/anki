@@ -198,7 +198,9 @@ impl Collection {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
+    use super::*;
+    use crate::collection::Collection;
+    use crate::error::Result;
     use crate::search::SortMode;
 
     fn sorted_names(col: &Collection) -> Vec<String> {
@@ -333,9 +335,6 @@ mod test {
 
         Ok(())
     }
-
-    use super::*;
-
     #[test]
     fn deck_id_or_nonzero() {
         let id = DeckId(5);

@@ -1444,4 +1444,124 @@ mod test {
         assert_eq!(&response.qnodes, &[FN::Text { text: "N".into() }]);
         assert!(!response.is_empty);
     }
+
+    #[test]
+    fn parsing_nested_conditionals() {
+        let tmpl = PT::from_text("{{#a}}{{#b}}inner{{/b}}{{/a}}").unwrap();
+        assert_eq!(
+            tmpl.0,
+            vec![Conditional {
+                key: "a".into(),
+                children: vec![Conditional {
+                    key: "b".into(),
+                    children: vec![Text("inner".into())]
+                }]
+            }]
+        );
+    }
+
+    #[test]
+    fn parsing_negated_conditional() {
+        let tmpl = PT::from_text("{{^empty}}shown{{/empty}}").unwrap();
+        assert_eq!(
+            tmpl.0,
+            vec![NegatedConditional {
+                key: "empty".into(),
+                children: vec![Text("shown".into())]
+            }]
+        );
+    }
+
+    #[test]
+    fn parsing_filter() {
+        let tmpl = PT::from_text("{{type:Front}}").unwrap();
+        assert_eq!(
+            tmpl.0,
+            vec![Replacement {
+                key: "Front".into(),
+                filters: vec!["type".into()]
+            }]
+        );
+    }
+
+    #[test]
+    fn parsing_multiple_filters() {
+        let tmpl = PT::from_text("{{text:cloze:Text}}").unwrap();
+        assert_eq!(
+            tmpl.0,
+            vec![Replacement {
+                key: "Text".into(),
+                filters: vec!["cloze".into(), "text".into()]
+            }]
+        );
+    }
+
+    #[test]
+    fn parsing_error_unclosed_conditional() {
+        let err = PT::from_text("{{#foo}}bar");
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn parsing_error_unopened_conditional() {
+        let err = PT::from_text("bar{{/foo}}");
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn parsing_error_mismatched_conditional() {
+        let err = PT::from_text("{{#foo}}bar{{/baz}}");
+        assert!(err.is_err());
+    }
+
+    #[test]
+    fn nonempty_fields_basic() {
+        let field_map: HashMap<&str, String> =
+            vec![("Front", "hello".to_string()), ("Back", "".to_string())]
+                .into_iter()
+                .collect();
+        let nonempty = nonempty_fields(&field_map);
+        assert!(nonempty.contains("Front"));
+        assert!(!nonempty.contains("Back"));
+    }
+
+    #[test]
+    fn nonempty_fields_html_only_is_empty() {
+        let field_map: HashMap<&str, String> =
+            vec![("Front", "<br>".to_string())].into_iter().collect();
+        let nonempty = nonempty_fields(&field_map);
+        assert!(!nonempty.contains("Front"));
+    }
+
+    #[test]
+    fn field_empty_edge_cases() {
+        assert!(field_is_empty("\t\n  "));
+        assert!(field_is_empty("<div><br></div>"));
+        assert!(!field_is_empty("0"));
+        assert!(!field_is_empty("<div>content</div>"));
+        assert!(!field_is_empty("<p></p>")); // p tags are not stripped
+    }
+
+    #[test]
+    fn template_to_string_roundtrip() {
+        let inputs = vec![
+            "{{Front}}",
+            "{{#Cond}}text{{/Cond}}",
+            "{{^Empty}}shown{{/Empty}}",
+            "{{type:Back}}",
+            "plain text only",
+        ];
+        for input in inputs {
+            let tmpl = PT::from_text(input).unwrap();
+            assert_eq!(input, &tmpl.template_to_string());
+        }
+    }
+
+    #[test]
+    fn field_requirements_single() {
+        let fields: FieldMap = vec![("Front", 0), ("Back", 1)].into_iter().collect();
+        let tmpl = PT::from_text("{{Front}}").unwrap();
+        let reqs = tmpl.requirements(&fields);
+        assert!(matches!(reqs, FieldRequirements::Any(_)));
+    }
 }

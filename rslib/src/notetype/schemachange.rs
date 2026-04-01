@@ -334,4 +334,34 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn cards_regenerated_for_orphaned_note_on_template_change() -> Result<()> {
+        let mut col = Collection::new();
+        let mut nt = col
+            .storage
+            .get_notetype(col.get_current_notetype_id().unwrap())?
+            .unwrap();
+        let mut note = nt.new_note();
+        note.set_field(0, "one")?;
+        note.set_field(1, "two")?;
+        col.add_note(&mut note, DeckId(1))?;
+
+        let cid = col.search_cards(note.id, SortMode::NoOrder)?[0];
+        col.storage.remove_card(cid)?;
+        assert!(col.storage.get_note(note.id)?.is_some());
+        assert!(col.search_cards(note.id, SortMode::NoOrder)?.is_empty());
+
+        nt.add_template("card 2", "{{Front}}2", "");
+        col.update_notetype(&mut nt, false)?;
+
+        let existing = col.storage.existing_cards_for_note(note.id)?;
+        assert_eq!(existing.len(), 2);
+        assert_eq!(
+            existing.iter().map(|card| card.ord).collect::<Vec<_>>(),
+            vec![0, 1]
+        );
+
+        Ok(())
+    }
 }

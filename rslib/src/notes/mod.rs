@@ -690,7 +690,6 @@ mod test {
     use crate::decks::DeckId;
     use crate::error::Result;
     use crate::notetype::NoteField;
-    use crate::prelude::*;
     use crate::search::SortMode;
 
     #[test]
@@ -871,7 +870,10 @@ mod test {
             None,
             None,
         );
-        assert_eq!(note.fields(), &vec!["front".to_string(), "back".to_string()]);
+        assert_eq!(
+            note.fields(),
+            &vec!["front".to_string(), "back".to_string()]
+        );
     }
 
     #[test]

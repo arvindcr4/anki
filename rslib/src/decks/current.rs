@@ -67,7 +67,8 @@ mod tests {
         assert_eq!(deck.id, DeckId(1));
 
         // setting to non-existent deck should fall back to default
-        col.set_config(ConfigKey::CurrentDeckId, &DeckId(999)).unwrap();
+        col.set_config(ConfigKey::CurrentDeckId, &DeckId(999))
+            .unwrap();
         let deck = col.get_current_deck().unwrap();
         assert_eq!(deck.id, DeckId(1));
     }

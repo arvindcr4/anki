@@ -161,11 +161,7 @@ mod tests {
     #[test]
     fn foreign_note_into_log_note_with_values() {
         let note = ForeignNote {
-            fields: vec![
-                Some("front".into()),
-                None,
-                Some("extra".into()),
-            ],
+            fields: vec![Some("front".into()), None, Some("extra".into())],
             ..Default::default()
         };
         let log = note.into_log_note();

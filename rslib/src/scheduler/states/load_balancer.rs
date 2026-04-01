@@ -468,8 +468,10 @@ mod tests {
 
     #[test]
     fn constants_are_reasonable() {
+        const {
+            assert!(LOAD_BALANCE_DAYS > MAX_LOAD_BALANCE_INTERVAL);
+        }
         assert_eq!(MAX_LOAD_BALANCE_INTERVAL, 90);
-        assert!(LOAD_BALANCE_DAYS > MAX_LOAD_BALANCE_INTERVAL);
     }
 
     #[test]
@@ -512,7 +514,12 @@ mod tests {
         let next_day_at = TimestampSecs(1_700_000_000);
         for interval in 1..=365 {
             let weekday = interval_to_weekday(interval, next_day_at);
-            assert!(weekday < 7, "weekday {} out of range for interval {}", weekday, interval);
+            assert!(
+                weekday < 7,
+                "weekday {} out of range for interval {}",
+                weekday,
+                interval
+            );
         }
     }
 }

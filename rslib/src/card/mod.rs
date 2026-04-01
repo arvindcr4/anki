@@ -510,7 +510,6 @@ impl From<MemoryState> for FsrsMemoryState {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
     use crate::tests::open_test_collection_with_learning_card;
     use crate::tests::open_test_collection_with_relearning_card;
     use crate::tests::DeckAdder;
@@ -574,9 +573,11 @@ mod test {
 
     #[test]
     fn review_seed_deterministic() {
-        let mut card = Card::default();
-        card.id = CardId(12345);
-        card.reps = 10;
+        let card = Card {
+            id: CardId(12345),
+            reps: 10,
+            ..Default::default()
+        };
         let seed1 = card.review_seed();
         let seed2 = card.review_seed();
         assert_eq!(seed1, seed2);
@@ -584,9 +585,11 @@ mod test {
 
     #[test]
     fn review_seed_changes_with_reps() {
-        let mut card = Card::default();
-        card.id = CardId(12345);
-        card.reps = 10;
+        let mut card = Card {
+            id: CardId(12345),
+            reps: 10,
+            ..Default::default()
+        };
         let seed1 = card.review_seed();
         card.reps = 11;
         let seed2 = card.review_seed();
@@ -595,40 +598,52 @@ mod test {
 
     #[test]
     fn review_seed_changes_with_id() {
-        let mut card1 = Card::default();
-        card1.id = CardId(1);
-        card1.reps = 5;
-        let mut card2 = Card::default();
-        card2.id = CardId(2);
-        card2.reps = 5;
+        let card1 = Card {
+            id: CardId(1),
+            reps: 5,
+            ..Default::default()
+        };
+        let card2 = Card {
+            id: CardId(2),
+            reps: 5,
+            ..Default::default()
+        };
         assert_ne!(card1.review_seed(), card2.review_seed());
     }
 
     #[test]
     fn remaining_steps_strips_today() {
-        let mut card = Card::default();
-        card.remaining_steps = 3002; // 3*1000 + 2
+        let card = Card {
+            remaining_steps: 3002, // 3*1000 + 2
+            ..Default::default()
+        };
         assert_eq!(card.remaining_steps(), 2);
     }
 
     #[test]
     fn ease_factor_as_float() {
-        let mut card = Card::default();
-        card.ease_factor = 2500;
+        let card = Card {
+            ease_factor: 2500,
+            ..Default::default()
+        };
         assert!((card.ease_factor() - 2.5).abs() < f32::EPSILON);
     }
 
     #[test]
     fn is_intraday_learning_learn() {
-        let mut card = Card::default();
-        card.queue = CardQueue::Learn;
+        let card = Card {
+            queue: CardQueue::Learn,
+            ..Default::default()
+        };
         assert!(card.is_intraday_learning());
     }
 
     #[test]
     fn is_intraday_learning_review() {
-        let mut card = Card::default();
-        card.queue = CardQueue::Review;
+        let card = Card {
+            queue: CardQueue::Review,
+            ..Default::default()
+        };
         assert!(!card.is_intraday_learning());
     }
 }

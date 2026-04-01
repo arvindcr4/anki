@@ -190,7 +190,10 @@ mod tests {
     #[test]
     fn meta_collection_filename_delegates() {
         assert_eq!(Meta::new().collection_filename(), "collection.anki21b");
-        assert_eq!(Meta::new_legacy().collection_filename(), "collection.anki21");
+        assert_eq!(
+            Meta::new_legacy().collection_filename(),
+            "collection.anki21"
+        );
     }
 
     #[test]

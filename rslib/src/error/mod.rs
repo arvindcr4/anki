@@ -431,7 +431,8 @@ mod tests {
 
     #[test]
     fn from_regex_error() {
-        let err = regex::Regex::new("[invalid").unwrap_err();
+        let pattern = String::from("[invalid");
+        let err = regex::Regex::new(&pattern).unwrap_err();
         let anki_err: AnkiError = err.into();
         assert!(matches!(anki_err, AnkiError::InvalidRegex { .. }));
     }
