@@ -246,7 +246,7 @@ impl Backend {
         // start the sync
         let (mgr, progress) = {
             let mut col = self.col.lock().unwrap();
-            let col = col.as_mut().unwrap();
+            let col = col.as_mut().or_invalid("collection closed during sync")?;
             (col.media()?, col.new_progress_handler())
         };
         let rt = self.runtime_handle();
