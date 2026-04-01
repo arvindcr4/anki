@@ -176,6 +176,7 @@ mod test {
     use anki_i18n::I18n;
 
     use crate::scheduler::timespan::answer_button_time;
+    use crate::scheduler::timespan::answer_button_time_collapsible;
     use crate::scheduler::timespan::time_span;
     use crate::scheduler::timespan::MONTH;
 
@@ -200,5 +201,109 @@ mod test {
         assert_eq!(time_span(365.0 * 86_400.0, &tr, false), "1 year");
         assert_eq!(time_span(365.0 * 86_400.0, &tr, true), "1 year");
         assert_eq!(time_span(365.0 * 86_400.0 * 1.5, &tr, false), "1.5 years");
+    }
+
+    use super::*;
+
+    #[test]
+    fn timespan_unit_as_str() {
+        assert_eq!(TimespanUnit::Seconds.as_str(), "seconds");
+        assert_eq!(TimespanUnit::Minutes.as_str(), "minutes");
+        assert_eq!(TimespanUnit::Hours.as_str(), "hours");
+        assert_eq!(TimespanUnit::Days.as_str(), "days");
+        assert_eq!(TimespanUnit::Months.as_str(), "months");
+        assert_eq!(TimespanUnit::Years.as_str(), "years");
+    }
+
+    #[test]
+    fn timespan_unit_ordering() {
+        assert!(TimespanUnit::Seconds < TimespanUnit::Minutes);
+        assert!(TimespanUnit::Minutes < TimespanUnit::Hours);
+        assert!(TimespanUnit::Hours < TimespanUnit::Days);
+        assert!(TimespanUnit::Days < TimespanUnit::Months);
+        assert!(TimespanUnit::Months < TimespanUnit::Years);
+    }
+
+    #[test]
+    fn natural_span_seconds() {
+        let ts = Timespan::from_secs(30.0).natural_span();
+        assert!(matches!(ts.unit(), TimespanUnit::Seconds));
+    }
+
+    #[test]
+    fn natural_span_minutes() {
+        let ts = Timespan::from_secs(120.0).natural_span();
+        assert!(matches!(ts.unit(), TimespanUnit::Minutes));
+    }
+
+    #[test]
+    fn natural_span_hours() {
+        let ts = Timespan::from_secs(7200.0).natural_span();
+        assert!(matches!(ts.unit(), TimespanUnit::Hours));
+    }
+
+    #[test]
+    fn natural_span_days() {
+        let ts = Timespan::from_secs(86_400.0 * 5.0).natural_span();
+        assert!(matches!(ts.unit(), TimespanUnit::Days));
+    }
+
+    #[test]
+    fn natural_span_months() {
+        let ts = Timespan::from_secs(86_400.0 * 45.0).natural_span();
+        assert!(matches!(ts.unit(), TimespanUnit::Months));
+    }
+
+    #[test]
+    fn natural_span_years() {
+        let ts = Timespan::from_secs(86_400.0 * 400.0).natural_span();
+        assert!(matches!(ts.unit(), TimespanUnit::Years));
+    }
+
+    #[test]
+    fn as_unit_conversion() {
+        let ts = Timespan::from_secs(120.0).to_unit(TimespanUnit::Minutes);
+        assert!((ts.as_unit() - 2.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn as_rounded_unit_seconds() {
+        let ts = Timespan::from_secs(30.7).to_unit(TimespanUnit::Seconds);
+        assert_eq!(ts.as_rounded_unit(), 31.0);
+    }
+
+    #[test]
+    fn as_rounded_unit_days() {
+        let ts = Timespan::from_secs(86_400.0 * 2.7).to_unit(TimespanUnit::Days);
+        assert_eq!(ts.as_rounded_unit(), 3.0); // rounds to integer
+    }
+
+    #[test]
+    fn as_rounded_unit_months() {
+        let ts = Timespan::from_secs(86_400.0 * 45.0).to_unit(TimespanUnit::Months);
+        let rounded = ts.as_rounded_unit();
+        // should be rounded to 1 decimal
+        assert_eq!(rounded, (rounded * 10.0).round() / 10.0);
+    }
+
+    #[test]
+    fn collapsible_zero() {
+        let tr = I18n::template_only();
+        let result = answer_button_time_collapsible(0, 60, &tr);
+        assert!(!result.is_empty());
+    }
+
+    #[test]
+    fn collapsible_below_collapse() {
+        let tr = I18n::template_only();
+        let result = answer_button_time_collapsible(30, 60, &tr);
+        assert!(result.starts_with('<'));
+    }
+
+    #[test]
+    fn collapsible_above_collapse() {
+        let tr = I18n::template_only();
+        let result = answer_button_time_collapsible(120, 60, &tr);
+        assert!(!result.starts_with('<'));
     }
 }
