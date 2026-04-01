@@ -458,8 +458,9 @@ class DeckBrowser:
                 f"{gap_summary}</a>"
             )
         latest_summary = "Latest: no recent capture"
+        latest_summary_classes = "daily-cards-pill daily-cards-latest"
         latest_summary_markup = (
-            f'<div class="daily-cards-pill daily-cards-latest">{latest_summary}</div>'
+            f'<div class="{latest_summary_classes}">{latest_summary}</div>'
         )
         if latest_active_group:
             latest_suffix = f"({_count_label(latest_active_group.card_count, 'card')})"
@@ -467,6 +468,7 @@ class DeckBrowser:
                 busiest_group
                 and latest_active_group.days_ago == busiest_group.days_ago
             ):
+                latest_summary_classes += " is-most-active-latest"
                 latest_suffix = (
                     f"({_count_label(latest_active_group.card_count, 'card')}, most active)"
                 )
@@ -476,7 +478,7 @@ class DeckBrowser:
                 f"{latest_suffix}"
             )
             latest_summary_markup = (
-                f'<a class="daily-cards-link daily-cards-pill daily-cards-latest" href=# '
+                f'<a class="daily-cards-link {latest_summary_classes}" href=# '
                 'title="Browse latest capture" aria-label="Browse latest capture" '
                 f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
                 f"{latest_summary}</a>"
@@ -826,8 +828,9 @@ class DeckBrowser:
                 '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'importcards\')">Import cards</a>'
             )
         busiest_summary = "Busiest: no recent activity yet"
+        busiest_summary_classes = "daily-cards-pill daily-cards-busiest"
         busiest_summary_markup = (
-            f'<div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>'
+            f'<div class="{busiest_summary_classes}">{busiest_summary}</div>'
         )
         burst_pct = 0
         bursty_week = False
@@ -838,6 +841,7 @@ class DeckBrowser:
         if busiest_group:
             busiest_suffix = f"({_count_label(busiest_group.card_count, 'card')})"
             if latest_active_group and busiest_group.days_ago == latest_active_group.days_ago:
+                busiest_summary_classes += " is-latest-busiest"
                 busiest_suffix = (
                     f"({_count_label(busiest_group.card_count, 'card')}, latest session)"
                 )
@@ -848,7 +852,7 @@ class DeckBrowser:
             )
             busiest_title = f"Browse busiest day ({busiest_group.date_label})"
             busiest_summary_markup = (
-                f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest" href=# '
+                f'<a class="daily-cards-link {busiest_summary_classes}" href=# '
                 f'title="{busiest_title}" aria-label="{busiest_title}" '
                 f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{busiest_summary}</a>"

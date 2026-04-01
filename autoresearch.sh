@@ -142,6 +142,8 @@ checks = [
     ('is-ready-to-restart', 1, 'visual'),
     ('daily-cards-gap', 1, 'visual'),
     ('daily-cards-latest', 1, 'visual'),
+    ('is-most-active-latest', 1, 'visual'),
+    ('is-latest-busiest', 1, 'visual'),
     ('daily-cards-quiet', 1, 'visual'),
     ('daily-cards-consistency', 1, 'visual'),
     ('Quiet days:', 2, 'timeline'),

@@ -28,6 +28,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Add a separate browseable **Latest** summary pill too, so the most recent active day stays visible in the metadata row even when the gap pill is focused on recovery language.
 - Include that latest session’s card count in the pill, so the metadata row reveals not only when the freshest session happened but also whether it was a tiny capture or a substantial batch.
 - When the freshest session is also the busiest one, let the **Latest** pill say so directly instead of making the learner cross-reference the separate busiest-day pill.
+- Mirror that overlap on the **Busiest** pill as well, so both metadata pills stay visually and semantically aligned when the same day is both freshest and largest.
 - Make the **Gap**, **active days**, and **visible range** pills browseable so the summary row doubles as navigation instead of passive metadata.
 - Add accessible labels to the browseable summary pills and expose the guidance area as a polite status region so the panel reads clearly in assistive tech, not just visually.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.

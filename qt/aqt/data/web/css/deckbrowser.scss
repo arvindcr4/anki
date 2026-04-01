@@ -169,6 +169,8 @@ body {
     background: var(--canvas-glass);
 }
 
+.daily-cards-latest.is-most-active-latest,
+.daily-cards-busiest.is-latest-busiest,
 .daily-cards-today.is-most-active-today {
     border-color: color(fg-link);
 }
