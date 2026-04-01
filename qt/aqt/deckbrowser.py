@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import html
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any
 
@@ -798,7 +798,8 @@ class DeckBrowser:
             (group.card_count for group in self._render_data.daily_groups),
             default=0,
         )
-        for group in self._render_data.daily_groups:
+        groups = self._render_data.daily_groups
+        for index, group in enumerate(groups):
             bar_height = 16
             if max_cards and group.card_count:
                 bar_height += int((group.card_count / max_cards) * 44)
@@ -854,6 +855,19 @@ class DeckBrowser:
                     date_label=html.escape(group.date_label),
                 )
             )
+            empty_run: list[DailyCardsGroup] = []
+            if not group.card_count and group.days_ago != 0:
+                previous_group = groups[index - 1] if index > 0 else None
+                if previous_group and not previous_group.card_count and previous_group.days_ago != 0:
+                    continue
+                scan_index = index
+                while (
+                    scan_index < len(groups)
+                    and not groups[scan_index].card_count
+                    and groups[scan_index].days_ago != 0
+                ):
+                    empty_run.append(groups[scan_index])
+                    scan_index += 1
             row_classes = ["daily-cards-row"]
             status_badges: list[str] = []
             if group.days_ago == 0:
@@ -906,10 +920,10 @@ class DeckBrowser:
 """
             else:
                 row_classes.append("is-empty")
-                metrics_markup = (
-                    '<div class="daily-cards-empty-summary">No cards added</div>'
-                )
                 if group.days_ago == 0:
+                    metrics_markup = (
+                        '<div class="daily-cards-empty-summary">No cards added</div>'
+                    )
                     row_classes.append("is-capture-target")
                     action = """
 <div class="daily-cards-action-stack">
@@ -917,7 +931,27 @@ class DeckBrowser:
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('importcards')">Import cards</a>
 </div>
 """
+                elif len(empty_run) > 1:
+                    row_classes.extend(["is-empty-cluster", "is-quiet-stretch"])
+                    first_empty = empty_run[0]
+                    last_empty = empty_run[-1]
+                    quiet_range = f"{last_empty.date_label} → {first_empty.date_label}"
+                    quiet_summary = (
+                        f"No cards added on {_count_label(len(empty_run), 'day')}"
+                    )
+                    metrics_markup = (
+                        f'<div class="daily-cards-empty-summary">{quiet_summary}</div>'
+                    )
+                    action = '<a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd(\'browseRecent\')">Browse week context</a>'
+                    group = replace(
+                        group,
+                        label="Quiet stretch",
+                        date_label=quiet_range,
+                    )
                 else:
+                    metrics_markup = (
+                        '<div class="daily-cards-empty-summary">No cards added</div>'
+                    )
                     action = '<span class="daily-cards-empty">—</span>'
             rows.append(
                 """

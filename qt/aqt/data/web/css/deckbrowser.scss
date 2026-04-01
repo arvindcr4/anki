@@ -424,6 +424,14 @@ body {
     opacity: 0.72;
 }
 
+.daily-cards-row.is-empty-cluster {
+    border-style: dashed;
+}
+
+.daily-cards-row.is-quiet-stretch .daily-cards-label {
+    color: color(fg-subtle);
+}
+
 .daily-cards-row.is-capture-target {
     opacity: 1;
     border-style: dashed;
