@@ -94,3 +94,100 @@ impl From<&MainQueueEntry> for QueueEntry {
         Self::Main(*e)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn learning_entry() -> LearningQueueEntry {
+        LearningQueueEntry {
+            due: TimestampSecs(1000),
+            id: CardId(42),
+            mtime: TimestampSecs(900),
+        }
+    }
+
+    fn main_entry(kind: MainQueueEntryKind) -> MainQueueEntry {
+        MainQueueEntry {
+            id: CardId(99),
+            mtime: TimestampSecs(800),
+            kind,
+        }
+    }
+
+    #[test]
+    fn card_id_learning() {
+        let entry = QueueEntry::IntradayLearning(learning_entry());
+        assert_eq!(entry.card_id(), CardId(42));
+    }
+
+    #[test]
+    fn card_id_main() {
+        let entry = QueueEntry::Main(main_entry(MainQueueEntryKind::New));
+        assert_eq!(entry.card_id(), CardId(99));
+    }
+
+    #[test]
+    fn mtime_learning() {
+        let entry = QueueEntry::IntradayLearning(learning_entry());
+        assert_eq!(entry.mtime(), TimestampSecs(900));
+    }
+
+    #[test]
+    fn mtime_main() {
+        let entry = QueueEntry::Main(main_entry(MainQueueEntryKind::Review));
+        assert_eq!(entry.mtime(), TimestampSecs(800));
+    }
+
+    #[test]
+    fn kind_intraday_learning() {
+        let entry = QueueEntry::IntradayLearning(learning_entry());
+        assert_eq!(entry.kind(), QueueEntryKind::Learning);
+    }
+
+    #[test]
+    fn kind_main_new() {
+        let entry = QueueEntry::Main(main_entry(MainQueueEntryKind::New));
+        assert_eq!(entry.kind(), QueueEntryKind::New);
+    }
+
+    #[test]
+    fn kind_main_review() {
+        let entry = QueueEntry::Main(main_entry(MainQueueEntryKind::Review));
+        assert_eq!(entry.kind(), QueueEntryKind::Review);
+    }
+
+    #[test]
+    fn kind_main_interday_learning() {
+        let entry = QueueEntry::Main(main_entry(MainQueueEntryKind::InterdayLearning));
+        assert_eq!(entry.kind(), QueueEntryKind::Learning);
+    }
+
+    #[test]
+    fn from_learning_entry() {
+        let le = learning_entry();
+        let entry: QueueEntry = le.into();
+        assert!(matches!(entry, QueueEntry::IntradayLearning(_)));
+    }
+
+    #[test]
+    fn from_main_entry() {
+        let me = main_entry(MainQueueEntryKind::New);
+        let entry: QueueEntry = me.into();
+        assert!(matches!(entry, QueueEntry::Main(_)));
+    }
+
+    #[test]
+    fn from_ref_learning_entry() {
+        let le = learning_entry();
+        let entry: QueueEntry = (&le).into();
+        assert_eq!(entry.card_id(), CardId(42));
+    }
+
+    #[test]
+    fn from_ref_main_entry() {
+        let me = main_entry(MainQueueEntryKind::Review);
+        let entry: QueueEntry = (&me).into();
+        assert_eq!(entry.card_id(), CardId(99));
+    }
+}
