@@ -70,7 +70,8 @@ pub(crate) fn with_review_fuzz(
 ) -> u32 {
     if let Some(fuzz_factor) = fuzz_factor {
         let (lower, upper) = constrained_fuzz_bounds(interval, minimum, maximum);
-        (lower as f32 + fuzz_factor * ((1 + upper - lower) as f32)).floor() as u32
+        let range = 1u32.saturating_add(upper.saturating_sub(lower));
+        (lower as f32 + fuzz_factor * (range as f32)).floor() as u32
     } else {
         (interval.round() as u32).clamp(minimum, maximum)
     }

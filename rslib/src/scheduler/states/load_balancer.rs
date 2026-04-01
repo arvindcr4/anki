@@ -218,9 +218,12 @@ impl LoadBalancer {
         }
 
         let (before_days, after_days) = constrained_fuzz_bounds(interval, minimum, maximum);
+        let max_idx = LOAD_BALANCE_DAYS.saturating_sub(1);
+        let before_days = (before_days as usize).min(max_idx);
+        let after_days = (after_days as usize).min(max_idx);
 
         let days = self.days_by_preset.get(&deckconfig_id)?;
-        let interval_days = &days[before_days as usize..=after_days as usize];
+        let interval_days = &days[before_days..=after_days];
 
         // calculate review counts and expected distribution
         let (review_counts, weekdays): (Vec<usize>, Vec<usize>) = interval_days
@@ -229,7 +232,7 @@ impl LoadBalancer {
             .map(|(i, day)| {
                 (
                     day.cards.len(),
-                    interval_to_weekday(i as u32 + before_days, self.next_day_at),
+                    interval_to_weekday(i as u32 + before_days as u32, self.next_day_at),
                 )
             })
             .unzip();
@@ -243,7 +246,7 @@ impl LoadBalancer {
             .enumerate()
             .map(|(interval_index, interval_day)| {
                 LoadBalancerInterval {
-                    target_interval: interval_index as u32 + before_days,
+                    target_interval: interval_index as u32 + before_days as u32,
                     review_count: review_counts[interval_index],
                     // if there is a sibling on this day, give it a very low weight
                     sibling_modifier: note_id
