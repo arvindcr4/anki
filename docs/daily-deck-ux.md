@@ -103,6 +103,7 @@ This prototype follows common guidance from strong UX systems and books:
 - If the latest session is also the busiest day, show both badges instead of forcing one to win, so the row preserves both meanings.
 - Render multiple badges with real spacing so stacked row states stay readable instead of collapsing into a tight blob.
 - When the latest session is not today, pair its browse action with **Create today** so the user can turn yesterday’s momentum into a fresh capture session immediately.
+- Let that latest row’s primary CTA read **Resume last capture →** instead of a generic browse label, so the freshest non-today session clearly feels like the recovery path back into the same work.
 - Pair that browse shortcut with a persistent **Create cards** CTA so users can immediately turn a new idea into study material.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
 - Mark the busiest row with a light **Most active** badge so the user can find the biggest capture session without rereading every line.

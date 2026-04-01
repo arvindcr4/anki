@@ -1003,6 +1003,15 @@ class DeckBrowser:
                 )
                 primary_row_action_label = "Browse cards →"
                 primary_row_action_class = "daily-cards-link"
+                if (
+                    latest_active_group
+                    and group.days_ago == latest_active_group.days_ago
+                    and group.days_ago > 0
+                ):
+                    primary_row_action_label = "Resume last capture →"
+                    primary_row_action_class = (
+                        "daily-cards-link daily-cards-resume-row-action"
+                    )
                 if group.days_ago == busiest_days_ago and bursty_week:
                     primary_row_action_label = "Review burst day →"
                     primary_row_action_class = (

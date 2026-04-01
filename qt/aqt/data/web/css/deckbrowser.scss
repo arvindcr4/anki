@@ -593,6 +593,11 @@ body {
     border-style: dashed;
 }
 
+.daily-cards-resume-row-action {
+    border-color: color(border);
+    background: color(border-subtle);
+}
+
 .daily-cards-current-gap-shortcut {
     border-style: dashed;
     border-color: color(fg-link);
