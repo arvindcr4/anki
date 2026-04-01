@@ -545,7 +545,8 @@ impl RowContext {
             .zip(self.cards[0].seconds_since_last_review(&self.timing))
             .zip(Some(self.cards[0].decay.unwrap_or(FSRS5_DEFAULT_DECAY)))
             .map(|((state, seconds), decay)| {
-                let r = FSRS::new(None).unwrap().current_retrievability_seconds(
+                let Ok(fsrs) = FSRS::new(None) else { return String::new() };
+                let r = fsrs.current_retrievability_seconds(
                     (*state).into(),
                     seconds,
                     decay,

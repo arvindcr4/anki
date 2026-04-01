@@ -210,13 +210,11 @@ fn extract_audio_from_video(video_path: &str) -> Result<String> {
     use std::process::Command;
 
     let temp_dir = std::env::temp_dir();
-    let output_path = temp_dir.join(format!(
-        "anki_video_extract_{}.wav",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_millis()
-    ));
+    let millis = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let output_path = temp_dir.join(format!("anki_video_extract_{millis}.wav"));
 
     let output_path_str = output_path.to_string_lossy().to_string();
 

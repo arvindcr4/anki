@@ -65,8 +65,8 @@ impl Context<'_> {
                     &mut copier,
                     self.meta.zstd_compressed(),
                 )?;
-                self.media_manager
-                    .add_entry(&entry.name, entry.sha1.unwrap())?;
+                let sha1 = entry.sha1.or_invalid("sha1 not set after copy")?;
+                self.media_manager.add_entry(&entry.name, sha1)?;
             }
             Ok(())
         })
@@ -91,7 +91,7 @@ fn prepare_media(
             }
         } else if let Some(other_sha1) = existing_sha1s.get(&entry.name) {
             entry.ensure_sha1_set(archive)?;
-            if entry.sha1.unwrap() != *other_sha1 {
+            if entry.sha1.or_invalid("sha1 not set after ensure")? != *other_sha1 {
                 let original_name = entry.uniquify_name();
                 media_map.add_checked(original_name, entry);
             }
