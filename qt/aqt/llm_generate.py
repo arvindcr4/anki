@@ -165,7 +165,7 @@ def _call_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
     req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
 
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             data = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         body = e.read().decode("utf-8", errors="replace")
@@ -173,7 +173,7 @@ def _call_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
     except urllib.error.URLError as e:
         raise LLMError(f"Network error: {e.reason}") from e
     except TimeoutError:
-        raise LLMError("API request timed out after 30 seconds")
+        raise LLMError("API request timed out after 120 seconds")
 
     try:
         return data["choices"][0]["message"]["content"]
@@ -185,8 +185,14 @@ def _parse_response(
     response_text: str, action: ActionType, model: str
 ) -> GenerationResult:
     """Parse LLM response into structured cards."""
-    # Strip markdown code fences if present
     text = response_text.strip()
+
+    # Strip thinking tags from reasoning models (e.g., Qwen3, DeepSeek)
+    if "<think>" in text:
+        import re
+        text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+
+    # Strip markdown code fences if present
     if text.startswith("```"):
         text = text.split("\n", 1)[1] if "\n" in text else text[3:]
         if text.endswith("```"):
