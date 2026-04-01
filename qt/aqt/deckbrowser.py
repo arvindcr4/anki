@@ -487,6 +487,30 @@ class DeckBrowser:
                 f"Range: {self._render_data.daily_groups[-1].date_label}"
                 f" → {self._render_data.daily_groups[0].date_label}"
             )
+        today_summary = "Today: no cards yet"
+        today_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-today">{today_summary}</div>'
+        )
+        if self._render_data.daily_groups:
+            today_group = self._render_data.daily_groups[0]
+            if today_group.card_count:
+                today_summary = (
+                    f"Today: {_count_label(today_group.card_count, 'card')}"
+                )
+                today_summary_markup = (
+                    f'<a class="daily-cards-link daily-cards-pill daily-cards-today" href=# '
+                    'title="Browse today" aria-label="Browse today" '
+                    "onclick=\"return pycmd('browseAdded:0')\">"
+                    f"{today_summary}</a>"
+                )
+            else:
+                today_summary = "Today: ready to capture"
+                today_summary_markup = (
+                    f'<a class="daily-cards-link daily-cards-pill daily-cards-today" href=# '
+                    'title="Create today\'s first card" aria-label="Create today\'s first card" '
+                    "onclick=\"return pycmd('addcards')\">"
+                    f"{today_summary}</a>"
+                )
         active_day_count_label = _count_label(active_day_count, "active day")
         quiet_day_count = max(0, recent_days - active_day_count)
         quiet_day_summary = "Quiet days: none"
@@ -1299,6 +1323,7 @@ class DeckBrowser:
       <span class="daily-cards-summary-label">Last 7 days:</span>
       <span class="daily-cards-summary-counts">{total_cards_label} across {total_notes_label}</span>
     </div>
+    {today_summary_markup}
     {active_day_markup}
     {quiet_day_markup}
     {consistency_markup}
@@ -1330,6 +1355,7 @@ class DeckBrowser:
             rollover_label=_format_rollover_hour(self._render_data.rollover_hour),
             total_cards_label=_count_label(total_cards, "card"),
             total_notes_label=_count_label(total_notes, "note"),
+            today_summary_markup=today_summary_markup,
             active_day_markup=active_day_markup,
             quiet_day_markup=quiet_day_markup,
             consistency_markup=consistency_markup,

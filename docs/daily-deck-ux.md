@@ -41,7 +41,9 @@ This prototype follows common guidance from strong UX systems and books:
 - When a current gap is present, let that helper line call out the dashed empty bars explicitly so the learner can decode the lull without reading the row list first.
 - When the week is burst-heavy, let that same helper line explain that the highlighted burst bar marks the busiest session, so the strip can teach its own emphasis without relying on the legend alone.
 - Make the empty **Today** bar itself a lightweight **create first card** target, so the visual strip can start a capture flow instead of only reflecting past activity.
-- Add compact momentum pills for **active days**, **quiet days**, **consistency percentage**, **cards-per-note density**, **cards-per-active-day pace**, **trend**, **burst share**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Add compact momentum pills for **today’s status**, **active days**, **quiet days**, **consistency percentage**, **cards-per-note density**, **cards-per-active-day pace**, **trend**, **burst share**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
+- Show **today’s status** explicitly in the meta row too, so learners can tell whether they have already captured today before scanning the strip or the row list.
+- Make that Today pill browseable when cards already exist, and let it become a lightweight **Create today’s first card** entry point when the day is still blank.
 - Show **consistency percentage** so learners can judge week-over-week capture reliability without mentally converting active and quiet day counts into a ratio.
 - Show **trend** to indicate whether recent capture is rising, steady, cooling, or just starting, instead of forcing the learner to mentally compare the strip bars.
 - Show **burst share** to reveal whether the week reflects steady capture or one dominant import/generation session.
