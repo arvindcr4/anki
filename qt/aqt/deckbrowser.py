@@ -1126,8 +1126,12 @@ class DeckBrowser:
             and (not latest_active_group or busiest_group.days_ago != latest_active_group.days_ago)
         ):
             busiest_day_label = f"Browse busiest day ({busiest_group.date_label})"
+            busiest_day_classes = "daily-cards-link daily-cards-pill daily-cards-busiest-shortcut"
+            if bursty_week:
+                busiest_day_label = f"Review burst day ({busiest_group.date_label})"
+                busiest_day_classes += " daily-cards-burst-shortcut"
             busiest_day_action = (
-                f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest-shortcut" href=# '
+                f'<a class="{busiest_day_classes}" href=# '
                 f'title="{busiest_day_label}" aria-label="{busiest_day_label}" '
                 f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{busiest_day_label}</a>"

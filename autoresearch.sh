@@ -109,6 +109,7 @@ checks = [
     ('daily-cards-import', 1, 'capture'),
     ('daily-cards-resume', 1, 'visual'),
     ('daily-cards-busiest-shortcut', 1, 'visual'),
+    ('daily-cards-burst-shortcut', 1, 'visual'),
     ('Most active', 1, 'visual'),
     ('Latest session', 2, 'visual'),
     ('Current gap', 2, 'timeline'),
