@@ -1,5 +1,6 @@
 # metric_direction: lower_is_better
 iteration	commit	metric	delta	guard	status	description
 0	2630541e3	17.32	0.0	-	baseline	initial state — executable size 17.32 MB
-1	ecd4691f1	14.40	-2.92	-	keep	enable full LTO and strip in release profile — executables 17.32->14.40 MB
-3	866838a52	65.0	+8.5	-	discard	reduce opt-level from z to 2 (no improvement)
+1	ecd4691f1	14.40	-2.92	-	keep	enable full LTO and strip in release profile (17.32->14.40 MB)
+2	-	-	-	-	no-op	attempted to add opt-level=z (reverted by linter)
+5	caeedc730	14.40	0.0	-	keep	add opt-level=z and panic=abort for size optimization

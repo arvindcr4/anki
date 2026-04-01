@@ -558,6 +558,39 @@ mod test {
     }
 
     #[test]
+    fn test_open_or_create_migrates_legacy_schema() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("legacy_cards.db");
+        let db = Connection::open(&path).unwrap();
+        db.execute_batch(
+            r#"
+CREATE TABLE generated_cards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  front TEXT NOT NULL,
+  back TEXT NOT NULL,
+  source_url TEXT,
+  source_type TEXT NOT NULL DEFAULT 'text',
+  created_at INTEGER NOT NULL,
+  sync_status TEXT NOT NULL DEFAULT 'pending',
+  tags TEXT NOT NULL DEFAULT ''
+);
+"#,
+        )
+        .unwrap();
+        drop(db);
+
+        let storage = GeneratedCardStorage::open_or_create(&path).unwrap();
+        let cloze = ClozeFlashcard::new("Rust is a {{c1::systems}} programming language.")
+            .with_back_extra("Memory safety without garbage collection.");
+        let card = Flashcard::new(cloze.text.clone(), cloze.back_extra.clone())
+            .with_cloze(cloze.clone());
+
+        let id = storage.add_card(&card).unwrap();
+        let round_tripped = storage.get_card(id).unwrap().unwrap().into_flashcard();
+        assert_eq!(round_tripped.cloze, Some(cloze));
+    }
+
+    #[test]
     fn test_literal_cloze_syntax_without_flag_stays_basic() {
         let stored = StoredCard {
             id: 1,
