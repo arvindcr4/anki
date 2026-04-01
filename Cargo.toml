@@ -184,3 +184,4 @@ opt-level = "z"
 panic = 'abort'
 overflow-checks = false
 codegen-units = 1
+target-cpu = native
