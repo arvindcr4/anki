@@ -477,4 +477,82 @@ mod test {
             );
         }
     }
+
+    #[test]
+    fn search_empty_collection() {
+        let mut col = Collection::new();
+        let cards = col.search_cards("", SortMode::NoOrder).unwrap();
+        assert!(cards.is_empty());
+    }
+
+    #[test]
+    fn search_notes_empty() {
+        let mut col = Collection::new();
+        let notes = col.search_notes_unordered("").unwrap();
+        assert!(notes.is_empty());
+    }
+
+    #[test]
+    fn search_with_note() {
+        let mut col = Collection::new();
+        let nt = col.get_notetype_by_name("Basic").unwrap().unwrap();
+        let mut note = nt.new_note();
+        note.set_field(0, "test front").unwrap();
+        col.add_note(&mut note, DeckId(1)).unwrap();
+
+        let cards = col.search_cards("", SortMode::NoOrder).unwrap();
+        assert_eq!(cards.len(), 1);
+
+        let notes = col.search_notes_unordered("").unwrap();
+        assert_eq!(notes.len(), 1);
+    }
+
+    #[test]
+    fn search_by_text() {
+        let mut col = Collection::new();
+        let nt = col.get_notetype_by_name("Basic").unwrap().unwrap();
+        let mut note = nt.new_note();
+        note.set_field(0, "unique_xyz_term").unwrap();
+        col.add_note(&mut note, DeckId(1)).unwrap();
+
+        assert_eq!(
+            col.search_cards("unique_xyz_term", SortMode::NoOrder)
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            col.search_cards("nonexistent", SortMode::NoOrder)
+                .unwrap()
+                .len(),
+            0
+        );
+    }
+
+    #[test]
+    fn sort_mode_builtin() {
+        let mut col = Collection::new();
+        let nt = col.get_notetype_by_name("Basic").unwrap().unwrap();
+        for i in 0..3 {
+            let mut note = nt.new_note();
+            note.set_field(0, &format!("note {i}")).unwrap();
+            col.add_note(&mut note, DeckId(1)).unwrap();
+        }
+        let cards = col
+            .search_cards(
+                "",
+                SortMode::Builtin {
+                    column: Column::SortField,
+                    reverse: false,
+                },
+            )
+            .unwrap();
+        assert_eq!(cards.len(), 3);
+    }
+
+    #[test]
+    fn return_item_types() {
+        assert_eq!(CardId::as_return_item_type(), ReturnItemType::Cards);
+        assert_eq!(NoteId::as_return_item_type(), ReturnItemType::Notes);
+    }
 }

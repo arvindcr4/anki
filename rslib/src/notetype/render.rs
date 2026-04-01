@@ -252,4 +252,64 @@ mod test {
         assert!(map.iter().all(|val| SPECIAL_FIELDS.contains(val.0)));
         Ok(())
     }
+
+    #[test]
+    fn render_output_question_single_text() {
+        let output = RenderCardOutput {
+            qnodes: vec![RenderedNode::Text {
+                text: "hello".into(),
+            }],
+            anodes: vec![],
+            css: String::new(),
+            latex_svg: false,
+            is_empty: false,
+        };
+        assert_eq!(output.question().as_ref(), "hello");
+    }
+
+    #[test]
+    fn render_output_question_not_fully_rendered() {
+        let output = RenderCardOutput {
+            qnodes: vec![
+                RenderedNode::Text {
+                    text: "a".into(),
+                },
+                RenderedNode::Text {
+                    text: "b".into(),
+                },
+            ],
+            anodes: vec![],
+            css: String::new(),
+            latex_svg: false,
+            is_empty: false,
+        };
+        assert_eq!(output.question().as_ref(), "not fully rendered");
+    }
+
+    #[test]
+    fn render_output_answer_single_text() {
+        let output = RenderCardOutput {
+            qnodes: vec![],
+            anodes: vec![RenderedNode::Text {
+                text: "answer text".into(),
+            }],
+            css: String::new(),
+            latex_svg: false,
+            is_empty: false,
+        };
+        assert_eq!(output.answer().as_ref(), "answer text");
+    }
+
+    #[test]
+    fn render_output_empty() {
+        let output = RenderCardOutput {
+            qnodes: vec![],
+            anodes: vec![],
+            css: String::new(),
+            latex_svg: false,
+            is_empty: true,
+        };
+        assert!(output.is_empty);
+        assert_eq!(output.question().as_ref(), "not fully rendered");
+    }
 }
