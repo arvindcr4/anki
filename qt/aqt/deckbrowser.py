@@ -497,6 +497,11 @@ class DeckBrowser:
                 today_summary = (
                     f"Today: {_count_label(today_group.card_count, 'card')}"
                 )
+                if busiest_group and busiest_group.days_ago == 0:
+                    today_summary = (
+                        f"Today: {_count_label(today_group.card_count, 'card')} "
+                        "(most active)"
+                    )
                 today_summary_markup = (
                     f'<a class="daily-cards-link daily-cards-pill daily-cards-today" href=# '
                     'title="Browse today" aria-label="Browse today" '
