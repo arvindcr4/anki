@@ -47,8 +47,8 @@ impl ReviewState {
     }
 
     pub(crate) fn interval_kind(self) -> IntervalKind {
-        // fixme: maybe use elapsed days in the future? would only
-        // make sense for revlog's lastIvl, not for future interval
+        // Uses scheduled_days (not elapsed_days) since this represents the
+        // future interval. elapsed_days would only suit revlog's lastIvl.
         IntervalKind::InDays(self.scheduled_days)
     }
 

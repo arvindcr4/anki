@@ -119,9 +119,8 @@ impl CardQueues {
     /// Remove the head of the intraday learning queue, and update counts.
     pub(super) fn pop_intraday_learning(&mut self) -> Option<LearningQueueEntry> {
         self.intraday_learning.pop_front().inspect(|_head| {
-            // FIXME:
-            // under normal circumstances this should not go below 0, but currently
-            // the Python unit tests answer learning cards before they're due
+            // Use saturating_sub because Python unit tests may answer learning
+            // cards before they're due, which can cause an underflow
             self.counts.learning = self.counts.learning.saturating_sub(1);
         })
     }
