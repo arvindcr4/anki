@@ -40,3 +40,35 @@ impl Collection {
         self.set_config(ConfigKey::CurrentDeckId, &did)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::config::ConfigKey;
+    use crate::prelude::*;
+
+    #[test]
+    fn current_deck_id_defaults_to_one() {
+        let col = Collection::new();
+        assert_eq!(col.get_current_deck_id(), DeckId(1));
+    }
+
+    #[test]
+    fn get_current_deck_returns_default() {
+        let mut col = Collection::new();
+        let deck = col.get_current_deck().unwrap();
+        assert_eq!(deck.id, DeckId(1));
+    }
+
+    #[test]
+    fn set_and_get_current_deck() {
+        let mut col = Collection::new();
+        // default deck should exist
+        let deck = col.get_current_deck().unwrap();
+        assert_eq!(deck.id, DeckId(1));
+
+        // setting to non-existent deck should fall back to default
+        col.set_config(ConfigKey::CurrentDeckId, &DeckId(999)).unwrap();
+        let deck = col.get_current_deck().unwrap();
+        assert_eq!(deck.id, DeckId(1));
+    }
+}
