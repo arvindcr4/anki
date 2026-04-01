@@ -124,3 +124,78 @@ impl MetaExt for Meta {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn version_collection_filename_legacy1() {
+        assert_eq!(Version::Legacy1.collection_filename(), "collection.anki2");
+    }
+
+    #[test]
+    fn version_collection_filename_legacy2() {
+        assert_eq!(Version::Legacy2.collection_filename(), "collection.anki21");
+    }
+
+    #[test]
+    fn version_collection_filename_latest() {
+        assert_eq!(Version::Latest.collection_filename(), "collection.anki21b");
+    }
+
+    #[test]
+    fn version_schema_legacy1() {
+        assert_eq!(Version::Legacy1.schema_version(), SchemaVersion::V11);
+    }
+
+    #[test]
+    fn version_schema_legacy2() {
+        assert_eq!(Version::Legacy2.schema_version(), SchemaVersion::V11);
+    }
+
+    #[test]
+    fn version_schema_latest() {
+        assert_eq!(Version::Latest.schema_version(), SchemaVersion::V18);
+    }
+
+    #[test]
+    fn meta_new_is_latest() {
+        let meta = Meta::new();
+        assert_eq!(meta.version(), Version::Latest);
+    }
+
+    #[test]
+    fn meta_new_legacy_is_legacy2() {
+        let meta = Meta::new_legacy();
+        assert_eq!(meta.version(), Version::Legacy2);
+    }
+
+    #[test]
+    fn meta_latest_not_legacy() {
+        let meta = Meta::new();
+        assert!(!meta.is_legacy());
+        assert!(meta.zstd_compressed());
+        assert!(!meta.media_list_is_hashmap());
+    }
+
+    #[test]
+    fn meta_legacy_properties() {
+        let meta = Meta::new_legacy();
+        assert!(meta.is_legacy());
+        assert!(!meta.zstd_compressed());
+        assert!(meta.media_list_is_hashmap());
+    }
+
+    #[test]
+    fn meta_collection_filename_delegates() {
+        assert_eq!(Meta::new().collection_filename(), "collection.anki21b");
+        assert_eq!(Meta::new_legacy().collection_filename(), "collection.anki21");
+    }
+
+    #[test]
+    fn meta_schema_version_delegates() {
+        assert_eq!(Meta::new().schema_version(), SchemaVersion::V18);
+        assert_eq!(Meta::new_legacy().schema_version(), SchemaVersion::V11);
+    }
+}
