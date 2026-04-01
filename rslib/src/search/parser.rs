@@ -327,9 +327,9 @@ fn quoted_term_str(s: &str) -> IResult<'_, &str> {
     } else {
         Err(parse_failure(
             s,
-            match opened.chars().next().unwrap() {
-                '"' => FailKind::EmptyQuote,
-                // no unescaped " and a trailing \
+            match opened.chars().next() {
+                Some('"') => FailKind::EmptyQuote,
+                // no unescaped " and a trailing \ or empty input after quote
                 _ => FailKind::UnclosedQuote,
             },
         ))
