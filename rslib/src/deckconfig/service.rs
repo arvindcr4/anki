@@ -106,7 +106,7 @@ impl crate::services::DeckConfigService for Collection {
         &mut self,
         input: anki_proto::deck_config::GetRetentionWorkloadRequest,
     ) -> Result<anki_proto::deck_config::GetRetentionWorkloadResponse> {
-        let days_elapsed = self.timing_today().unwrap().days_elapsed as i32;
+        let days_elapsed = self.timing_today()?.days_elapsed as i32;
         let guard =
             self.search_cards_into_table(&input.search, crate::search::SortMode::NoOrder)?;
 
