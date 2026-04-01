@@ -85,3 +85,109 @@ impl Card {
         self.original_deck_id.0 > 0
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn restore_queue_new() {
+        let mut card = Card::default();
+        card.ctype = CardType::New;
+        card.restore_queue_from_type();
+        assert_eq!(card.queue, CardQueue::New);
+    }
+
+    #[test]
+    fn restore_queue_review() {
+        let mut card = Card::default();
+        card.ctype = CardType::Review;
+        card.restore_queue_from_type();
+        assert_eq!(card.queue, CardQueue::Review);
+    }
+
+    #[test]
+    fn restore_queue_learn_unix_timestamp() {
+        let mut card = Card::default();
+        card.ctype = CardType::Learn;
+        card.due = 1_700_000_000; // unix timestamp
+        card.restore_queue_from_type();
+        assert_eq!(card.queue, CardQueue::Learn);
+    }
+
+    #[test]
+    fn restore_queue_learn_day_number() {
+        let mut card = Card::default();
+        card.ctype = CardType::Learn;
+        card.due = 100; // day number
+        card.restore_queue_from_type();
+        assert_eq!(card.queue, CardQueue::DayLearn);
+    }
+
+    #[test]
+    fn original_or_current_deck_id_no_original() {
+        let mut card = Card::default();
+        card.deck_id = DeckId(5);
+        card.original_deck_id = DeckId(0);
+        assert_eq!(card.original_or_current_deck_id(), DeckId(5));
+    }
+
+    #[test]
+    fn original_or_current_deck_id_has_original() {
+        let mut card = Card::default();
+        card.deck_id = DeckId(5);
+        card.original_deck_id = DeckId(10);
+        assert_eq!(card.original_or_current_deck_id(), DeckId(10));
+    }
+
+    #[test]
+    fn is_filtered_true() {
+        let mut card = Card::default();
+        card.original_deck_id = DeckId(1);
+        assert!(card.is_filtered());
+    }
+
+    #[test]
+    fn is_filtered_false() {
+        let card = Card::default();
+        assert!(!card.is_filtered());
+    }
+
+    #[test]
+    fn remove_from_filtered_restores_deck() {
+        let mut card = Card::default();
+        card.deck_id = DeckId(99); // filtered deck
+        card.original_deck_id = DeckId(1); // home deck
+        card.original_due = 50;
+        card.remove_from_filtered_deck_before_reschedule();
+        assert_eq!(card.deck_id, DeckId(1));
+        assert_eq!(card.original_deck_id, DeckId(0));
+        assert_eq!(card.original_due, 0);
+    }
+
+    #[test]
+    fn remove_from_filtered_noop_when_not_filtered() {
+        let mut card = Card::default();
+        card.deck_id = DeckId(1);
+        card.original_deck_id = DeckId(0);
+        card.remove_from_filtered_deck_before_reschedule();
+        assert_eq!(card.deck_id, DeckId(1)); // unchanged
+    }
+
+    #[test]
+    fn remove_restoring_queue() {
+        let mut card = Card::default();
+        card.ctype = CardType::Review;
+        card.deck_id = DeckId(99);
+        card.original_deck_id = DeckId(1);
+        card.original_due = 50;
+        card.due = -100;
+        card.queue = CardQueue::Review;
+        card.remove_from_filtered_deck_restoring_queue();
+        assert_eq!(card.deck_id, DeckId(1));
+        assert_eq!(card.due, 50);
+        assert_eq!(card.queue, CardQueue::Review);
+        assert_eq!(card.original_due, 0);
+        assert_eq!(card.original_deck_id, DeckId(0));
+    }
+}
