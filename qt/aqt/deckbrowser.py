@@ -1110,14 +1110,21 @@ class DeckBrowser:
             )
         create_action_label = "Create first card"
         create_action_title = "Create cards"
+        import_action_label = "Import cards"
+        import_action_title = "Import cards"
         if has_recent_cards:
             create_action_label = "Restart today"
+            import_action_label = "Import more"
+            import_action_title = "Import more cards"
+            if latest_active_group and latest_active_group.days_ago > 2:
+                import_action_label = "Import to rebuild momentum"
+                import_action_title = "Import to rebuild momentum"
             if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
                 create_action_label = "Create another"
         panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# title="{create_action_title}" aria-label="{create_action_title}" onclick="return pycmd('addcards')">{create_action_label}</a>
-    <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# title="{import_action_title}" aria-label="{import_action_title}" onclick="return pycmd('importcards')">{import_action_label}</a>
   </div>
   <div class="daily-cards-zero-state">
     Add cards today and they'll appear here for fast date-based browsing.
@@ -1125,6 +1132,8 @@ class DeckBrowser:
 """.format(
             create_action_title=create_action_title,
             create_action_label=create_action_label,
+            import_action_title=import_action_title,
+            import_action_label=import_action_label,
         )
         if has_recent_cards:
             browse_recent_label = f"Browse {recent_days} day range"
@@ -1137,7 +1146,7 @@ class DeckBrowser:
             panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# title="{create_action_title}" aria-label="{create_action_title}" onclick="return pycmd('addcards')">{create_action_label}</a>
-    <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# title="{import_action_title}" aria-label="{import_action_title}" onclick="return pycmd('importcards')">{import_action_label}</a>
     {today_action}
     {latest_day_action}
     {busiest_day_action}
@@ -1146,6 +1155,8 @@ class DeckBrowser:
 """.format(
                 create_action_title=create_action_title,
                 create_action_label=create_action_label,
+                import_action_title=import_action_title,
+                import_action_label=import_action_label,
                 today_action=today_action,
                 latest_day_action=latest_day_action,
                 busiest_day_action=busiest_day_action,

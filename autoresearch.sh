@@ -100,6 +100,8 @@ checks = [
     ('Create another', 2, 'capture'),
     ('Import cards', 2, 'capture'),
     ('Import more', 2, 'capture'),
+    ('Import to rebuild momentum', 2, 'capture'),
+    ('Import more cards', 1, 'capture'),
     ('addcards', 2, 'capture'),
     ('importcards', 2, 'capture'),
     ('daily-cards-create', 1, 'capture'),

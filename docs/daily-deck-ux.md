@@ -65,6 +65,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Prefer a single recent-cards aggregation query over multiple round trips where possible, so richer timeline summaries do not make the deck browser feel sluggish.
 - Keep visible **Create cards** and **Import cards** actions in the panel so the main screen supports both revisiting and generating learning material.
 - Let the primary create CTA adapt to context: **Create first card** for empty weeks, **Restart today** when today is blank but recent capture exists, and **Create another** when today already has cards.
+- Let the import CTA adapt too: keep **Import cards** for empty weeks, use **Import more** when capture is already active, and switch to **Import to rebuild momentum** when the visible week shows a longer current gap.
 - For each day, show:
   - a human label like **Today**, **Yesterday**, or weekday
   - the date
