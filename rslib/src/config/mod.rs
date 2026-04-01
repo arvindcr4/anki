@@ -362,4 +362,73 @@ mod test {
             .unwrap();
         assert_eq!(col.get_config_optional::<i64, _>("test"), None,);
     }
+
+    #[test]
+    fn scheduler_version_default() {
+        let col = Collection::new();
+        assert_eq!(col.scheduler_version(), SchedulerVersion::V2);
+    }
+
+    #[test]
+    fn v2_enabled_default() {
+        let col = Collection::new();
+        assert!(col.v2_enabled());
+    }
+
+    #[test]
+    fn learn_ahead_secs_default() {
+        let col = Collection::new();
+        assert_eq!(col.learn_ahead_secs(), 1200);
+    }
+
+    #[test]
+    fn learn_ahead_secs_set_and_get() {
+        let mut col = Collection::new();
+        col.set_learn_ahead_secs(600).unwrap();
+        assert_eq!(col.learn_ahead_secs(), 600);
+    }
+
+    #[test]
+    fn get_next_card_position_default() {
+        let col = Collection::new();
+        assert_eq!(col.get_next_card_position(), 1);
+    }
+
+    #[test]
+    fn get_and_update_next_card_position() {
+        let mut col = Collection::new();
+        let pos = col.get_and_update_next_card_position().unwrap();
+        assert_eq!(pos, 1);
+        let pos2 = col.get_and_update_next_card_position().unwrap();
+        assert_eq!(pos2, 2);
+    }
+
+    #[test]
+    fn backup_limits_default() {
+        let col = Collection::new();
+        let limits = col.get_backup_limits();
+        assert_eq!(limits.daily, 12);
+        assert_eq!(limits.weekly, 10);
+        assert_eq!(limits.monthly, 9);
+        assert_eq!(limits.minimum_interval_mins, 30);
+    }
+
+    #[test]
+    fn get_answer_time_limit_default() {
+        let col = Collection::new();
+        assert_eq!(col.get_answer_time_limit_secs(), 0);
+    }
+
+    #[test]
+    fn first_day_of_week_default() {
+        let col = Collection::new();
+        assert!(matches!(col.get_first_day_of_week(), Weekday::Sunday));
+    }
+
+    #[test]
+    fn config_default_fn() {
+        let col = Collection::new();
+        let val: i32 = col.get_config_default("nonexistent");
+        assert_eq!(val, 0); // i32 default
+    }
 }
