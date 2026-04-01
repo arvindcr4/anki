@@ -161,4 +161,55 @@ mod test {
 
         Ok(())
     }
+
+    #[test]
+    fn replace_text_basic() {
+        let ctx = FindReplaceContext::new(vec![], "foo", "bar", None).unwrap();
+        assert_eq!(ctx.replace_text("hello foo world"), "hello bar world");
+    }
+
+    #[test]
+    fn replace_text_regex() {
+        let ctx = FindReplaceContext::new(vec![], r"\d+", "NUM", None).unwrap();
+        assert_eq!(ctx.replace_text("abc 123 def 456"), "abc NUM def NUM");
+    }
+
+    #[test]
+    fn replace_text_no_match() {
+        let ctx = FindReplaceContext::new(vec![], "xyz", "abc", None).unwrap();
+        let input = "hello world";
+        // should return borrowed (unchanged)
+        assert!(matches!(ctx.replace_text(input), Cow::Borrowed(_)));
+    }
+
+    #[test]
+    fn replace_text_empty_pattern() {
+        let ctx = FindReplaceContext::new(vec![], "", "x", None).unwrap();
+        // empty pattern matches between every character
+        assert_eq!(ctx.replace_text("ab"), "xaxbx");
+    }
+
+    #[test]
+    fn replace_text_capture_groups() {
+        let ctx = FindReplaceContext::new(vec![], r"(\w+)@(\w+)", "$1 at $2", None).unwrap();
+        assert_eq!(ctx.replace_text("user@host"), "user at host");
+    }
+
+    #[test]
+    fn new_invalid_regex_fails() {
+        let result = FindReplaceContext::new(vec![], "[invalid", "x", None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn new_with_field_name() {
+        let ctx = FindReplaceContext::new(vec![], "test", "x", Some("Front".into())).unwrap();
+        assert_eq!(ctx.field_name.as_deref(), Some("Front"));
+    }
+
+    #[test]
+    fn new_without_field_name() {
+        let ctx = FindReplaceContext::new(vec![], "test", "x", None).unwrap();
+        assert!(ctx.field_name.is_none());
+    }
 }
