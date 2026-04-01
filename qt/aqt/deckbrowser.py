@@ -648,11 +648,21 @@ class DeckBrowser:
         heatmap_hint = "Bars light up as you create or import cards."
         if has_recent_cards:
             heatmap_hint = "Tap a bar to browse that day's cards across notes."
+            if bursty_week:
+                heatmap_hint = (
+                    "Tap a bar to browse that day's cards across notes; "
+                    "the highlighted burst bar marks the busiest session."
+                )
             if latest_active_group and latest_active_group.days_ago > 1:
                 heatmap_hint = (
                     "Tap a bar to browse that day's cards across notes; "
                     "dashed empty bars mark the current gap."
                 )
+                if bursty_week:
+                    heatmap_hint = (
+                        "Tap a bar to browse that day's cards across notes; dashed empty bars mark the current gap, "
+                        "and the highlighted burst bar marks the busiest session."
+                    )
         guidance_actions: list[str] = []
         guidance = "Create or import cards to start this week's timeline."
         if (

@@ -205,6 +205,7 @@ checks = [
     ('Streak run', 1, 'timeline'),
     ('Tap a bar to browse that day', 2, 'timeline'),
     ('dashed empty bars mark the current gap', 2, 'timeline'),
+    ('highlighted burst bar marks the busiest session', 2, 'timeline'),
     ('Bars light up as you create or import cards', 2, 'timeline'),
     ('Keep capturing while the topic is fresh', 2, 'timeline'),
     ('Keep the streak going', 2, 'capture'),
