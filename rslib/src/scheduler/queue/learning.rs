@@ -172,3 +172,78 @@ impl CardQueues {
             .adding_secs(self.learn_ahead_secs)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn learning_entry_ordering_by_due() {
+        let early = LearningQueueEntry {
+            due: TimestampSecs(100),
+            id: CardId(1),
+            mtime: TimestampSecs(0),
+        };
+        let late = LearningQueueEntry {
+            due: TimestampSecs(200),
+            id: CardId(2),
+            mtime: TimestampSecs(0),
+        };
+        assert!(early < late);
+    }
+
+    #[test]
+    fn learning_entry_ordering_same_due_by_id() {
+        let a = LearningQueueEntry {
+            due: TimestampSecs(100),
+            id: CardId(1),
+            mtime: TimestampSecs(0),
+        };
+        let b = LearningQueueEntry {
+            due: TimestampSecs(100),
+            id: CardId(2),
+            mtime: TimestampSecs(0),
+        };
+        assert!(a < b);
+    }
+
+    #[test]
+    fn learning_entry_equality() {
+        let a = LearningQueueEntry {
+            due: TimestampSecs(100),
+            id: CardId(1),
+            mtime: TimestampSecs(50),
+        };
+        let b = LearningQueueEntry {
+            due: TimestampSecs(100),
+            id: CardId(1),
+            mtime: TimestampSecs(50),
+        };
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn learning_entry_sort() {
+        let mut entries = vec![
+            LearningQueueEntry {
+                due: TimestampSecs(300),
+                id: CardId(3),
+                mtime: TimestampSecs(0),
+            },
+            LearningQueueEntry {
+                due: TimestampSecs(100),
+                id: CardId(1),
+                mtime: TimestampSecs(0),
+            },
+            LearningQueueEntry {
+                due: TimestampSecs(200),
+                id: CardId(2),
+                mtime: TimestampSecs(0),
+            },
+        ];
+        entries.sort();
+        assert_eq!(entries[0].id, CardId(1));
+        assert_eq!(entries[1].id, CardId(2));
+        assert_eq!(entries[2].id, CardId(3));
+    }
+}
