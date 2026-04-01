@@ -176,3 +176,7 @@ debug = 0
 [profile.release-lto]
 inherits = "release"
 lto = true
+
+[profile.release]
+lto = "fat"
+strip = true
