@@ -99,7 +99,6 @@ strum.workspace = true
 tempfile.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
-urlencoding.workspace = true
 tower-http.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
@@ -107,6 +106,7 @@ tracing-subscriber.workspace = true
 unic-ucd-category.workspace = true
 unicase.workspace = true
 unicode-normalization.workspace = true
+urlencoding.workspace = true
 zip.workspace = true
 zstd.workspace = true
 

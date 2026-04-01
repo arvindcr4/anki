@@ -10,7 +10,9 @@ use std::path::Path;
 
 use crate::error::Result;
 use crate::ingestion::api::GeminiClient;
-use crate::ingestion::models::{Content, IngestionConfig, IngestionResult};
+use crate::ingestion::models::Content;
+use crate::ingestion::models::IngestionConfig;
+use crate::ingestion::models::IngestionResult;
 
 /// Content ingestion service.
 ///
@@ -24,9 +26,10 @@ pub struct IngestionService {
 impl IngestionService {
     /// Create a new IngestionService with the given configuration.
     pub fn new(config: IngestionConfig) -> Self {
-        let gemini_client = config.gemini_api_key.as_ref().map(|key| {
-            GeminiClient::new(key.clone())
-        });
+        let gemini_client = config
+            .gemini_api_key
+            .as_ref()
+            .map(|key| GeminiClient::new(key.clone()));
 
         IngestionService {
             config,
@@ -72,10 +75,7 @@ impl IngestionService {
 
         // Check file exists
         if !file_path.exists() {
-            return IngestionResult::failure(format!(
-                "Audio file not found: {}",
-                file_path_str
-            ));
+            return IngestionResult::failure(format!("Audio file not found: {}", file_path_str));
         }
 
         let client = match &self.gemini_client {
@@ -92,11 +92,7 @@ impl IngestionService {
                 let transcription_prompt = "Transcribe this audio file exactly. Include all spoken words. If there are multiple speakers, indicate speaker changes if possible.";
 
                 match client
-                    .generate_content_with_file(
-                        "gemini-2.0-flash",
-                        &file_uri,
-                        transcription_prompt,
-                    )
+                    .generate_content_with_file("gemini-2.0-flash", &file_uri, transcription_prompt)
                     .await
                 {
                     Ok(response) => {
@@ -104,9 +100,7 @@ impl IngestionService {
                         let content = Content::from_audio(text, &file_path_str);
                         IngestionResult::success(content)
                     }
-                    Err(e) => {
-                        IngestionResult::failure(format!("Transcription failed: {:?}", e))
-                    }
+                    Err(e) => IngestionResult::failure(format!("Transcription failed: {:?}", e)),
                 }
             }
             Err(e) => IngestionResult::failure(format!("Upload failed: {:?}", e)),
@@ -148,14 +142,11 @@ impl IngestionService {
                 let _ = tokio::fs::remove_file(&temp_audio).await;
 
                 // Generate transcription
-                let transcription_prompt = "Transcribe this video's audio exactly. Include all spoken words.";
+                let transcription_prompt =
+                    "Transcribe this video's audio exactly. Include all spoken words.";
 
                 match client
-                    .generate_content_with_file(
-                        "gemini-2.0-flash",
-                        &file_uri,
-                        transcription_prompt,
-                    )
+                    .generate_content_with_file("gemini-2.0-flash", &file_uri, transcription_prompt)
                     .await
                 {
                     Ok(response) => {
@@ -198,9 +189,7 @@ impl IngestionService {
     /// For text, returns the first 500 characters.
     pub fn preview(&self, source: &str, source_type: crate::flashcard::SourceType) -> String {
         match source_type {
-            crate::flashcard::SourceType::Text => {
-                source.chars().take(500).collect::<String>()
-            }
+            crate::flashcard::SourceType::Text => source.chars().take(500).collect::<String>(),
             crate::flashcard::SourceType::Url => {
                 format!("URL: {}", source)
             }
@@ -210,9 +199,7 @@ impl IngestionService {
             crate::flashcard::SourceType::Video => {
                 format!("Video file: {}", source)
             }
-            crate::flashcard::SourceType::Code => {
-                source.chars().take(500).collect::<String>()
-            }
+            crate::flashcard::SourceType::Code => source.chars().take(500).collect::<String>(),
         }
     }
 }
@@ -283,8 +270,9 @@ fn extract_text_from_response(response: &crate::ingestion::api::GenerateContentR
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     #[test]
     fn test_ingestion_service_creation() {
@@ -311,7 +299,10 @@ mod test {
         let service = IngestionService::with_api_key("test-key");
         let result = service.ingest_text("This is sample text content.");
         assert!(result.success);
-        assert_eq!(result.content.source_type, crate::flashcard::SourceType::Text);
+        assert_eq!(
+            result.content.source_type,
+            crate::flashcard::SourceType::Text
+        );
     }
 
     #[test]

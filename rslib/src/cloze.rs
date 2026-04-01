@@ -131,10 +131,8 @@ fn tokenize(mut text: &str) -> impl Iterator<Item = Token<'_>> {
         } else {
             // Fast dispatch based on first byte
             let result = match text.as_bytes()[0] {
-                b'{' => open_cloze(text)
-                    .or_else(|_| normal_text(text)),
-                b'}' => close_cloze(text)
-                    .or_else(|_| normal_text(text)),
+                b'{' => open_cloze(text).or_else(|_| normal_text(text)),
+                b'}' => close_cloze(text).or_else(|_| normal_text(text)),
                 _ => normal_text(text),
             };
             let (remaining_text, token) = result.unwrap();

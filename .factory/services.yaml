@@ -1,0 +1,39 @@
+commands:
+  install: cargo fetch
+  typecheck: cargo check
+  build: ./check
+  test: cargo test --lib
+  python-test: python -m pytest pylib/tests -v
+  qt-test: python -m pytest aqt/tests -v
+  lint: cargo fmt --check && cargo clippy -- -D warnings
+
+services:
+  minmax-api:
+    description: MiniMax API (OpenAI-compatible)
+    url: https://api.minimax.chat/v1
+    healthcheck: curl -sf -o /dev/null https://api.minimax.chat/v1/models
+    required_env:
+      - MINIMAX_API_KEY
+    type: external
+
+  gemini-api:
+    description: Google Gemini API
+    url: https://generativelanguage.googleapis.com/v1beta
+    healthcheck: curl -sf -o /dev/null https://generativelanguage.googleapis.com/v1beta/models
+    required_env:
+      - GEMINI_API_KEY
+    type: external
+
+  anki-connect:
+    description: AnkiConnect addon (port 8765)
+    url: http://localhost:8765
+    healthcheck: curl -sf -o /dev/null -X POST http://localhost:8765 -d '{"action":"version","version":6}'
+    port: 8765
+    type: external
+    optional: true
+
+environment:
+  MINIMAX_API_KEY: ""
+  GEMINI_API_KEY: ""
+  ANKI_CONNECT_URL: "http://localhost:8765"
+  DEFAULT_DECK_NAME: "LLM Cards"

@@ -443,7 +443,7 @@ class DeckBrowser:
             gap_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-gap" href=# '
                 f'title="Browse latest capture" aria-label="Browse latest capture" '
-                f'onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">'
+                f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
                 f"{gap_summary}</a>"
             )
         range_summary = "Range: this week"
@@ -457,8 +457,15 @@ class DeckBrowser:
         quiet_day_summary = "Quiet days: none"
         if quiet_day_count:
             quiet_day_summary = f"Quiet days: {_count_label(quiet_day_count, 'day')}"
+        consistency_pct = round((active_day_count / max(1, recent_days)) * 100)
+        consistency_summary = f"Consistency: {consistency_pct}% active"
         active_day_markup = f'<div class="daily-cards-pill daily-cards-activity">{active_day_count_label} with cards</div>'
-        quiet_day_markup = f'<div class="daily-cards-pill daily-cards-quiet">{quiet_day_summary}</div>'
+        quiet_day_markup = (
+            f'<div class="daily-cards-pill daily-cards-quiet">{quiet_day_summary}</div>'
+        )
+        consistency_markup = (
+            f'<div class="daily-cards-pill daily-cards-consistency">{consistency_summary}</div>'
+        )
         range_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-range">{range_summary}</div>'
         )
@@ -466,19 +473,25 @@ class DeckBrowser:
             active_day_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-activity" href=# '
                 'title="Browse active week" aria-label="Browse active week" '
-                'onclick="return pycmd(\'browseRecent\')">'
+                "onclick=\"return pycmd('browseRecent')\">"
                 f"{active_day_count_label} with cards</a>"
             )
             quiet_day_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-quiet" href=# '
                 'title="Browse quiet week context" aria-label="Browse quiet week context" '
-                'onclick="return pycmd(\'browseRecent\')">'
+                "onclick=\"return pycmd('browseRecent')\">"
                 f"{quiet_day_summary}</a>"
+            )
+            consistency_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-consistency" href=# '
+                'title="Browse weekly consistency context" aria-label="Browse weekly consistency context" '
+                "onclick=\"return pycmd('browseRecent')\">"
+                f"{consistency_summary}</a>"
             )
             range_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-range" href=# '
                 'title="Browse visible week" aria-label="Browse visible week" '
-                'onclick="return pycmd(\'browseRecent\')">'
+                "onclick=\"return pycmd('browseRecent')\">"
                 f"{range_summary}</a>"
             )
         pace_summary = "Pace: no active days yet"
@@ -493,13 +506,17 @@ class DeckBrowser:
             pace_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-pace" href=# '
                 'title="Browse weekly pace context" aria-label="Browse weekly pace context" '
-                'onclick="return pycmd(\'browseRecent\')">'
+                "onclick=\"return pycmd('browseRecent')\">"
                 f"{pace_summary}</a>"
             )
         recent_window = self._render_data.daily_groups[:3]
         earlier_window = self._render_data.daily_groups[3:]
-        recent_avg = sum(group.card_count for group in recent_window) / max(1, len(recent_window))
-        earlier_avg = sum(group.card_count for group in earlier_window) / max(1, len(earlier_window))
+        recent_avg = sum(group.card_count for group in recent_window) / max(
+            1, len(recent_window)
+        )
+        earlier_avg = sum(group.card_count for group in earlier_window) / max(
+            1, len(earlier_window)
+        )
         trend_summary = "Trend: no activity yet"
         if total_cards:
             if recent_avg and not earlier_avg:
@@ -517,7 +534,7 @@ class DeckBrowser:
             trend_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-trend" href=# '
                 'title="Browse weekly trend context" aria-label="Browse weekly trend context" '
-                'onclick="return pycmd(\'browseRecent\')">'
+                "onclick=\"return pycmd('browseRecent')\">"
                 f"{trend_summary}</a>"
             )
         density_summary = "Density: no cards yet"
@@ -564,7 +581,7 @@ class DeckBrowser:
                 streak_summary_markup = (
                     f'<a class="daily-cards-link daily-cards-pill daily-cards-streak" href=# '
                     f'title="{streak_title}" aria-label="{streak_title}" '
-                    f'onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">'
+                    f"onclick=\"return pycmd('browseStreak:{latest_active_group.days_ago},{streak_count}')\">"
                     f"{streak_summary}</a>"
                 )
             else:
@@ -572,7 +589,10 @@ class DeckBrowser:
         legend_items = [
             '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-today"></span>Today</span>'
         ]
-        if self._render_data.daily_groups and not self._render_data.daily_groups[0].card_count:
+        if (
+            self._render_data.daily_groups
+            and not self._render_data.daily_groups[0].card_count
+        ):
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-capture"></span>Create here</span>'
             )
@@ -663,7 +683,7 @@ class DeckBrowser:
             busiest_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest" href=# '
                 f'title="Browse busiest day" aria-label="Browse busiest day" '
-                f'onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
+                f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{busiest_summary}</a>"
             )
             burst_pct = round((busiest_group.card_count / total_cards) * 100)
@@ -671,19 +691,23 @@ class DeckBrowser:
             burst_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-burst" href=# '
                 f'title="Browse burst day" aria-label="Browse burst day" '
-                f'onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">'
+                f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{burst_summary}</a>"
             )
         insight_summary = "Insight: no recent capture yet."
         if total_cards:
             if burst_pct >= 60:
-                insight_summary = "Insight: most of this week came from one big capture session."
+                insight_summary = (
+                    "Insight: most of this week came from one big capture session."
+                )
             elif trend_summary == "Trend: rising":
                 insight_summary = "Insight: recent capture is accelerating."
             elif trend_summary == "Trend: cooling":
                 insight_summary = "Insight: recent capture has cooled compared with earlier in the week."
             elif active_day_count >= recent_days - 1:
-                insight_summary = "Insight: capture has been consistent across nearly the whole week."
+                insight_summary = (
+                    "Insight: capture has been consistent across nearly the whole week."
+                )
             else:
                 insight_summary = "Insight: capture is spread across multiple days."
         max_cards = max(
@@ -780,7 +804,10 @@ class DeckBrowser:
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('addcards')">Create another</a>
 </div>
 """
-                elif latest_active_group and group.days_ago == latest_active_group.days_ago:
+                elif (
+                    latest_active_group
+                    and group.days_ago == latest_active_group.days_ago
+                ):
                     action = f"""
 <div class="daily-cards-action-stack">
   <a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>
@@ -820,14 +847,17 @@ class DeckBrowser:
                 )
             )
         today_action = ""
-        if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+        if (
+            self._render_data.daily_groups
+            and self._render_data.daily_groups[0].card_count
+        ):
             today_label = (
                 f"Browse today ({self._render_data.daily_groups[0].date_label})"
             )
             today_action = (
                 '<a class="daily-cards-link daily-cards-pill" href=# '
                 f'title="{today_label}" aria-label="{today_label}" '
-                'onclick="return pycmd(\'browseAdded:0\')">'
+                "onclick=\"return pycmd('browseAdded:0')\">"
                 f"{today_label}</a>"
             )
         latest_day_action = ""
@@ -881,6 +911,7 @@ class DeckBrowser:
     </div>
     {active_day_markup}
     {quiet_day_markup}
+    {consistency_markup}
     {gap_summary_markup}
     {range_summary_markup}
     {pace_summary_markup}
@@ -910,6 +941,7 @@ class DeckBrowser:
             total_notes_label=_count_label(total_notes, "note"),
             active_day_markup=active_day_markup,
             quiet_day_markup=quiet_day_markup,
+            consistency_markup=consistency_markup,
             gap_summary_markup=gap_summary_markup,
             range_summary_markup=range_summary_markup,
             pace_summary_markup=pace_summary_markup,

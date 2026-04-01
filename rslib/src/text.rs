@@ -277,7 +277,8 @@ pub fn strip_html_benchmark() {
 #[cfg(feature = "bench")]
 pub fn strip_html_plain_benchmark() {
     use std::hint::black_box;
-    let text = "The capital of France is Paris. It is located in northern France along the Seine river.";
+    let text =
+        "The capital of France is Paris. It is located in northern France along the Seine river.";
     black_box(strip_html(black_box(text)));
 }
 

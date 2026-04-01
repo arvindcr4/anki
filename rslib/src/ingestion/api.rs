@@ -4,11 +4,14 @@
 //! Gemini API client for content extraction.
 //!
 //! This module provides HTTP client functionality for interacting with
-//! the Gemini API for URL context extraction, file uploads, and text generation.
+//! the Gemini API for URL context extraction, file uploads, and text
+//! generation.
+
+use std::time::Duration;
 
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::error::AnkiError;
 use crate::error::Result;
@@ -37,11 +40,7 @@ impl GeminiClient {
     }
 
     /// Extract content from a URL using Gemini's urlContext tool.
-    pub async fn extract_url_context(
-        &self,
-        url: &str,
-        model: &str,
-    ) -> Result<UrlContextResponse> {
+    pub async fn extract_url_context(&self, url: &str, model: &str) -> Result<UrlContextResponse> {
         let url_context = self.call_url_context_api(url, model).await?;
 
         Ok(url_context)
@@ -49,15 +48,16 @@ impl GeminiClient {
 
     /// Upload a file to Gemini for processing.
     pub async fn upload_file(&self, file_path: &str) -> Result<UploadResponse> {
-        let file_content = tokio::fs::read(file_path).await.map_err(|e| {
-            AnkiError::FileIoError {
-                source: anki_io::FileIoError {
-                    path: file_path.into(),
-                    op: anki_io::FileOp::Read,
-                    source: e,
-                },
-            }
-        })?;
+        let file_content =
+            tokio::fs::read(file_path)
+                .await
+                .map_err(|e| AnkiError::FileIoError {
+                    source: anki_io::FileIoError {
+                        path: file_path.into(),
+                        op: anki_io::FileOp::Read,
+                        source: e,
+                    },
+                })?;
 
         let _file_name = std::path::Path::new(file_path)
             .file_name()
@@ -155,9 +155,7 @@ impl GeminiClient {
         // For now, we implement a simple fetch as placeholder
         let fetch_url = format!(
             "{}/v1beta/{}:generateContent?key={}",
-            GEMINI_API_BASE,
-            "models/gemini-2.0-flash",
-            self.api_key
+            GEMINI_API_BASE, "models/gemini-2.0-flash", self.api_key
         );
 
         let request_body = serde_json::json!({

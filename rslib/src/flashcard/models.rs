@@ -6,7 +6,8 @@
 //! This module provides the Flashcard struct which represents a generated
 //! flashcard before it's converted into an Anki Note.
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 /// Represents the source type of a generated flashcard.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -178,10 +179,7 @@ mod test {
     fn test_cloze_flashcard_with_back_extra() {
         let card = ClozeFlashcard::new("Rust is a {{c1::systems}} programming language.")
             .with_back_extra("Memory safety without garbage collection.");
-        assert_eq!(
-            card.back_extra,
-            "Memory safety without garbage collection."
-        );
+        assert_eq!(card.back_extra, "Memory safety without garbage collection.");
     }
 
     #[test]

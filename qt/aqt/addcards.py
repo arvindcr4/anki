@@ -676,9 +676,7 @@ class AddCards(QMainWindow):
             showWarning("No note loaded.", parent=self)
             return
 
-        source_text = "\n".join(
-            field for field in note.fields if field.strip()
-        )
+        source_text = "\n".join(field for field in note.fields if field.strip())
         if not source_text.strip():
             showWarning(
                 "No source text in note fields. Add text to a field first, "
@@ -693,7 +691,7 @@ class AddCards(QMainWindow):
         self._update_source_preview(target, selected_action=action)
 
         # Run generation in a thread to avoid blocking the UI
-        from aqt.llm_generate import generate_cards, LLMError, get_api_key
+        from aqt.llm_generate import LLMError, generate_cards, get_api_key
 
         if not get_api_key():
             showWarning(
@@ -701,9 +699,7 @@ class AddCards(QMainWindow):
                 "Set OPENAI_API_KEY environment variable to enable LLM generation.",
                 parent=self,
             )
-            self.intake_frame.set_llm_status(
-                "LLM status: provider not configured"
-            )
+            self.intake_frame.set_llm_status("LLM status: provider not configured")
             return
 
         context = f"Deck: {self.deck_chooser.selected_deck_name()}"
@@ -715,9 +711,7 @@ class AddCards(QMainWindow):
                     lambda: self._apply_llm_result(result, action)
                 )
             except LLMError as e:
-                self.mw.taskman.run_on_main(
-                    lambda: self._handle_llm_error(str(e))
-                )
+                self.mw.taskman.run_on_main(lambda: self._handle_llm_error(str(e)))
 
         self.mw.taskman.run_in_background(do_generate)
 
@@ -796,9 +790,7 @@ class AddCards(QMainWindow):
 
     def _handle_llm_error(self, error_msg: str) -> None:
         """Handle LLM generation errors."""
-        self.intake_frame.set_llm_status(
-            f"LLM status: generation failed"
-        )
+        self.intake_frame.set_llm_status(f"LLM status: generation failed")
         showWarning(f"LLM generation failed:\n\n{error_msg}", parent=self)
 
     def _organize_current_note(self) -> None:

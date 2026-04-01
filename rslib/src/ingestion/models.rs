@@ -6,7 +6,8 @@
 //! These structs represent the raw content extracted from various sources
 //! before it's processed by the LLM for flashcard generation.
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
 use crate::flashcard::SourceType;
 
@@ -143,12 +144,12 @@ mod test {
 
     #[test]
     fn test_content_from_url() {
-        let content = Content::from_url(
-            "Article content here",
-            "https://example.com/article",
-        );
+        let content = Content::from_url("Article content here", "https://example.com/article");
         assert_eq!(content.source_type, SourceType::Url);
-        assert_eq!(content.source_url.as_deref(), Some("https://example.com/article"));
+        assert_eq!(
+            content.source_url.as_deref(),
+            Some("https://example.com/article")
+        );
     }
 
     #[test]

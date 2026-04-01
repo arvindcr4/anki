@@ -6,9 +6,11 @@
 //! This module provides functions to generate prompts for Basic (Q&A)
 //! and Cloze (fill-in-the-blank) flashcard formats.
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
+use serde::Serialize;
 
-use super::models::{Flashcard, SourceType};
+use super::models::Flashcard;
+use super::models::SourceType;
 
 /// Format for flashcard generation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -87,7 +89,7 @@ Rules:
 
     // Add card count guidance
     prompt.push_str(&format!(
-        "\n- Generate approximately 1 card per 100 words of content (minimum 1, maximum 50)" 
+        "\n- Generate approximately 1 card per 100 words of content (minimum 1, maximum 50)"
     ));
 
     // Add subject focus if provided
@@ -114,7 +116,7 @@ Example: [{"front": "What is X?", "back": "X is...", "tags": ["source-url", "key
 
 Response Format:
 Return ONLY a JSON array of objects with "front" and "back" keys.
-Example: [{"front": "What is X?", "back": "X is..."}]"#
+Example: [{"front": "What is X?", "back": "X is..."}]"#,
         );
     }
 
@@ -161,7 +163,7 @@ Example: [{"text": "Rust is a {{c1::systems}} programming language.", "tags": ["
 
 Response Format:
 Return ONLY a JSON array of objects with "text" key.
-Example: [{"text": "Rust is a {{c1::systems}} programming language."}]"#
+Example: [{"text": "Rust is a {{c1::systems}} programming language."}]"#,
         );
     }
 
@@ -191,13 +193,12 @@ pub fn user_message(title: Option<&str>, source_url: Option<&str>, content: &str
 /// Returns 2-4 relevant keywords from the content.
 pub fn extract_keywords(content: &str, min_word_len: usize) -> Vec<String> {
     let stop_words: Vec<&str> = vec![
-        "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for",
-        "of", "with", "by", "from", "is", "are", "was", "were", "be", "been",
-        "being", "have", "has", "had", "do", "does", "did", "will", "would",
-        "should", "could", "may", "might", "must", "can", "this", "that", "these",
-        "those", "it", "its", "as", "if", "then", "than", "so", "not", "no",
-        "yes", "all", "any", "each", "every", "both", "few", "more", "most",
-        "other", "some", "such", "only", "own", "same", "than", "too", "very",
+        "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
+        "from", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do",
+        "does", "did", "will", "would", "should", "could", "may", "might", "must", "can", "this",
+        "that", "these", "those", "it", "its", "as", "if", "then", "than", "so", "not", "no",
+        "yes", "all", "any", "each", "every", "both", "few", "more", "most", "other", "some",
+        "such", "only", "own", "same", "than", "too", "very",
     ];
 
     let words: Vec<&str> = content
@@ -217,11 +218,7 @@ pub fn extract_keywords(content: &str, min_word_len: usize) -> Vec<String> {
     let mut sorted: Vec<(String, usize)> = freq.into_iter().collect();
     sorted.sort_by(|a, b| b.1.cmp(&a.1));
 
-    sorted
-        .into_iter()
-        .take(4)
-        .map(|(word, _)| word)
-        .collect()
+    sorted.into_iter().take(4).map(|(word, _)| word).collect()
 }
 
 /// Generate tags for a flashcard based on source type and content.
@@ -251,18 +248,13 @@ pub fn generate_tags(source_type: SourceType, content: &str) -> Vec<String> {
 ///
 /// Handles both Basic and Cloze format responses.
 pub fn parse_flashcards_json(json_str: &str) -> Result<Vec<Flashcard>, String> {
-    // Try to extract JSON array from the response (may be wrapped in markdown code blocks)
+    // Try to extract JSON array from the response (may be wrapped in markdown code
+    // blocks)
     let json_str = json_str.trim();
     let json_str = if json_str.starts_with("```json") {
-        json_str
-            .strip_prefix("```json")
-            .unwrap()
-            .trim_start()
+        json_str.strip_prefix("```json").unwrap().trim_start()
     } else if json_str.starts_with("```") {
-        json_str
-            .strip_prefix("```")
-            .unwrap()
-            .trim_start()
+        json_str.strip_prefix("```").unwrap().trim_start()
     } else {
         json_str
     };
@@ -274,8 +266,12 @@ pub fn parse_flashcards_json(json_str: &str) -> Result<Vec<Flashcard>, String> {
     };
 
     // Find JSON array
-    let start = json_str.find('[').ok_or("No JSON array found in response")?;
-    let end = json_str.rfind(']').ok_or("No closing bracket found in response")?;
+    let start = json_str
+        .find('[')
+        .ok_or("No JSON array found in response")?;
+    let end = json_str
+        .rfind(']')
+        .ok_or("No closing bracket found in response")?;
     let json_str = &json_str[start..=end];
 
     let items: Vec<serde_json::Value> =
@@ -348,7 +344,11 @@ mod test {
 
     #[test]
     fn test_user_message_with_title_and_url() {
-        let msg = user_message(Some("Test Title"), Some("https://example.com"), "Test content");
+        let msg = user_message(
+            Some("Test Title"),
+            Some("https://example.com"),
+            "Test content",
+        );
         assert!(msg.contains("Title: Test Title"));
         assert!(msg.contains("Source: https://example.com"));
         assert!(msg.contains("Test content"));
@@ -366,7 +366,8 @@ mod test {
     fn test_extract_keywords_basic() {
         let content = "Rust is a systems programming language focused on safety and performance. Rust memory model prevents bugs.";
         let keywords = extract_keywords(content, 4);
-        // Should contain rust, systems, programming, language, safety, performance, memory, model, prevents, bugs
+        // Should contain rust, systems, programming, language, safety, performance,
+        // memory, model, prevents, bugs
         assert!(keywords.contains(&"rust".to_string()) || keywords.contains(&"rusts".to_string()));
         assert!(keywords.len() <= 4);
     }

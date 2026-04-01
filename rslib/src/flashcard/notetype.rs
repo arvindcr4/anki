@@ -48,7 +48,8 @@ pub fn basic_notetype(tr: &I18n) -> Notetype {
 /// Create a Cloze notetype for fill-in-the-blank flashcards.
 ///
 /// Cloze notetypes use the {{c1::text}} syntax to hide portions of the text.
-/// Multiple cloze numbers ({{c1::}}, {{c2::}}, etc.) can be used in a single card.
+/// Multiple cloze numbers ({{c1::}}, {{c2::}}, etc.) can be used in a single
+/// card.
 pub fn cloze_notetype(tr: &I18n) -> Notetype {
     let mut nt = empty_stock(
         NotetypeKind::Cloze,

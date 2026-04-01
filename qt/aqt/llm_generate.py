@@ -11,12 +11,10 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from typing import Literal
-
-import urllib.request
-import urllib.error
-
 
 ActionType = Literal["qa", "cloze", "summarize"]
 
@@ -49,21 +47,21 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
         "Given source material, create high-quality question-answer pairs. "
         "Each question should test one specific concept. Answers should be concise but complete. "
         "Return a JSON array of objects with 'front' and 'back' keys. "
-        "Example: [{\"front\": \"What is the capital of France?\", \"back\": \"Paris\"}]"
+        'Example: [{"front": "What is the capital of France?", "back": "Paris"}]'
     ),
     "cloze": (
         "You are an expert flashcard creator for spaced repetition learning. "
         "Given source material, create cloze deletion cards using Anki syntax {{c1::answer}}. "
         "Each card should test one specific concept. Use multiple cloze numbers for related facts. "
         "Return a JSON array of objects with a 'text' key containing the cloze text. "
-        "Example: [{\"text\": \"The capital of {{c1::France}} is {{c2::Paris}}\"}]"
+        'Example: [{"text": "The capital of {{c1::France}} is {{c2::Paris}}"}]'
     ),
     "summarize": (
         "You are an expert at creating concise study summaries. "
         "Given source material, create a structured summary suitable for a flashcard back field. "
         "Use bullet points for key facts. Keep it under 200 words. "
         "Return a JSON object with a 'summary' key. "
-        "Example: {\"summary\": \"Key points:\\n• Point 1\\n• Point 2\"}"
+        'Example: {"summary": "Key points:\\n• Point 1\\n• Point 2"}'
     ),
 }
 
@@ -124,9 +122,13 @@ def _build_user_prompt(
     if context:
         parts.append(f"\nContext: {context}")
     if action == "qa":
-        parts.append(f"\nGenerate exactly {num_cards} question-answer pairs as a JSON array.")
+        parts.append(
+            f"\nGenerate exactly {num_cards} question-answer pairs as a JSON array."
+        )
     elif action == "cloze":
-        parts.append(f"\nGenerate exactly {num_cards} cloze deletion cards as a JSON array.")
+        parts.append(
+            f"\nGenerate exactly {num_cards} cloze deletion cards as a JSON array."
+        )
     else:
         parts.append("\nGenerate a concise study summary as a JSON object.")
     parts.append("\nRespond with ONLY valid JSON, no markdown fences or explanation.")
@@ -139,15 +141,17 @@ def _call_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
     model = get_model()
     url = f"{api_base}/chat/completions"
 
-    payload = json.dumps({
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ],
-        "temperature": 0.7,
-        "max_tokens": 2000,
-    }).encode("utf-8")
+    payload = json.dumps(
+        {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.7,
+            "max_tokens": 2000,
+        }
+    ).encode("utf-8")
 
     headers = {
         "Content-Type": "application/json",
@@ -188,7 +192,9 @@ def _parse_response(
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as e:
-        raise LLMError(f"Failed to parse LLM response as JSON: {e}\nResponse: {text[:500]}") from e
+        raise LLMError(
+            f"Failed to parse LLM response as JSON: {e}\nResponse: {text[:500]}"
+        ) from e
 
     cards: list[GeneratedCard] = []
     clozes: list[GeneratedCloze] = []
@@ -199,20 +205,24 @@ def _parse_response(
             parsed = [parsed]
         for item in parsed:
             if isinstance(item, dict) and "front" in item and "back" in item:
-                cards.append(GeneratedCard(
-                    front=str(item["front"]),
-                    back=str(item["back"]),
-                    tags=["ai-generated", "qa"],
-                ))
+                cards.append(
+                    GeneratedCard(
+                        front=str(item["front"]),
+                        back=str(item["back"]),
+                        tags=["ai-generated", "qa"],
+                    )
+                )
     elif action == "cloze":
         if not isinstance(parsed, list):
             parsed = [parsed]
         for item in parsed:
             if isinstance(item, dict) and "text" in item:
-                clozes.append(GeneratedCloze(
-                    text=str(item["text"]),
-                    tags=["ai-generated", "cloze"],
-                ))
+                clozes.append(
+                    GeneratedCloze(
+                        text=str(item["text"]),
+                        tags=["ai-generated", "cloze"],
+                    )
+                )
     elif action == "summarize":
         if isinstance(parsed, dict) and "summary" in parsed:
             summary = str(parsed["summary"])
@@ -230,4 +240,5 @@ def _parse_response(
 
 class LLMError(Exception):
     """Error from LLM generation."""
+
     pass
