@@ -19,7 +19,7 @@ The script performs a fast Python syntax check and scores whether the deck brows
 - clickable browse-by-date actions, including date-labeled today, week-range, date-bounded streak, resume-your-last-capture, busiest-day, and summary-pill shortcuts
 - dedicated daily cards panel styling, including a compact 7-day activity strip with visible dates, stateful highlighting, a decoding legend, capture hints, accessible labels, discoverability hints, and assistive-tech semantics
 - empty/zero state support for dates with no cards, without noisy repeated zero-count pills
-- card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt, a capture-enabled Today bar, and a keep-capturing shortcut for Today
+- card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt with import fallback, a capture-enabled Today bar, and a keep-capturing shortcut for Today
 - momentum cues such as active/quiet day balance, consistency, gap, visible range, pace, trend, density, burst share, streaks, busiest-day summaries, and next-step guidance so the panel encourages continuity, not just navigation
 - context-sensitive guidance and row actions so the right next step is one click away, including trend-aware restart prompts and burst-review followups
 - an insight summary that interprets the week before suggesting what to do next

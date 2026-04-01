@@ -164,6 +164,8 @@ checks = [
     ('Browse busiest day', 2, 'browse'),
     ('Create first card', 2, 'capture'),
     ('Create another', 2, 'capture'),
+    ('Create first card →', 1, 'capture'),
+    ('Import cards', 2, 'capture'),
     ('Create today', 2, 'capture'),
     ('daily-cards-action-stack', 1, 'capture'),
     ('daily-cards-secondary-link', 1, 'visual'),

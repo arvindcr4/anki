@@ -829,7 +829,12 @@ class DeckBrowser:
                 )
                 if group.days_ago == 0:
                     row_classes.append("is-capture-target")
-                    action = "<a class='daily-cards-link' href=# onclick=\"return pycmd('addcards')\">Create first card →</a>"
+                    action = """
+<div class="daily-cards-action-stack">
+  <a class='daily-cards-link' href=# onclick="return pycmd('addcards')">Create first card →</a>
+  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('importcards')">Import cards</a>
+</div>
+"""
                 else:
                     action = '<span class="daily-cards-empty">—</span>'
             rows.append(

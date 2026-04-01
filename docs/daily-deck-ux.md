@@ -63,6 +63,7 @@ This prototype follows common guidance from strong UX systems and books:
 - If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**, but visually de-emphasize it so active days stand out first.
 - Collapse empty rows into a single summary instead of repeating **0 cards / 0 notes**, which reduces noise when most of the week is blank.
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.
+- Pair that empty-today prompt with **Import cards** so starting a new day supports both small manual capture and larger generated/imported sessions.
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - Prefer a visible-range label on that shortcut so the week-level action is anchored to concrete dates, not just a relative count.
