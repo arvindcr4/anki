@@ -63,6 +63,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.
 - Prefer a single recent-cards aggregation query over multiple round trips where possible, so richer timeline summaries do not make the deck browser feel sluggish.
 - Keep visible **Create cards** and **Import cards** actions in the panel so the main screen supports both revisiting and generating learning material.
+- Let the primary create CTA adapt to context: **Create first card** for empty weeks, **Restart today** when today is blank but recent capture exists, and **Create another** when today already has cards.
 - For each day, show:
   - a human label like **Today**, **Yesterday**, or weekday
   - the date

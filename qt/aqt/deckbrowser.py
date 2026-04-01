@@ -1085,15 +1085,24 @@ class DeckBrowser:
                 f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{busiest_day_label}</a>"
             )
+        create_action_label = "Create first card"
+        create_action_title = "Create cards"
+        if has_recent_cards:
+            create_action_label = "Restart today"
+            if self._render_data.daily_groups and self._render_data.daily_groups[0].card_count:
+                create_action_label = "Create another"
         panel_state = """
   <div class="daily-cards-actions">
-    <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# title="{create_action_title}" aria-label="{create_action_title}" onclick="return pycmd('addcards')">{create_action_label}</a>
     <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
   </div>
   <div class="daily-cards-zero-state">
     Add cards today and they'll appear here for fast date-based browsing.
   </div>
-"""
+""".format(
+            create_action_title=create_action_title,
+            create_action_label=create_action_label,
+        )
         if has_recent_cards:
             browse_recent_label = f"Browse {recent_days} day range"
             if self._render_data.daily_groups:
@@ -1104,7 +1113,7 @@ class DeckBrowser:
                 )
             panel_state = """
   <div class="daily-cards-actions">
-    <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
+    <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# title="{create_action_title}" aria-label="{create_action_title}" onclick="return pycmd('addcards')">{create_action_label}</a>
     <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
     {today_action}
     {latest_day_action}
@@ -1112,6 +1121,8 @@ class DeckBrowser:
     <a class="daily-cards-link daily-cards-pill" href=# title="{browse_recent_label}" aria-label="{browse_recent_label}" onclick="return pycmd('browseRecent')">{browse_recent_label}</a>
   </div>
 """.format(
+                create_action_title=create_action_title,
+                create_action_label=create_action_label,
                 today_action=today_action,
                 latest_day_action=latest_day_action,
                 busiest_day_action=busiest_day_action,
