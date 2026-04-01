@@ -179,3 +179,127 @@ impl Collection {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn revlog_id_as_secs() {
+        let id = RevlogId(1_600_000_000_000); // milliseconds
+        assert_eq!(id.as_secs(), TimestampSecs(1_600_000_000));
+    }
+
+    #[test]
+    fn revlog_id_as_secs_rounds_down() {
+        let id = RevlogId(1_600_000_000_999);
+        assert_eq!(id.as_secs(), TimestampSecs(1_600_000_000));
+    }
+
+    #[test]
+    fn interval_secs_positive_days() {
+        let mut entry = RevlogEntry::default();
+        entry.interval = 10; // 10 days
+        assert_eq!(entry.interval_secs(), 864_000);
+    }
+
+    #[test]
+    fn interval_secs_negative_is_seconds() {
+        let mut entry = RevlogEntry::default();
+        entry.interval = -600; // -600 seconds
+        assert_eq!(entry.interval_secs(), 600);
+    }
+
+    #[test]
+    fn last_interval_secs_positive() {
+        let mut entry = RevlogEntry::default();
+        entry.last_interval = 7;
+        assert_eq!(entry.last_interval_secs(), 604_800);
+    }
+
+    #[test]
+    fn last_interval_secs_negative() {
+        let mut entry = RevlogEntry::default();
+        entry.last_interval = -300;
+        assert_eq!(entry.last_interval_secs(), 300);
+    }
+
+    #[test]
+    fn is_reset_true() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Manual;
+        entry.ease_factor = 0;
+        assert!(entry.is_reset());
+    }
+
+    #[test]
+    fn is_reset_false_with_ease_factor() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Manual;
+        entry.ease_factor = 2500;
+        assert!(!entry.is_reset());
+    }
+
+    #[test]
+    fn is_reset_false_wrong_kind() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Review;
+        entry.ease_factor = 0;
+        assert!(!entry.is_reset());
+    }
+
+    #[test]
+    fn is_cramming_true() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Filtered;
+        entry.ease_factor = 0;
+        assert!(entry.is_cramming());
+    }
+
+    #[test]
+    fn is_cramming_false_with_ease_factor() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Filtered;
+        entry.ease_factor = 2500;
+        assert!(!entry.is_cramming());
+    }
+
+    #[test]
+    fn has_rating_true() {
+        let mut entry = RevlogEntry::default();
+        entry.button_chosen = 1;
+        assert!(entry.has_rating());
+    }
+
+    #[test]
+    fn has_rating_false() {
+        let entry = RevlogEntry::default();
+        assert!(!entry.has_rating()); // button_chosen defaults to 0
+    }
+
+    #[test]
+    fn has_rating_and_affects_scheduling_normal_review() {
+        let mut entry = RevlogEntry::default();
+        entry.button_chosen = 2;
+        entry.review_kind = RevlogReviewKind::Review;
+        entry.ease_factor = 2500;
+        assert!(entry.has_rating_and_affects_scheduling());
+    }
+
+    #[test]
+    fn has_rating_and_affects_scheduling_cramming() {
+        let mut entry = RevlogEntry::default();
+        entry.button_chosen = 2;
+        entry.review_kind = RevlogReviewKind::Filtered;
+        entry.ease_factor = 0; // cramming
+        assert!(!entry.has_rating_and_affects_scheduling());
+    }
+
+    #[test]
+    fn has_rating_and_affects_scheduling_no_rating() {
+        let mut entry = RevlogEntry::default();
+        entry.button_chosen = 0;
+        entry.review_kind = RevlogReviewKind::Review;
+        assert!(!entry.has_rating_and_affects_scheduling());
+    }
+}
