@@ -642,7 +642,13 @@ class DeckBrowser:
                 "Add a card today to restart the streak."
             )
             restart_label = "Restart streak today"
-            if trend_summary == "Trend: rising":
+            if active_day_count >= recent_days - 1:
+                guidance = (
+                    f"You were active on {_count_label(active_day_count, 'day')}. "
+                    "Keep consistency going by adding at least one card today."
+                )
+                restart_label = "Keep consistency going"
+            elif trend_summary == "Trend: rising":
                 guidance = (
                     f"You were active on {_count_label(active_day_count, 'day')}. "
                     "Momentum is rising—add a card today to extend it."

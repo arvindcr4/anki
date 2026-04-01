@@ -163,6 +163,7 @@ checks = [
     ('Keep the streak going', 2, 'capture'),
     ('restart the streak', 2, 'timeline'),
     ('Restart streak today', 2, 'capture'),
+    ('Keep consistency going', 2, 'capture'),
     ('Extend rising trend', 2, 'capture'),
     ('Reverse cooling trend', 2, 'capture'),
     ('Build a streak today', 2, 'capture'),
