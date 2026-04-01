@@ -962,12 +962,19 @@ class DeckBrowser:
                         status_badges.append(
                             '<span class="daily-cards-status daily-cards-status-secondary">Current gap</span>'
                         )
+                        extra_recovery_action = ""
+                        if len(empty_run) >= 3:
+                            extra_recovery_action = (
+                                '  <a class="daily-cards-link daily-cards-secondary-link '
+                                'daily-cards-quiet-import" href=# onclick="return pycmd(\'importcards\')">'
+                                'Import to rebuild momentum</a>\n'
+                            )
                         action = """
 <div class="daily-cards-action-stack">
   <a class='daily-cards-link daily-cards-quiet-restart' href=# onclick="return pycmd('addcards')">Restart after quiet stretch</a>
-  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('browseRecent')">Browse week context</a>
+{extra_recovery_action}  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('browseRecent')">Browse week context</a>
 </div>
-"""
+""".format(extra_recovery_action=extra_recovery_action)
                     group = replace(
                         group,
                         label="Quiet stretch",
