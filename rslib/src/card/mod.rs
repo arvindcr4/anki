@@ -372,7 +372,9 @@ impl Collection {
         let config_id = deck.config_id().ok_or(AnkiError::FilteredDeckError {
             source: FilteredDeckError::CanNotMoveCardsInto,
         })?;
-        let config = self.get_deck_config(config_id, true)?.or_invalid("deck config missing")?;
+        let config = self
+            .get_deck_config(config_id, true)?
+            .or_invalid("deck config missing")?;
         let mut steps_adjuster = RemainingStepsAdjuster::new(&config);
         let usn = self.usn()?;
         self.transact(Op::SetCardDeck, |col| {
@@ -417,7 +419,9 @@ impl Collection {
     pub(crate) fn deck_config_for_card(&mut self, card: &Card) -> Result<DeckConfig> {
         if let Some(deck) = self.get_deck(card.original_or_current_deck_id())? {
             if let Some(conf_id) = deck.config_id() {
-                return Ok(self.get_deck_config(conf_id, true)?.or_invalid("deck config missing")?);
+                return self
+                    .get_deck_config(conf_id, true)?
+                    .or_invalid("deck config missing");
             }
         }
 
