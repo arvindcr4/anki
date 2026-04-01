@@ -88,3 +88,63 @@ impl Collection {
         self.update_single_deck_undoable(deck, original)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::decks::NativeDeckName;
+
+    fn make_deck_with_stats(day: u32) -> Deck {
+        Deck {
+            id: DeckId(1),
+            name: NativeDeckName::from_native_str("Test"),
+            mtime_secs: TimestampSecs(0),
+            usn: Usn(0),
+            common: DeckCommon {
+                last_day_studied: day,
+                new_studied: 5,
+                review_studied: 10,
+                learning_studied: 3,
+                milliseconds_studied: 60000,
+                ..Default::default()
+            },
+            kind: DeckKind::Normal(Default::default()),
+        }
+    }
+
+    #[test]
+    fn reset_stats_same_day_no_change() {
+        let mut deck = make_deck_with_stats(100);
+        deck.reset_stats_if_day_changed(100);
+        assert_eq!(deck.common.new_studied, 5);
+        assert_eq!(deck.common.review_studied, 10);
+        assert_eq!(deck.common.milliseconds_studied, 60000);
+    }
+
+    #[test]
+    fn reset_stats_new_day_clears() {
+        let mut deck = make_deck_with_stats(100);
+        deck.reset_stats_if_day_changed(101);
+        assert_eq!(deck.common.new_studied, 0);
+        assert_eq!(deck.common.review_studied, 0);
+        assert_eq!(deck.common.learning_studied, 0);
+        assert_eq!(deck.common.milliseconds_studied, 0);
+        assert_eq!(deck.common.last_day_studied, 101);
+    }
+
+    #[test]
+    fn new_rev_counts_today() {
+        let deck = make_deck_with_stats(100);
+        let (new, rev) = deck.new_rev_counts(100);
+        assert_eq!(new, 5);
+        assert_eq!(rev, 10);
+    }
+
+    #[test]
+    fn new_rev_counts_different_day() {
+        let deck = make_deck_with_stats(100);
+        let (new, rev) = deck.new_rev_counts(101);
+        assert_eq!(new, 0);
+        assert_eq!(rev, 0);
+    }
+}
