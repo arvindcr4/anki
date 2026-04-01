@@ -703,7 +703,7 @@ class DeckBrowser:
                 )
             if latest_active_group:
                 guidance_actions.append(
-                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Resume last capture ({latest_active_group.date_label})</a>'
+                    f'<a class="daily-cards-link daily-cards-pill daily-cards-resume" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Resume last capture ({latest_active_group.date_label})</a>'
                 )
             if burst_pct >= 60 and busiest_group:
                 guidance_actions.append(
@@ -1003,7 +1003,7 @@ class DeckBrowser:
         if latest_active_group and latest_active_group.days_ago > 0:
             latest_day_label = f"Browse latest day ({latest_active_group.date_label})"
             latest_day_action = (
-                f'<a class="daily-cards-link daily-cards-pill" href=# '
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-resume" href=# '
                 f'title="{latest_day_label}" aria-label="{latest_day_label}" '
                 f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
                 f"{latest_day_label}</a>"
