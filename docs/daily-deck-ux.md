@@ -91,6 +91,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Pair that empty-today prompt with **Import cards** so starting a new day supports both small manual capture and larger generated/imported sessions.
 - When the week already has activity, also pair that empty-today row with **Resume last capture** so a blank today can still reconnect the learner to the freshest session without forcing them to hunt elsewhere in the panel.
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
+- If Today is also the burst-dominant session, add **Import more** to that same row so large generation/import workflows can continue from the freshest capture context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - Prefer a visible-range label on that shortcut so the week-level action is anchored to concrete dates, not just a relative count.
 - If today already has cards, surface a top-level **Browse today** shortcut because that is often the fastest way to revisit the freshest generated material.

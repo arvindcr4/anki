@@ -1022,11 +1022,18 @@ class DeckBrowser:
                 action = f"<a class='{primary_row_action_class}' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>{primary_row_action_label}</a>"
                 row_classes.append("has-cards")
                 if group.days_ago == 0:
+                    extra_today_action = ""
+                    if group.days_ago == busiest_days_ago and bursty_week:
+                        extra_today_action = (
+                            '  <a class="daily-cards-link daily-cards-secondary-link '
+                            'daily-cards-burst-import" href=# '
+                            'onclick="return pycmd(\'importcards\')">Import more</a>\n'
+                        )
                     action = f"""
 <div class="daily-cards-action-stack">
   <a class='{primary_row_action_class}' href=# onclick='return pycmd(\"browseAdded:0\")'>{primary_row_action_label}</a>
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('addcards')">Create another</a>
-</div>
+{extra_today_action}</div>
 """
                 elif (
                     latest_active_group
