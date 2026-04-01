@@ -431,9 +431,16 @@ class DeckBrowser:
             None,
         )
         gap_summary = "Gap: no recent capture"
+        gap_summary_classes = "daily-cards-pill daily-cards-gap"
         if latest_active_group:
             if latest_active_group.days_ago == 0:
                 gap_summary = "Gap: captured today"
+            elif latest_active_group.days_ago > 1:
+                gap_summary = (
+                    f"Current gap: {_count_label(latest_active_group.days_ago, 'day')} "
+                    f"since {latest_active_group.date_label}"
+                )
+                gap_summary_classes += " is-current-gap"
             else:
                 gap_summary = (
                     "Gap: last capture on "
@@ -441,11 +448,11 @@ class DeckBrowser:
                     f"({_count_label(latest_active_group.days_ago, 'day')} ago)"
                 )
         gap_summary_markup = (
-            f'<div class="daily-cards-pill daily-cards-gap">{gap_summary}</div>'
+            f'<div class="{gap_summary_classes}">{gap_summary}</div>'
         )
         if latest_active_group:
             gap_summary_markup = (
-                f'<a class="daily-cards-link daily-cards-pill daily-cards-gap" href=# '
+                f'<a class="daily-cards-link {gap_summary_classes}" href=# '
                 f'title="Browse latest capture" aria-label="Browse latest capture" '
                 f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
                 f"{gap_summary}</a>"

@@ -24,6 +24,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Show the explicit date range for the visible week so **Last 7 days** is grounded in real calendar dates, not just an abstract relative label.
 - Add a compact **Gap** summary that tells the learner how long it has been since the last capture session.
 - When the latest capture is not today, anchor that gap summary to the actual capture date as well, so the learner can verify the jump target without scanning the rows.
+- When the gap spans multiple days, name it explicitly as a **Current gap** in the summary row so the top-level pills use the same recovery language as the strip and row states.
 - Make the **Gap**, **active days**, and **visible range** pills browseable so the summary row doubles as navigation instead of passive metadata.
 - Add accessible labels to the browseable summary pills and expose the guidance area as a polite status region so the panel reads clearly in assistive tech, not just visually.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
