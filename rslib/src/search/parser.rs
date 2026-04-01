@@ -298,7 +298,7 @@ fn unquoted_term(s: &str) -> IResult<'_, Node> {
                         provided: format!("\\{c}"),
                     },
                 ))
-            } else if s.chars().next().is_some_and(|ch| "\"() \u{3000}".contains(ch)) {
+            } else if "\"() \u{3000}".contains(s.chars().next().unwrap()) {
                 Err(parse_error(s))
             } else {
                 // input ends in an odd number of backslashes
