@@ -338,6 +338,28 @@ body {
     line-height: 1.4;
 }
 
+.daily-cards-insight.is-burst {
+    border-color: color(fg-link);
+    background: color(border-subtle);
+}
+
+.daily-cards-insight.is-rising {
+    border-color: color(fg-link);
+}
+
+.daily-cards-insight.is-cooling {
+    border-style: dashed;
+}
+
+.daily-cards-insight.is-consistent {
+    background: var(--canvas-glass);
+}
+
+.daily-cards-insight.is-spread,
+.daily-cards-insight.is-neutral {
+    opacity: 0.9;
+}
+
 .daily-cards-guidance-block {
     display: flex;
     flex-direction: column;
