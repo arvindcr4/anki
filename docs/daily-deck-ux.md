@@ -57,6 +57,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Let the guidance react to the weekly trend as well: for example, suggest **Extend rising trend** when momentum is building, or **Reverse cooling trend** when activity is fading.
 - When the trend is cooling, pair the restart CTA with **Import to rebuild momentum** so the user can recover with either manual capture or a larger generated/imported batch.
 - When the week is already highly consistent but today is blank, switch to a **Keep consistency going** prompt so the user understands the main risk is breaking continuity, not lack of momentum.
+- If the deck has slipped into a multi-day current gap, let the guidance call that out directly with the latest capture date, so recovery reads like resuming a paused timeline instead of a generic restart.
 - Keep card and note labels grammatically correct for one-item days, so the interface never shows awkward copy like **1 cards**.
 - Keep the week summary honest by counting unique notes across the full range, not by naively summing each day bucket.
 - Use database-side aggregation for the week summary and per-day buckets so the deck browser stays responsive even after large imports.

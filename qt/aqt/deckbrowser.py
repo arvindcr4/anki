@@ -674,7 +674,16 @@ class DeckBrowser:
                 "Add a card today to restart the streak."
             )
             restart_label = "Restart streak today"
-            if active_day_count >= recent_days - 1:
+            current_gap_days = latest_active_group.days_ago if latest_active_group else 0
+            if current_gap_days > 1 and latest_active_group:
+                guidance = (
+                    f"You're in a {_count_label(current_gap_days, 'day')} current gap since "
+                    f"{latest_active_group.date_label}. Restart today to resume the timeline."
+                )
+                restart_label = "Restart after quiet stretch"
+                if current_gap_days == 2:
+                    restart_label = "Restart after quiet day"
+            elif active_day_count >= recent_days - 1:
                 guidance = (
                     f"You were active on {_count_label(active_day_count, 'day')}. "
                     "Keep consistency going by adding at least one card today."
@@ -701,7 +710,7 @@ class DeckBrowser:
             guidance_actions.append(
                 f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">{restart_label}</a>'
             )
-            if trend_summary == "Trend: cooling":
+            if trend_summary == "Trend: cooling" or current_gap_days > 2:
                 guidance_actions.append(
                     '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'importcards\')">Import to rebuild momentum</a>'
                 )

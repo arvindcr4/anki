@@ -55,6 +55,8 @@ checks = [
     ('daily-cards-quiet-import', 1, 'visual'),
     ('Current gap', 2, 'timeline'),
     ('is-current-gap', 1, 'visual'),
+    ('current gap since', 1, 'timeline'),
+    ('resume the timeline', 1, 'timeline'),
     ('gap is already several days long', 1, 'timeline'),
     ('Browse week context', 1, 'browse'),
     ('0 cards / 0 notes', 1, 'timeline'),
