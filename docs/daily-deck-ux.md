@@ -51,6 +51,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Make that density pill browseable too, so users can jump from a surprising cards-per-note ratio straight into the visible week context.
 - Make the streak pill browseable so momentum is not just decorative: users can reopen the cards from their current or last active run.
 - Make the **busiest day** summary pill directly browseable so the highest-volume capture session doubles as a quick re-entry point.
+- When that busiest session is also the latest one, let the busiest pill say so directly instead of forcing the learner to reconcile two separate metadata pills.
 - When that busiest day is not also the latest session, keep a panel-level **Browse busiest day** shortcut in the action row so high-volume import/generation sessions remain one click away.
 - If the visible week is burst-heavy, promote that same top-row shortcut to **Review burst day** so the panel explains why that specific day matters before the user clicks.
 - Pair it with a **burst** pill that quantifies how much of the visible week came from that single day.

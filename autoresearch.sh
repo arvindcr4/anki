@@ -234,6 +234,7 @@ checks = [
     ('Build a streak today', 2, 'capture'),
     ('start this week\'s timeline', 2, 'timeline'),
     ('Busiest:', 2, 'timeline'),
+    ('latest session)', 1, 'timeline'),
     ('Browse current streak', 2, 'browse'),
     ('Browse last streak', 2, 'browse'),
     ('Browse busiest day', 2, 'browse'),

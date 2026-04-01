@@ -790,10 +790,15 @@ class DeckBrowser:
             f'<div class="daily-cards-pill daily-cards-burst">{burst_summary}</div>'
         )
         if busiest_group:
-            busiest_summary = "Busiest: {label} {date} ({count})".format(
+            busiest_suffix = f"({_count_label(busiest_group.card_count, 'card')})"
+            if latest_active_group and busiest_group.days_ago == latest_active_group.days_ago:
+                busiest_suffix = (
+                    f"({_count_label(busiest_group.card_count, 'card')}, latest session)"
+                )
+            busiest_summary = "Busiest: {label} {date} {suffix}".format(
                 label=html.escape(busiest_group.label),
                 date=html.escape(busiest_group.date_label),
-                count=_count_label(busiest_group.card_count, "card"),
+                suffix=html.escape(busiest_suffix),
             )
             busiest_title = f"Browse busiest day ({busiest_group.date_label})"
             busiest_summary_markup = (
