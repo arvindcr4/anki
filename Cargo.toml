@@ -182,3 +182,4 @@ lto = "fat"
 strip = true
 opt-level = "z"
 panic = 'abort'
+overflow-checks = false
