@@ -81,6 +81,8 @@ class NoteImporter(Importer):
     def __init__(self, col: Collection, file: str) -> None:
         Importer.__init__(self, col, file)
         self.model = col.models.current()
+        if self.model is None:
+            raise Exception("no notetypes in collection")
         self.mapping = None
         self.tagModified = None
         self._tagsMapped = False

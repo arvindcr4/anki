@@ -87,6 +87,7 @@ class TextImporter(NoteImporter):
                 del self.data[0]
             self.updateDelimiter()
         if not self.dialect and not self.delimiter:
+            self.fileobj.close()
             raise Exception("unknownFormat")
 
     def updateDelimiter(self) -> None:

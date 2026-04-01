@@ -231,6 +231,8 @@ class Anki2Importer(Importer):
             return self._modelMap[srcMid]
         mid = srcMid
         srcModel = self.src.models.get(srcMid)
+        if srcModel is None:
+            return srcMid
         srcScm = self.src.models.scmhash(srcModel)
         while True:
             # missing from target col?
@@ -268,6 +270,8 @@ class Anki2Importer(Importer):
             return self._decks[did]
         # get the name in src
         g = self.src.decks.get(did)
+        if g is None:
+            return did
         name = g["name"]
         # if there's a prefix, replace the top level deck
         if self.deckPrefix:
