@@ -568,16 +568,24 @@ class DeckBrowser:
             f'<div class="daily-cards-pill daily-cards-streak">{streak_summary}</div>'
         )
         if streak_count:
+            streak_end_group = None
             if latest_active_group:
                 streak_start = latest_active_group.days_ago
                 streak_days_ago = set(range(streak_start, streak_start + streak_count))
+                streak_end_group = self._daily_group_for(streak_start + streak_count - 1)
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
             if latest_active_group:
-                streak_title = (
+                streak_title_base = (
                     "Browse current streak"
                     if latest_active_group.days_ago == 0
                     else "Browse last streak"
                 )
+                streak_title = streak_title_base
+                if streak_end_group:
+                    streak_title = (
+                        f"{streak_title_base} ({streak_end_group.date_label} → "
+                        f"{latest_active_group.date_label})"
+                    )
                 streak_summary_markup = (
                     f'<a class="daily-cards-link daily-cards-pill daily-cards-streak" href=# '
                     f'title="{streak_title}" aria-label="{streak_title}" '
@@ -634,7 +642,7 @@ class DeckBrowser:
                 )
             if burst_pct >= 60 and busiest_group:
                 guidance_actions.append(
-                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">Review burst day</a>'
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">Review burst day ({busiest_group.date_label})</a>'
                 )
         elif active_day_count:
             guidance = (
@@ -675,11 +683,11 @@ class DeckBrowser:
                 )
             if latest_active_group:
                 guidance_actions.append(
-                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Browse latest day</a>'
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Browse latest day ({latest_active_group.date_label})</a>'
                 )
             if burst_pct >= 60 and busiest_group:
                 guidance_actions.append(
-                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">Review burst day</a>'
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">Review burst day ({busiest_group.date_label})</a>'
                 )
         else:
             guidance_actions.append(
@@ -699,22 +707,27 @@ class DeckBrowser:
             f'<div class="daily-cards-pill daily-cards-burst">{burst_summary}</div>'
         )
         if busiest_group:
-            busiest_summary = "Busiest: {label} ({count})".format(
+            busiest_summary = "Busiest: {label} {date} ({count})".format(
                 label=html.escape(busiest_group.label),
+                date=html.escape(busiest_group.date_label),
                 count=_count_label(busiest_group.card_count, "card"),
             )
+            busiest_title = f"Browse busiest day ({busiest_group.date_label})"
             busiest_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest" href=# '
-                f'title="Browse busiest day" aria-label="Browse busiest day" '
+                f'title="{busiest_title}" aria-label="{busiest_title}" '
                 f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{busiest_summary}</a>"
             )
             burst_pct = round((busiest_group.card_count / total_cards) * 100)
             bursty_week = burst_pct >= 60
-            burst_summary = f"Burst: {burst_pct}% on busiest day"
+            burst_summary = (
+                f"Burst: {burst_pct}% on busiest day ({busiest_group.date_label})"
+            )
+            burst_title = f"Browse burst day ({busiest_group.date_label})"
             burst_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-burst" href=# '
-                f'title="Browse burst day" aria-label="Browse burst day" '
+                f'title="{burst_title}" aria-label="{burst_title}" '
                 f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{burst_summary}</a>"
             )
