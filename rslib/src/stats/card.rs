@@ -67,7 +67,7 @@ impl Collection {
                 .get_deck(card.original_deck_id)?
                 .or_not_found(card.original_deck_id)?
         };
-        let config_id = original_deck.config_id().unwrap();
+        let config_id = original_deck.config_id().or_invalid("deck has no config")?;
         let preset = self
             .get_deck_config(config_id, true)?
             .or_not_found(config_id.to_string())?;
