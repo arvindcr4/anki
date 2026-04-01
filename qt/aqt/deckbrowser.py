@@ -628,6 +628,10 @@ class DeckBrowser:
                 guidance_actions.append(
                     f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">Browse current streak</a>'
                 )
+            if burst_pct >= 60 and busiest_group:
+                guidance_actions.append(
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">Review burst day</a>'
+                )
         elif active_day_count:
             guidance = (
                 f"You were active on {_count_label(active_day_count, 'day')}. "
@@ -658,6 +662,10 @@ class DeckBrowser:
             if latest_active_group:
                 guidance_actions.append(
                     f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Browse latest day</a>'
+                )
+            if burst_pct >= 60 and busiest_group:
+                guidance_actions.append(
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{busiest_group.days_ago}\')">Review burst day</a>'
                 )
         else:
             guidance_actions.append(

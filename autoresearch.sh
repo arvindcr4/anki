@@ -121,6 +121,7 @@ checks = [
     ('Burst:', 2, 'timeline'),
     ('% on busiest day', 2, 'timeline'),
     ('Browse burst day', 2, 'browse'),
+    ('Review burst day', 2, 'browse'),
     ('daily-cards-density', 1, 'visual'),
     ('Density:', 2, 'timeline'),
     ('cards/note', 2, 'timeline'),
