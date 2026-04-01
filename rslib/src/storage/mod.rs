@@ -52,13 +52,12 @@ where
     D: std::fmt::Display,
     I: IntoIterator<Item = D>,
 {
-    let mut trailing_sep = false;
-    for id in ids {
-        write!(buf, "{id},").unwrap();
-        trailing_sep = true;
-    }
-    if trailing_sep {
-        buf.pop();
+    let mut iter = ids.into_iter();
+    if let Some(first) = iter.next() {
+        write!(buf, "{first}").unwrap();
+        for id in iter {
+            write!(buf, ",{id}").unwrap();
+        }
     }
 }
 

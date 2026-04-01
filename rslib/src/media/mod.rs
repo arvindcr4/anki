@@ -74,7 +74,7 @@ impl MediaManager {
             let existing_entry = db.get_entry(&chosen_fname)?;
             let new_sha1 = Some(data_hash);
 
-            let entry_update_required = existing_entry.map(|e| e.sha1 != new_sha1).unwrap_or(true);
+            let entry_update_required = existing_entry.map_or(true, |e| e.sha1 != new_sha1);
 
             if entry_update_required {
                 db.set_entry(&MediaEntry {

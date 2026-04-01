@@ -211,7 +211,8 @@ impl<'a> MethodComments<'a> {
         self.by_package_and_path
             .get(method.parent_file().package_name())
             .and_then(|by_path| by_path.get(method.path()))
-            .and_then(|s| if s.is_empty() { None } else { Some(s.into()) })
+            .filter(|s| !s.is_empty())
+            .cloned()
     }
 }
 
@@ -242,12 +243,13 @@ where
         LazyLock::new(|| Regex::new(r"pub (struct|enum) ([[:alnum:]]+?)\s").unwrap());
     let contents = read_to_string(path)?;
     let contents = MESSAGE_OR_ENUM_RE.replace_all(&contents, |caps: &Captures| {
+        let matched = caps.get(0).unwrap().as_str();
         let is_enum = caps.get(1).unwrap().as_str() == "enum";
         let name = caps.get(2).unwrap().as_str();
         if is_enum || !is_empty(path, name) {
-            format!("#[must_use]\n{}", caps.get(0).unwrap().as_str())
+            format!("#[must_use]\n{matched}")
         } else {
-            caps.get(0).unwrap().as_str().to_string()
+            matched.to_string()
         }
     });
     write_file_if_changed(path, contents.as_ref())?;
@@ -265,11 +267,8 @@ where
 pub fn determine_if_message_is_empty(pool: &DescriptorPool, path: &Utf8Path, name: &str) -> bool {
     let package = path.file_stem().unwrap();
     let full_name = format!("{package}.{name}");
-    if let Some(msg) = pool.get_message_by_name(&full_name) {
-        msg.fields().count() == 0
-    } else {
-        false
-    }
+    pool.get_message_by_name(&full_name)
+        .is_some_and(|msg| msg.fields().count() == 0)
 }
 
 /// - When building via a local checkout, the path defined in .cargo/config

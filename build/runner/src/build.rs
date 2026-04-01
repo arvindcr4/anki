@@ -155,7 +155,7 @@ fn bootstrap_build() {
     let status = Command::new("cargo")
         .args(["run", "-p", "configure"])
         .status();
-    assert!(status.expect("ninja").success());
+    assert!(status.expect("failed to run cargo configure").success());
 }
 
 fn maybe_update_buildhash(build_root: &Utf8Path) {

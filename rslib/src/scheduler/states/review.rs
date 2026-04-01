@@ -399,7 +399,10 @@ mod test {
         // should give more than just the current interval
         assert!(good > 30, "good interval {good} should exceed scheduled 30");
         // And should be less than on-time good (75)
-        assert!(good < 75, "good interval {good} should be less than on-time 75");
+        assert!(
+            good < 75,
+            "good interval {good} should be less than on-time 75"
+        );
         // Hard should also scale proportionally
         assert!(hard > 0);
         // Easy should be more than good

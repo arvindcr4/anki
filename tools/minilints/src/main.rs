@@ -40,9 +40,11 @@ const IGNORED_FOLDERS: &[&str] = &[
     "./.venv",
 ];
 
+const LINTED_EXTENSIONS: &[&str] = &["py", "ts", "rs", "svelte", "mjs"];
+
 fn main() -> Result<()> {
     let mut args = env::args();
-    let want_fix = args.nth(1) == Some("fix".to_string());
+    let want_fix = matches!(args.nth(1).as_deref(), Some("fix"));
     let stamp = args.next().unwrap();
     let mut ctx = LintContext::new(want_fix);
     ctx.check_contributors()?;
@@ -75,6 +77,7 @@ impl LintContext {
 
     pub fn walk_folders(&mut self, root: &Path) -> Result<()> {
         let ignored_folders: HashSet<_> = IGNORED_FOLDERS.iter().map(Utf8Path::new).collect();
+        let linted_extensions: HashSet<_> = LINTED_EXTENSIONS.iter().copied().map(Some).collect();
         let walker = WalkDir::new(root).into_iter();
         for entry in walker.filter_entry(|e| {
             !ignored_folders.contains(&Utf8Path::from_path(e.path()).expect("utf8"))
@@ -82,11 +85,8 @@ impl LintContext {
             let entry = entry.unwrap();
             let path = Utf8Path::from_path(entry.path()).context("utf8")?;
 
-            let exts: HashSet<_> = ["py", "ts", "rs", "svelte", "mjs"]
-                .into_iter()
-                .map(Some)
-                .collect();
-            if exts.contains(&path.extension()) && !sveltekit_temp_file(path.as_str()) {
+            if linted_extensions.contains(&path.extension()) && !sveltekit_temp_file(path.as_str())
+            {
                 self.check_copyright(path)?;
                 self.check_triple_slash(path)?;
             }
