@@ -40,20 +40,18 @@ pub enum ExportProgress {
 
 impl Note {
     pub(crate) fn into_log_note(self) -> LogNote {
+        let reduce_field = |field: String| {
+            let mut reduced = strip_html_preserving_media_filenames(&field)
+                .map_cow(newlines_to_spaces)
+                .get_owned()
+                .unwrap_or(field);
+            truncate_to_char_boundary(&mut reduced, 80);
+            reduced
+        };
+
         LogNote {
             id: Some(anki_proto::notes::NoteId { nid: self.id.0 }),
-            fields: self
-                .into_fields()
-                .into_iter()
-                .map(|field| {
-                    let mut reduced = strip_html_preserving_media_filenames(&field)
-                        .map_cow(newlines_to_spaces)
-                        .get_owned()
-                        .unwrap_or(field);
-                    truncate_to_char_boundary(&mut reduced, 80);
-                    reduced
-                })
-                .collect(),
+            fields: self.into_fields().into_iter().map(reduce_field).collect(),
         }
     }
 }

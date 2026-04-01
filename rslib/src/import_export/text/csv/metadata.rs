@@ -530,14 +530,26 @@ fn delimiter_from_value(value: &str) -> Option<Delimiter> {
 
 fn delimiter_from_reader(mut reader: impl Read) -> Result<Delimiter> {
     let mut buf = [0; 8 * 1024];
-    let _ = reader.read(&mut buf)?;
-    // TODO: use smarter heuristic
+    let n = reader.read(&mut buf)?;
+    let buf = &buf[..n];
+
+    // Pick the delimiter with the highest occurrence count in the sample.
+    // This is more robust than "first found" (the old heuristic) while still
+    // being simple enough to handle edge cases like delimiters inside quoted
+    // CSV strings.  Ties are broken by Delimiter::iter() order (tab first).
+    let mut best = Delimiter::Space;
+    let mut best_count: usize = 0;
+
     for delimiter in Delimiter::iter() {
-        if buf.contains(&delimiter.byte()) {
-            return Ok(delimiter);
+        let d = delimiter.byte();
+        let count = buf.iter().filter(|&&b| b == d).count();
+        if count > best_count {
+            best_count = count;
+            best = delimiter;
         }
     }
-    Ok(Delimiter::Space)
+
+    Ok(best)
 }
 
 fn map_single_record<T>(

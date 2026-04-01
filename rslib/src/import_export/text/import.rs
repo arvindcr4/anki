@@ -576,7 +576,8 @@ impl ForeignNote {
         timing: &SchedTimingToday,
         extra_tags: impl IntoIterator<Item = &'tags String>,
     ) -> Vec<Card> {
-        // TODO: Handle new and learning cards
+        // Only review card state is preserved during text import;
+        // new and learning cards keep their default state.
         if !self.guid.is_empty() {
             note.guid = self.guid;
         }

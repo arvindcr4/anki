@@ -102,7 +102,8 @@ impl CardContext<'_> {
             if self.map_to_imported_note(card) && !self.card_ordinal_already_exists(card) {
                 self.add_card(card)?;
             }
-            // TODO: could update existing card
+            // Cards with a matching ordinal are skipped; updating existing
+            // cards would require merge logic for review history.
         }
         Ok(())
     }

@@ -421,7 +421,7 @@ impl<'n> NoteContext<'n> {
         } else if should_update(self.update_notes, existing.mtime, incoming.mtime) {
             self.update_note(incoming, existing.id)?;
         } else {
-            // TODO: might still want to update merged in fields
+            // Duplicate note is not newer; fields are left unchanged.
             self.imports.log_duplicate(incoming, existing.id);
         }
         Ok(())
