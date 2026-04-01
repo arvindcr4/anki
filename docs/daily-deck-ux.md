@@ -25,6 +25,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Add a compact **Gap** summary that tells the learner how long it has been since the last capture session.
 - When the latest capture is not today, anchor that gap summary to the actual capture date as well, so the learner can verify the jump target without scanning the rows.
 - When the gap spans multiple days, name it explicitly as a **Current gap** in the summary row so the top-level pills use the same recovery language as the strip and row states.
+- If that current gap has stretched into a longer break, give the gap pill and current-gap shortcut a little more visual weight so the panel distinguishes a brief stumble from a real lapse.
 - Add a separate browseable **Latest** summary pill too, so the most recent active day stays visible in the metadata row even when the gap pill is focused on recovery language.
 - Include that latest session’s card count in the pill, so the metadata row reveals not only when the freshest session happened but also whether it was a tiny capture or a substantial batch.
 - When the freshest session is also the busiest one, let the **Latest** pill say so directly instead of making the learner cross-reference the separate busiest-day pill.

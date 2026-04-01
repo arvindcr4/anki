@@ -505,6 +505,11 @@ body {
     border-color: color(fg-link);
 }
 
+.daily-cards-gap.is-long-gap,
+.daily-cards-current-gap-shortcut.is-long-gap {
+    background: color(border-subtle);
+}
+
 .daily-cards-row.is-capture-target {
     opacity: 1;
     border-style: dashed;

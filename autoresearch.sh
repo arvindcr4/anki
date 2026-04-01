@@ -57,6 +57,8 @@ checks = [
     ('daily-cards-quiet-import', 1, 'visual'),
     ('Current gap', 2, 'timeline'),
     ('is-current-gap', 1, 'visual'),
+    ('is-long-gap', 1, 'visual'),
+    ('longer break', 1, 'timeline'),
     ('current gap since', 1, 'timeline'),
     ('resume the timeline', 1, 'timeline'),
     ('gap is already several days long', 1, 'timeline'),

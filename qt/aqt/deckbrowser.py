@@ -432,6 +432,9 @@ class DeckBrowser:
         )
         gap_summary = "Gap: no recent capture"
         gap_summary_classes = "daily-cards-pill daily-cards-gap"
+        long_gap_active = bool(
+            latest_active_group and latest_active_group.days_ago >= 4
+        )
         if latest_active_group:
             if latest_active_group.days_ago == 0:
                 gap_summary = "Gap: captured today"
@@ -441,6 +444,8 @@ class DeckBrowser:
                     f"since {latest_active_group.date_label}"
                 )
                 gap_summary_classes += " is-current-gap"
+                if long_gap_active:
+                    gap_summary_classes += " is-long-gap"
             else:
                 gap_summary = (
                     "Gap: last capture on "
@@ -1268,8 +1273,13 @@ class DeckBrowser:
                 "Browse current gap week ("
                 f"{latest_active_group.date_label} → {self._render_data.daily_groups[0].date_label})"
             )
+            current_gap_action_classes = (
+                "daily-cards-link daily-cards-pill daily-cards-current-gap-shortcut"
+            )
+            if long_gap_active:
+                current_gap_action_classes += " is-long-gap"
             current_gap_action = (
-                f'<a class="daily-cards-link daily-cards-pill daily-cards-current-gap-shortcut" href=# '
+                f'<a class="{current_gap_action_classes}" href=# '
                 f'title="{current_gap_label}" aria-label="{current_gap_label}" '
                 "onclick=\"return pycmd('browseRecent')\">"
                 f"{current_gap_label}</a>"
