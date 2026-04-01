@@ -224,11 +224,14 @@ impl GeneratedCardStorage {
         rows.into_iter().map(|r| r.map_err(Into::into)).collect()
     }
 
-    /// Update card front/back content.
-    pub fn update_card(&self, id: i64, front: &str, back: &str) -> Result<bool> {
+    /// Update card front/back content and persisted card type.
+    pub fn update_card(&self, id: i64, front: &str, back: &str, is_cloze: bool) -> Result<bool> {
         let rows_affected: i64 = self
             .db
-            .execute(include_str!("update.sql"), params![front, back, id])?
+            .execute(
+                include_str!("update.sql"),
+                params![front, back, is_cloze, id],
+            )?
             .try_into()
             .unwrap_or(0);
         Ok(rows_affected > 0)
@@ -344,6 +347,20 @@ fn migrate_schema(db: &Connection) -> Result<()> {
             "ALTER TABLE generated_cards ADD COLUMN is_cloze INTEGER NOT NULL DEFAULT 0",
             [],
         )?;
+        // Legacy rows predate the explicit flag, so preserve prior behavior by
+        // backfilling cloze cards with the same text-based heuristic that older
+        // code used during rehydration.
+        db.execute(
+            "UPDATE generated_cards
+             SET is_cloze = CASE
+                 WHEN instr(front, '{{c') > 0
+                  AND instr(front, '::') > 0
+                  AND instr(front, '}}') > 0
+                 THEN 1
+                 ELSE 0
+             END",
+            [],
+        )?;
     }
 
     Ok(())
@@ -396,7 +413,12 @@ mod test {
 
         let id = storage.add_card(&card).unwrap();
         let updated = storage
-            .update_card(id, "What is Rust?", "A programming language for safety.")
+            .update_card(
+                id,
+                "What is Rust?",
+                "A programming language for safety.",
+                false,
+            )
             .unwrap();
 
         assert!(updated);
@@ -591,6 +613,57 @@ CREATE TABLE generated_cards (
     }
 
     #[test]
+    fn test_open_or_create_backfills_existing_legacy_cloze_rows() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("legacy_existing_cards.db");
+        let db = Connection::open(&path).unwrap();
+        db.execute_batch(
+            r#"
+CREATE TABLE generated_cards (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  front TEXT NOT NULL,
+  back TEXT NOT NULL,
+  source_url TEXT,
+  source_type TEXT NOT NULL DEFAULT 'text',
+  created_at INTEGER NOT NULL,
+  sync_status TEXT NOT NULL DEFAULT 'pending',
+  tags TEXT NOT NULL DEFAULT ''
+);
+"#,
+        )
+        .unwrap();
+        db.execute(
+            "INSERT INTO generated_cards (
+                front, back, source_url, source_type, created_at, sync_status, tags
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            rusqlite::params![
+                "Rust is a {{c1::systems}} programming language.",
+                "Memory safety without garbage collection.",
+                "https://example.com",
+                "url",
+                1234567890_i64,
+                "pending",
+                "generated\x1frust",
+            ],
+        )
+        .unwrap();
+        let id = db.last_insert_rowid();
+        drop(db);
+
+        let storage = GeneratedCardStorage::open_or_create(&path).unwrap();
+        let flashcard = storage.get_card(id).unwrap().unwrap().into_flashcard();
+
+        let cloze = flashcard
+            .cloze
+            .expect("legacy cloze payload should be restored");
+        assert_eq!(cloze.text, flashcard.front);
+        assert_eq!(cloze.back_extra, flashcard.back);
+        assert_eq!(cloze.tags, flashcard.tags);
+        assert_eq!(cloze.source_type, flashcard.source_type);
+        assert_eq!(cloze.source_url, flashcard.source_url);
+    }
+
+    #[test]
     fn test_literal_cloze_syntax_without_flag_stays_basic() {
         let stored = StoredCard {
             id: 1,
@@ -606,6 +679,38 @@ CREATE TABLE generated_cards (
 
         let flashcard = stored.into_flashcard();
         assert!(flashcard.cloze.is_none());
+    }
+
+    #[test]
+    fn test_update_card_updates_cloze_flag() {
+        let (storage, _dir) = temp_storage();
+        let card = Flashcard::new("Basic front", "Basic back").with_source_type(SourceType::Text);
+        let id = storage.add_card(&card).unwrap();
+
+        assert!(storage
+            .update_card(
+                id,
+                "Rust uses {{c1::ownership}} for memory safety.",
+                "Preventing data races.",
+                true,
+            )
+            .unwrap());
+
+        let cloze_card = storage.get_card(id).unwrap().unwrap().into_flashcard();
+        assert!(cloze_card.cloze.is_some());
+        assert_eq!(
+            cloze_card.front,
+            "Rust uses {{c1::ownership}} for memory safety."
+        );
+
+        assert!(storage
+            .update_card(id, "Plain front", "Plain back", false)
+            .unwrap());
+
+        let basic_card = storage.get_card(id).unwrap().unwrap().into_flashcard();
+        assert!(basic_card.cloze.is_none());
+        assert_eq!(basic_card.front, "Plain front");
+        assert_eq!(basic_card.back, "Plain back");
     }
 
     #[test]

@@ -172,8 +172,13 @@ impl<N: Deref<Target = Notetype>> CardGenContext<N> {
 
 // this could be reworked in the future to avoid the extra vec allocation
 pub(super) fn group_generated_cards_by_note(
-    items: Vec<AlreadyGeneratedCardInfo>,
+    mut items: Vec<AlreadyGeneratedCardInfo>,
 ) -> Vec<(NoteId, Vec<AlreadyGeneratedCardInfo>)> {
+    // SQLite does not guarantee row order here, and chunk_by() only groups
+    // consecutive runs. Normalize order first so cards from the same note are
+    // always grouped together.
+    items.sort_by_key(|card| (card.nid, card.ord, card.id));
+
     let mut out = vec![];
     for (key, group) in &items.into_iter().chunk_by(|c| c.nid) {
         out.push((key, group.collect()));
@@ -193,11 +198,14 @@ pub(crate) struct ExtractedCardInfo {
 pub(crate) fn extract_data_from_existing_cards(
     cards: &[AlreadyGeneratedCardInfo],
 ) -> ExtractedCardInfo {
-    let mut due = None;
+    let mut due: Option<u32> = None;
     let mut deck_ids = HashSet::new();
     for card in cards {
-        if due.is_none() && card.position_if_new.is_some() {
-            due = card.position_if_new;
+        if let Some(position) = card.position_if_new {
+            due = Some(match due {
+                Some(existing) => existing.min(position),
+                None => position,
+            });
         }
         deck_ids.insert(card.original_deck_id);
     }
@@ -488,5 +496,75 @@ mod test {
 
         assert_eq!(cards.len(), 1);
         assert_eq!(cards[0].ord, 1);
+    }
+
+    #[test]
+    fn extract_data_from_existing_cards_uses_lowest_new_position() {
+        let extracted = extract_data_from_existing_cards(&[
+            AlreadyGeneratedCardInfo {
+                id: CardId(3),
+                nid: NoteId(1),
+                ord: 2,
+                original_deck_id: DeckId(1),
+                position_if_new: Some(30),
+            },
+            AlreadyGeneratedCardInfo {
+                id: CardId(1),
+                nid: NoteId(1),
+                ord: 0,
+                original_deck_id: DeckId(1),
+                position_if_new: Some(10),
+            },
+            AlreadyGeneratedCardInfo {
+                id: CardId(2),
+                nid: NoteId(1),
+                ord: 1,
+                original_deck_id: DeckId(1),
+                position_if_new: Some(20),
+            },
+        ]);
+
+        assert_eq!(extracted.due, Some(10));
+        assert_eq!(extracted.deck_id, Some(DeckId(1)));
+        assert_eq!(extracted.existing_ords, HashSet::from([0, 1, 2]));
+    }
+
+    #[test]
+    fn group_generated_cards_by_note_handles_unsorted_input() {
+        let groups = group_generated_cards_by_note(vec![
+            AlreadyGeneratedCardInfo {
+                id: CardId(3),
+                nid: NoteId(2),
+                ord: 0,
+                original_deck_id: DeckId(1),
+                position_if_new: Some(30),
+            },
+            AlreadyGeneratedCardInfo {
+                id: CardId(2),
+                nid: NoteId(1),
+                ord: 1,
+                original_deck_id: DeckId(1),
+                position_if_new: Some(20),
+            },
+            AlreadyGeneratedCardInfo {
+                id: CardId(1),
+                nid: NoteId(1),
+                ord: 0,
+                original_deck_id: DeckId(1),
+                position_if_new: Some(10),
+            },
+        ]);
+
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].0, NoteId(1));
+        assert_eq!(
+            groups[0].1.iter().map(|card| card.ord).collect::<Vec<_>>(),
+            vec![0, 1]
+        );
+        assert_eq!(groups[1].0, NoteId(2));
+        assert_eq!(
+            groups[1].1.iter().map(|card| card.ord).collect::<Vec<_>>(),
+            vec![0]
+        );
     }
 }

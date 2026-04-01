@@ -225,7 +225,10 @@ mod tests {
 
     #[test]
     fn revlog_kind_is_learning() {
-        assert_eq!(default_learn_state().revlog_kind(), RevlogReviewKind::Learning);
+        assert_eq!(
+            default_learn_state().revlog_kind(),
+            RevlogReviewKind::Learning
+        );
     }
 
     #[test]

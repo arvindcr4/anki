@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn learning_entry_sort() {
-        let mut entries = vec![
+        let mut entries = [
             LearningQueueEntry {
                 due: TimestampSecs(300),
                 id: CardId(3),
