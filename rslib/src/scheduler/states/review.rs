@@ -246,33 +246,41 @@ impl ReviewState {
         (hard_interval, good_interval, easy_interval)
     }
 
-    /// Mostly direct port from the Python version for now, so we can confirm
-    /// implementation is correct.
-    /// FIXME: this needs reworking in the future; it overly penalizes reviews
-    /// done shortly before the due date.
+    /// Compute intervals for a review done before the due date.
+    /// Uses proportional interpolation: the bonus scales linearly with how
+    /// much of the scheduled interval has elapsed, avoiding the old
+    /// behavior that gave zero growth for very early reviews.
     fn passing_early_review_intervals(self, ctx: &StateContext) -> (u32, u32, u32) {
         let scheduled = (self.scheduled_days as f32).max(1.0);
         let elapsed = self.elapsed_days as f32;
+        let proportion = (elapsed / scheduled).min(1.0);
 
         let hard_interval = {
-            let factor = ctx.hard_multiplier;
-            let half_usual = factor / 2.0;
+            let on_time = scheduled * ctx.hard_multiplier;
             constrain_passing_interval(
                 ctx,
-                (elapsed * factor).max(scheduled * half_usual),
+                scheduled + (on_time - scheduled) * proportion,
                 0,
                 false,
             )
         };
 
-        let good_interval =
-            constrain_passing_interval(ctx, (elapsed * self.ease_factor).max(scheduled), 0, false);
+        let good_interval = {
+            let on_time = scheduled * self.ease_factor;
+            constrain_passing_interval(
+                ctx,
+                scheduled + (on_time - scheduled) * proportion,
+                0,
+                false,
+            )
+        };
 
         let easy_interval = {
             let reduced_bonus = ctx.easy_multiplier - (ctx.easy_multiplier - 1.0) / 2.0;
+            let on_time = scheduled * self.ease_factor * reduced_bonus;
             constrain_passing_interval(
                 ctx,
-                (elapsed * self.ease_factor).max(scheduled) * reduced_bonus,
+                scheduled + (on_time - scheduled) * proportion,
                 0,
                 false,
             )
@@ -372,6 +380,49 @@ mod test {
         ctx.interval_multiplier = 10.0;
         ctx.maximum_review_interval = 5;
         assert_eq!(state.passing_review_intervals(&ctx), (5, 5, 5));
+    }
+
+    #[test]
+    fn early_review_proportional_penalty() {
+        let mut ctx = StateContext::defaults_for_testing();
+        ctx.fuzz_factor = Some(0.0);
+        let state = ReviewState {
+            scheduled_days: 30,
+            elapsed_days: 10,
+            ease_factor: 2.5,
+            lapses: 0,
+            leeched: false,
+            memory_state: None,
+        };
+        let (hard, good, easy) = state.passing_early_review_intervals(&ctx);
+        // With proportional scaling, reviewing at 1/3 of the interval
+        // should give more than just the current interval
+        assert!(good > 30, "good interval {good} should exceed scheduled 30");
+        // And should be less than on-time good (75)
+        assert!(good < 75, "good interval {good} should be less than on-time 75");
+        // Hard should also scale proportionally
+        assert!(hard > 0);
+        // Easy should be more than good
+        assert!(easy > good, "easy {easy} should exceed good {good}");
+    }
+
+    #[test]
+    fn early_review_converges_at_boundary() {
+        let mut ctx = StateContext::defaults_for_testing();
+        ctx.fuzz_factor = Some(0.0);
+        // When elapsed == scheduled (boundary), early formula should match
+        // nonearly formula
+        let state = ReviewState {
+            scheduled_days: 30,
+            elapsed_days: 30,
+            ease_factor: 2.5,
+            lapses: 0,
+            leeched: false,
+            memory_state: None,
+        };
+        let (_, good_early, _) = state.passing_early_review_intervals(&ctx);
+        // On-time good: scheduled * ease_factor = 30 * 2.5 = 75
+        assert_eq!(good_early, 75);
     }
 
     #[test]
