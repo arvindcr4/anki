@@ -720,26 +720,57 @@ class DeckBrowser:
             )
         insight_class = "daily-cards-insight is-neutral"
         insight_summary = "Insight: no recent capture yet."
+        insight_markup = f'<div class="{insight_class}">{insight_summary}</div>'
         if total_cards:
             if burst_pct >= 60:
                 insight_class = "daily-cards-insight is-burst"
                 insight_summary = (
                     "Insight: most of this week came from one big capture session."
                 )
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    f'title="Review burst-heavy week" aria-label="Review burst-heavy week" '
+                    f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
+                    f"{insight_summary}</a>"
+                )
             elif trend_summary == "Trend: rising":
                 insight_class = "daily-cards-insight is-rising"
                 insight_summary = "Insight: recent capture is accelerating."
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    'title="Browse recent trend" aria-label="Browse recent trend" '
+                    "onclick=\"return pycmd('browseRecent')\">"
+                    f"{insight_summary}</a>"
+                )
             elif trend_summary == "Trend: cooling":
                 insight_class = "daily-cards-insight is-cooling"
                 insight_summary = "Insight: recent capture has cooled compared with earlier in the week."
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    'title="Browse recent trend" aria-label="Browse recent trend" '
+                    "onclick=\"return pycmd('browseRecent')\">"
+                    f"{insight_summary}</a>"
+                )
             elif active_day_count >= recent_days - 1:
                 insight_class = "daily-cards-insight is-consistent"
                 insight_summary = (
                     "Insight: capture has been consistent across nearly the whole week."
                 )
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    'title="Browse recent trend" aria-label="Browse recent trend" '
+                    "onclick=\"return pycmd('browseRecent')\">"
+                    f"{insight_summary}</a>"
+                )
             else:
                 insight_class = "daily-cards-insight is-spread"
                 insight_summary = "Insight: capture is spread across multiple days."
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    'title="Browse recent trend" aria-label="Browse recent trend" '
+                    "onclick=\"return pycmd('browseRecent')\">"
+                    f"{insight_summary}</a>"
+                )
         max_cards = max(
             (group.card_count for group in self._render_data.daily_groups),
             default=0,
@@ -967,7 +998,7 @@ class DeckBrowser:
   </div>
   <div class="daily-cards-strip-hint">{heatmap_hint}</div>
   <div class="daily-cards-strip-legend">{legend_items}</div>
-  <div class="{insight_class}">{insight_summary}</div>
+  {insight_markup}
 {panel_state}  <div class="daily-cards-guidance-block" role="status" aria-live="polite">
     <div class="daily-cards-guidance">{guidance}</div>
     <div class="daily-cards-guidance-actions">{guidance_actions}</div>
@@ -995,7 +1026,7 @@ class DeckBrowser:
             guidance_actions="\n".join(guidance_actions),
             heatmap_hint=heatmap_hint,
             legend_items="\n".join(legend_items),
-            insight_class=insight_class,
+            insight_markup=insight_markup,
             insight_summary=insight_summary,
             activity_bars="\n".join(activity_bars),
             panel_state=panel_state,

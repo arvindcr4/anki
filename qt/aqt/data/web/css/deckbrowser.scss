@@ -338,6 +338,16 @@ body {
     line-height: 1.4;
 }
 
+.daily-cards-insight-link {
+    display: block;
+    text-decoration: none;
+}
+
+.daily-cards-insight-link:hover {
+    text-decoration: none;
+    border-color: color(border);
+}
+
 .daily-cards-insight.is-burst {
     border-color: color(fg-link);
     background: color(border-subtle);
