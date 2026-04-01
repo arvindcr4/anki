@@ -459,7 +459,7 @@ class AddCards(QMainWindow):
             )
         elif self._codex_preferred():
             self.intake_frame.set_codex_status(
-                "Codex connection: Codex preferred provider • add OPENAI_API_KEY to enable preview-first actions"
+                "Codex connection: Codex preferred provider selected • add OPENAI_API_KEY to enable preview-first actions"
             )
         elif self._codex_api_key_present():
             self.intake_frame.set_codex_status(
@@ -696,7 +696,8 @@ class AddCards(QMainWindow):
         if not get_api_key():
             showWarning(
                 "No API key configured.\n\n"
-                "Set OPENAI_API_KEY environment variable to enable LLM generation.",
+                "Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable "
+                "to enable LLM generation.",
                 parent=self,
             )
             self.intake_frame.set_llm_status("LLM status: provider not configured")
