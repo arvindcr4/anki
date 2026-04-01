@@ -181,3 +181,4 @@ lto = true
 lto = "fat"
 strip = true
 opt-level = "z"
+panic = 'abort'
