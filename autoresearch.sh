@@ -130,6 +130,7 @@ checks = [
     ('Burst session', 1, 'visual'),
     ('Today:', 2, 'timeline'),
     ('ready to capture', 2, 'timeline'),
+    ('ready to restart', 2, 'timeline'),
     ('active day', 2, 'timeline'),
     ('daily-cards-today', 1, 'visual'),
     ('daily-cards-gap', 1, 'visual'),

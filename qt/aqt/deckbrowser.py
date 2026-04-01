@@ -505,6 +505,8 @@ class DeckBrowser:
                 )
             else:
                 today_summary = "Today: ready to capture"
+                if latest_active_group and latest_active_group.days_ago > 0:
+                    today_summary = "Today: ready to restart"
                 today_summary_markup = (
                     f'<a class="daily-cards-link daily-cards-pill daily-cards-today" href=# '
                     'title="Create today\'s first card" aria-label="Create today\'s first card" '
