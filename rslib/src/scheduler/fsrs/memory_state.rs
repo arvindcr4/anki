@@ -728,5 +728,71 @@ mod tests {
 
             Ok(())
         }
+
+        #[test]
+        fn decay_from_empty_params() {
+            assert_eq!(get_decay_from_params(&[]), FSRS6_DEFAULT_DECAY);
+        }
+
+        #[test]
+        fn decay_from_short_params_fsrs5() {
+            // less than 21 params -> FSRS5 default
+            let params = vec![0.1; 19];
+            assert_eq!(get_decay_from_params(&params), FSRS5_DEFAULT_DECAY);
+        }
+
+        #[test]
+        fn decay_from_full_params_fsrs6() {
+            // 21+ params -> use params[20]
+            let mut params = vec![0.1; 21];
+            params[20] = 0.42;
+            assert_eq!(get_decay_from_params(&params), 0.42);
+        }
+
+        #[test]
+        fn last_revlog_info_empty() {
+            let info = get_last_revlog_info(&[]);
+            assert!(info.is_empty());
+        }
+
+        #[test]
+        fn last_revlog_info_single_review() {
+            let entry = RevlogEntry {
+                id: RevlogId(1_700_000_000_000),
+                cid: CardId(42),
+                button_chosen: 3,
+                review_kind: RevlogReviewKind::Review,
+                last_interval: 10,
+                ..RevlogEntry::default()
+            };
+            let info = get_last_revlog_info(&[entry]);
+            let card_info = info.get(&CardId(42)).unwrap();
+            assert!(card_info.last_reviewed_at.is_some());
+            assert_eq!(card_info.previous_interval, Some(10));
+        }
+
+        #[test]
+        fn last_revlog_info_reset_clears() {
+            let review = RevlogEntry {
+                id: RevlogId(1_700_000_000_000),
+                cid: CardId(42),
+                button_chosen: 3,
+                review_kind: RevlogReviewKind::Review,
+                last_interval: 10,
+                ..RevlogEntry::default()
+            };
+            let reset = RevlogEntry {
+                id: RevlogId(1_700_001_000_000),
+                cid: CardId(42),
+                button_chosen: 0,
+                review_kind: RevlogReviewKind::Manual,
+                ease_factor: 0,
+                ..RevlogEntry::default()
+            };
+            let info = get_last_revlog_info(&[review, reset]);
+            let card_info = info.get(&CardId(42)).unwrap();
+            assert!(card_info.last_reviewed_at.is_none());
+            assert!(card_info.previous_interval.is_none());
+        }
     }
 }
