@@ -82,4 +82,85 @@ mod test {
         assert_eq!(field.fix_name(), Ok(()));
         assert_eq!(&field.name, "test field name #/^");
     }
+
+    #[test]
+    fn new_field_defaults() {
+        let field = NoteField::new("Front");
+        assert_eq!(field.name, "Front");
+        assert!(field.ord.is_none());
+        assert_eq!(field.config.font_name, "Arial");
+        assert_eq!(field.config.font_size, 20);
+        assert!(!field.config.sticky);
+        assert!(!field.config.rtl);
+        assert!(!field.config.plain_text);
+    }
+
+    #[test]
+    fn fix_name_valid_name_unchanged() {
+        let mut field = NoteField::new("Front");
+        assert!(field.fix_name().is_ok());
+        assert_eq!(field.name, "Front");
+    }
+
+    #[test]
+    fn fix_name_removes_colons() {
+        let mut field = NoteField::new("my:field");
+        assert!(field.fix_name().is_ok());
+        assert_eq!(field.name, "myfield");
+    }
+
+    #[test]
+    fn fix_name_removes_braces() {
+        let mut field = NoteField::new("my{field}");
+        assert!(field.fix_name().is_ok());
+        assert_eq!(field.name, "myfield");
+    }
+
+    #[test]
+    fn fix_name_removes_quotes() {
+        let mut field = NoteField::new("my\"field\"");
+        assert!(field.fix_name().is_ok());
+        assert_eq!(field.name, "myfield");
+    }
+
+    #[test]
+    fn fix_name_trims_leading_special() {
+        let mut field = NoteField::new("#/^test");
+        assert!(field.fix_name().is_ok());
+        assert_eq!(field.name, "test");
+    }
+
+    #[test]
+    fn fix_name_empty_fails() {
+        let mut field = NoteField::new("");
+        assert!(field.fix_name().is_err());
+    }
+
+    #[test]
+    fn fix_name_only_bad_chars_fails() {
+        let mut field = NoteField::new("::{}\"\"");
+        assert!(field.fix_name().is_err());
+    }
+
+    #[test]
+    fn from_proto_roundtrip() {
+        let field = NoteField::new("Back");
+        let proto: NoteFieldProto = field.clone().into();
+        assert_eq!(proto.name, "Back");
+        let back: NoteField = proto.into();
+        assert_eq!(back.name, "Back");
+        assert!(back.ord.is_none());
+    }
+
+    #[test]
+    fn from_proto_with_ord() {
+        let proto = NoteFieldProto {
+            ord: Some(anki_proto::generic::UInt32 { val: 3 }),
+            name: "Test".to_string(),
+            config: Some(NoteFieldConfig::default()),
+        };
+        let field: NoteField = proto.into();
+        assert_eq!(field.ord, Some(3));
+        assert_eq!(field.name, "Test");
+    }
 }
