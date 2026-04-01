@@ -241,6 +241,10 @@ body {
     filter: saturate(1.15);
 }
 
+.daily-cards-bar.is-burst-bar {
+    box-shadow: inset 0 0 0 2px color(border-subtle);
+}
+
 .daily-cards-bar.is-empty {
     opacity: 0.5;
 }
@@ -318,6 +322,10 @@ body {
 .daily-cards-legend-swatch.is-busiest {
     background: color(fg-link);
     filter: saturate(1.15);
+}
+
+.daily-cards-legend-swatch.is-burst {
+    box-shadow: inset 0 0 0 2px color(border-subtle);
 }
 
 .daily-cards-insight {
@@ -436,6 +444,11 @@ body {
 
 .daily-cards-status-secondary {
     background: color(border);
+    color: color(fg);
+}
+
+.daily-cards-status-burst {
+    background: color(border-subtle);
     color: color(fg);
 }
 

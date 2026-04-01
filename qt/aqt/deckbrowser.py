@@ -596,6 +596,10 @@ class DeckBrowser:
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-capture"></span>Create here</span>'
             )
+        if bursty_week:
+            legend_items.append(
+                '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-burst"></span>Burst session</span>'
+            )
         if streak_count:
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-streak"></span>Streak run</span>'
@@ -679,6 +683,7 @@ class DeckBrowser:
             f'<div class="daily-cards-pill daily-cards-busiest">{busiest_summary}</div>'
         )
         burst_pct = 0
+        bursty_week = False
         burst_summary = "Burst: no capture yet"
         burst_summary_markup = (
             f'<div class="daily-cards-pill daily-cards-burst">{burst_summary}</div>'
@@ -695,6 +700,7 @@ class DeckBrowser:
                 f"{busiest_summary}</a>"
             )
             burst_pct = round((busiest_group.card_count / total_cards) * 100)
+            bursty_week = burst_pct >= 60
             burst_summary = f"Burst: {burst_pct}% on busiest day"
             burst_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-burst" href=# '
@@ -738,6 +744,8 @@ class DeckBrowser:
                 bar_classes.append("is-latest-bar")
             if group.days_ago == busiest_days_ago and group.card_count:
                 bar_classes.append("is-busiest-bar")
+                if bursty_week:
+                    bar_classes.append("is-burst-bar")
             if group.card_count:
                 bar_classes.append("has-cards")
                 bar_markup = (
@@ -795,6 +803,10 @@ class DeckBrowser:
                 status_badges.append(
                     '<span class="daily-cards-status">Most active</span>'
                 )
+                if bursty_week:
+                    status_badges.append(
+                        '<span class="daily-cards-status daily-cards-status-burst">Burst session</span>'
+                    )
             if group.card_count:
                 metrics_markup = """
   <div class="daily-cards-metric">{card_count_label}</div>
