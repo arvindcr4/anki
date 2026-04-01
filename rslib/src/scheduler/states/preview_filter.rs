@@ -47,3 +47,59 @@ fn delay_or_return(seconds: u32) -> CardState {
     }
     .into()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scheduler::states::CardState;
+    use crate::scheduler::states::FilteredState;
+
+    #[test]
+    fn preview_interval_kind() {
+        let state = PreviewState {
+            scheduled_secs: 300,
+            finished: false,
+        };
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(300));
+    }
+
+    #[test]
+    fn preview_interval_kind_zero() {
+        let state = PreviewState {
+            scheduled_secs: 0,
+            finished: true,
+        };
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn preview_revlog_kind_is_filtered() {
+        let state = PreviewState {
+            scheduled_secs: 0,
+            finished: false,
+        };
+        assert_eq!(state.revlog_kind(), RevlogReviewKind::Filtered);
+    }
+
+    #[test]
+    fn delay_or_return_zero_is_finished() {
+        let result = delay_or_return(0);
+        if let CardState::Filtered(FilteredState::Preview(state)) = result {
+            assert!(state.finished);
+            assert_eq!(state.scheduled_secs, 0);
+        } else {
+            panic!("expected Preview state");
+        }
+    }
+
+    #[test]
+    fn delay_or_return_nonzero_is_not_finished() {
+        let result = delay_or_return(120);
+        if let CardState::Filtered(FilteredState::Preview(state)) = result {
+            assert!(!state.finished);
+            assert_eq!(state.scheduled_secs, 120);
+        } else {
+            panic!("expected Preview state");
+        }
+    }
+}

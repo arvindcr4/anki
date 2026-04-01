@@ -21,3 +21,32 @@ impl NewState {
         RevlogReviewKind::Learning
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_state_interval_kind_is_zero_secs() {
+        let state = NewState { position: 0 };
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn new_state_interval_kind_ignores_position() {
+        let state = NewState { position: 999 };
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn new_state_revlog_kind_is_learning() {
+        let state = NewState { position: 0 };
+        assert_eq!(state.revlog_kind(), RevlogReviewKind::Learning);
+    }
+
+    #[test]
+    fn new_state_default_position_is_zero() {
+        let state = NewState::default();
+        assert_eq!(state.position, 0);
+    }
+}
