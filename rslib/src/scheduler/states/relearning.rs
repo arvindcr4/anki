@@ -202,3 +202,83 @@ impl RelearnState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_relearn_state() -> RelearnState {
+        RelearnState {
+            learning: LearnState {
+                remaining_steps: 1,
+                scheduled_secs: 600,
+                elapsed_secs: 0,
+                memory_state: None,
+            },
+            review: ReviewState {
+                scheduled_days: 10,
+                elapsed_days: 10,
+                ease_factor: 2.5,
+                lapses: 3,
+                leeched: false,
+                memory_state: None,
+            },
+        }
+    }
+
+    #[test]
+    fn interval_kind_delegates_to_learning() {
+        let state = default_relearn_state();
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(600));
+    }
+
+    #[test]
+    fn interval_kind_zero_secs() {
+        let mut state = default_relearn_state();
+        state.learning.scheduled_secs = 0;
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn revlog_kind_is_relearning() {
+        assert_eq!(
+            default_relearn_state().revlog_kind(),
+            RevlogReviewKind::Relearning
+        );
+    }
+
+    #[test]
+    fn next_states_current_is_relearning() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_relearn_state();
+        let states = state.next_states(&ctx);
+        assert!(matches!(
+            states.current,
+            CardState::Normal(super::super::NormalState::Relearning(_))
+        ));
+    }
+
+    #[test]
+    fn next_states_easy_is_review() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_relearn_state();
+        let states = state.next_states(&ctx);
+        assert!(matches!(
+            states.easy,
+            CardState::Normal(super::super::NormalState::Review(_))
+        ));
+    }
+
+    #[test]
+    fn next_states_again_exists() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_relearn_state();
+        let states = state.next_states(&ctx);
+        // again should produce a relearn or review state
+        assert!(matches!(
+            states.again,
+            CardState::Normal(super::super::NormalState::Relearning(_))
+                | CardState::Normal(super::super::NormalState::Review(_))
+        ));
+    }
+}
