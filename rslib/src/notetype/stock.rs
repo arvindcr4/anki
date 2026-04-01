@@ -184,3 +184,74 @@ pub(crate) fn cloze(tr: &I18n) -> Notetype {
     nt.add_template(nt.name.clone(), qfmt, afmt);
     nt
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fieldref_basic() {
+        assert_eq!(fieldref("Front"), "{{Front}}");
+    }
+
+    #[test]
+    fn fieldref_with_colons() {
+        assert_eq!(fieldref("FrontSide"), "{{FrontSide}}");
+    }
+
+    #[test]
+    fn fieldref_empty() {
+        assert_eq!(fieldref(""), "{{}}");
+    }
+
+    #[test]
+    fn fieldref_string_owned() {
+        assert_eq!(fieldref(String::from("Back")), "{{Back}}");
+    }
+
+    #[test]
+    fn empty_stock_normal() {
+        let nt = empty_stock(NotetypeKind::Normal, OriginalStockKind::Basic, "Test");
+        assert_eq!(nt.name, "Test");
+        assert_eq!(nt.config.kind, NotetypeKind::Normal as i32);
+        assert_eq!(nt.config.original_stock_kind, OriginalStockKind::Basic as i32);
+    }
+
+    #[test]
+    fn empty_stock_cloze() {
+        let nt = empty_stock(NotetypeKind::Cloze, OriginalStockKind::Cloze, "MyCloze");
+        assert_eq!(nt.name, "MyCloze");
+        assert_eq!(nt.config.kind, NotetypeKind::Cloze as i32);
+    }
+
+    #[test]
+    fn all_stock_notetypes_count() {
+        let tr = I18n::template_only();
+        let notetypes = all_stock_notetypes(&tr);
+        assert_eq!(notetypes.len(), 6);
+    }
+
+    #[test]
+    fn basic_notetype_has_two_fields() {
+        let tr = I18n::template_only();
+        let nt = basic(&tr);
+        assert_eq!(nt.fields.len(), 2);
+        assert_eq!(nt.templates.len(), 1);
+    }
+
+    #[test]
+    fn basic_forward_reverse_has_two_templates() {
+        let tr = I18n::template_only();
+        let nt = basic_forward_reverse(&tr);
+        assert_eq!(nt.templates.len(), 2);
+    }
+
+    #[test]
+    fn cloze_notetype_structure() {
+        let tr = I18n::template_only();
+        let nt = cloze(&tr);
+        assert_eq!(nt.fields.len(), 2);
+        assert_eq!(nt.templates.len(), 1);
+        assert_eq!(nt.config.kind, NotetypeKind::Cloze as i32);
+    }
+}
