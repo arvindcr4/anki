@@ -230,3 +230,156 @@ impl From<HttpError> for AnkiError {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sync_error_message_server_message() {
+        let tr = I18n::template_only();
+        let err = SyncError {
+            info: "custom server msg".into(),
+            kind: SyncErrorKind::ServerMessage,
+        };
+        assert_eq!(err.message(&tr), "custom server msg");
+    }
+
+    #[test]
+    fn sync_error_messages_not_empty() {
+        let tr = I18n::template_only();
+        let errors = vec![
+            SyncError { info: "".into(), kind: SyncErrorKind::Conflict },
+            SyncError { info: "".into(), kind: SyncErrorKind::ServerError },
+            SyncError { info: "".into(), kind: SyncErrorKind::ClientTooOld },
+            SyncError { info: "".into(), kind: SyncErrorKind::AuthFailed },
+            SyncError { info: "".into(), kind: SyncErrorKind::ResyncRequired },
+            SyncError { info: "".into(), kind: SyncErrorKind::ClockIncorrect },
+            SyncError { info: "".into(), kind: SyncErrorKind::DatabaseCheckRequired },
+            SyncError { info: "".into(), kind: SyncErrorKind::SyncNotStarted },
+        ];
+        for err in &errors {
+            assert!(!err.message(&tr).is_empty());
+        }
+    }
+
+    #[test]
+    fn network_error_message_not_empty() {
+        let tr = I18n::template_only();
+        let kinds = vec![
+            NetworkErrorKind::Offline,
+            NetworkErrorKind::Timeout,
+            NetworkErrorKind::ProxyAuth,
+            NetworkErrorKind::Other,
+        ];
+        for kind in kinds {
+            let err = NetworkError {
+                info: "details".into(),
+                kind,
+            };
+            assert!(!err.message(&tr).is_empty());
+        }
+    }
+
+    #[test]
+    fn error_for_status_code_proxy_auth() {
+        let err = error_for_status_code("info".into(), StatusCode::PROXY_AUTHENTICATION_REQUIRED);
+        assert!(matches!(err, AnkiError::NetworkError { .. }));
+    }
+
+    #[test]
+    fn error_for_status_code_conflict() {
+        let err = error_for_status_code("info".into(), StatusCode::CONFLICT);
+        assert!(matches!(err, AnkiError::SyncError { .. }));
+    }
+
+    #[test]
+    fn error_for_status_code_forbidden() {
+        let err = error_for_status_code("info".into(), StatusCode::FORBIDDEN);
+        if let AnkiError::SyncError { source } = err {
+            assert_eq!(source.kind, SyncErrorKind::AuthFailed);
+        } else {
+            panic!("expected SyncError");
+        }
+    }
+
+    #[test]
+    fn error_for_status_code_internal_server() {
+        let err = error_for_status_code("info".into(), StatusCode::INTERNAL_SERVER_ERROR);
+        if let AnkiError::SyncError { source } = err {
+            assert_eq!(source.kind, SyncErrorKind::ServerError);
+        } else {
+            panic!("expected SyncError");
+        }
+    }
+
+    #[test]
+    fn error_for_status_code_unknown() {
+        let err = error_for_status_code("info".into(), StatusCode::IM_A_TEAPOT);
+        assert!(matches!(err, AnkiError::NetworkError { .. }));
+    }
+
+    #[test]
+    fn guess_reqwest_error_dns() {
+        let err = guess_reqwest_error("dns error: cancelled".into());
+        assert!(matches!(err, AnkiError::Interrupted));
+    }
+
+    #[test]
+    fn guess_reqwest_error_unreachable() {
+        let err = guess_reqwest_error("host unreachable".into());
+        if let AnkiError::NetworkError { source } = err {
+            assert_eq!(source.kind, NetworkErrorKind::Offline);
+        } else {
+            panic!("expected NetworkError");
+        }
+    }
+
+    #[test]
+    fn guess_reqwest_error_timeout() {
+        let err = guess_reqwest_error("connection timed out".into());
+        if let AnkiError::NetworkError { source } = err {
+            assert_eq!(source.kind, NetworkErrorKind::Timeout);
+        } else {
+            panic!("expected NetworkError");
+        }
+    }
+
+    #[test]
+    fn guess_reqwest_error_other() {
+        let err = guess_reqwest_error("something else".into());
+        if let AnkiError::NetworkError { source } = err {
+            assert_eq!(source.kind, NetworkErrorKind::Other);
+        } else {
+            panic!("expected NetworkError");
+        }
+    }
+
+    #[test]
+    fn anki_error_sync_error_constructor() {
+        let err = AnkiError::sync_error("test", SyncErrorKind::Conflict);
+        assert!(matches!(err, AnkiError::SyncError { .. }));
+    }
+
+    #[test]
+    fn anki_error_server_message() {
+        let err = AnkiError::server_message("server says no");
+        if let AnkiError::SyncError { source } = err {
+            assert_eq!(source.kind, SyncErrorKind::ServerMessage);
+            assert_eq!(source.info, "server says no");
+        } else {
+            panic!("expected SyncError");
+        }
+    }
+
+    #[test]
+    fn sync_error_display() {
+        let err = SyncError {
+            info: "test info".into(),
+            kind: SyncErrorKind::Conflict,
+        };
+        let display = format!("{err}");
+        assert!(display.contains("Conflict"));
+        assert!(display.contains("test info"));
+    }
+}
