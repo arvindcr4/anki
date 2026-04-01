@@ -71,6 +71,8 @@ checks = [
     ('Browse today (', 1, 'browse'),
     ('Browse latest day', 2, 'browse'),
     ('Browse latest day (', 1, 'browse'),
+    ('Resume last capture', 2, 'browse'),
+    ('Resume last capture (', 1, 'browse'),
     ('latest_active_group', 1, 'timeline'),
     ('Cards added on', 1, 'browse'),
     ('Cards added in last 7 days', 1, 'browse'),
