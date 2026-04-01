@@ -957,6 +957,13 @@ class DeckBrowser:
                         f'<div class="daily-cards-empty-summary">{quiet_summary}</div>'
                     )
                     action = '<a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd(\'browseRecent\')">Browse week context</a>'
+                    if first_empty.days_ago == 1 and latest_active_group:
+                        action = """
+<div class="daily-cards-action-stack">
+  <a class='daily-cards-link daily-cards-quiet-restart' href=# onclick="return pycmd('addcards')">Restart after quiet stretch</a>
+  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('browseRecent')">Browse week context</a>
+</div>
+"""
                     group = replace(
                         group,
                         label="Quiet stretch",

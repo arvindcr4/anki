@@ -48,6 +48,8 @@ checks = [
     ('is-empty-cluster', 1, 'visual'),
     ('Quiet stretch', 2, 'timeline'),
     ('No cards added on', 2, 'timeline'),
+    ('Restart after quiet stretch', 2, 'capture'),
+    ('daily-cards-quiet-restart', 1, 'visual'),
     ('Browse week context', 1, 'browse'),
     ('0 cards / 0 notes', 1, 'timeline'),
     ('deck-browser-secondary-row', 1, 'visual'),
