@@ -322,3 +322,117 @@ pub enum CardTypeErrorDetails {
     NoSuchField { field: String },
     MissingCloze,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn anki_error_message_parse_num() {
+        let tr = I18n::template_only();
+        let msg = AnkiError::ParseNumError.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn anki_error_message_deleted() {
+        let tr = I18n::template_only();
+        let msg = AnkiError::Deleted.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn anki_error_message_fsrs_insufficient() {
+        let tr = I18n::template_only();
+        let msg = AnkiError::FsrsInsufficientData.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn anki_error_message_fsrs_reviews() {
+        let tr = I18n::template_only();
+        let msg = AnkiError::FsrsInsufficientReviews { count: 100 }.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn anki_error_message_scheduler_upgrade() {
+        let tr = I18n::template_only();
+        let msg = AnkiError::SchedulerUpgradeRequired.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn anki_error_message_invalid_input() {
+        let tr = I18n::template_only();
+        let err = AnkiError::InvalidInput {
+            source: InvalidInputError {
+                message: "bad".into(),
+                source: None,
+                backtrace: None,
+            },
+        };
+        assert_eq!(err.message(&tr), "bad");
+    }
+
+    #[test]
+    fn anki_error_context_invalid_input() {
+        let err = AnkiError::InvalidInput {
+            source: InvalidInputError {
+                message: "msg".into(),
+                source: None,
+                backtrace: None,
+            },
+        };
+        assert_eq!(err.context(), "");
+    }
+
+    #[test]
+    fn anki_error_context_not_found() {
+        let err = AnkiError::NotFound {
+            source: NotFoundError {
+                type_name: "card".into(),
+                identifier: "42".into(),
+                backtrace: None,
+            },
+        };
+        assert_eq!(err.context(), "No such card: '42'");
+    }
+
+    #[test]
+    fn anki_error_context_other() {
+        assert_eq!(AnkiError::Interrupted.context(), "");
+    }
+
+    #[test]
+    fn help_page_none_for_most_errors() {
+        assert!(AnkiError::Interrupted.help_page().is_none());
+        assert!(AnkiError::ParseNumError.help_page().is_none());
+    }
+
+    #[test]
+    fn help_page_card_type_errors() {
+        let err = AnkiError::CardTypeError {
+            source: CardTypeError {
+                notetype: "Basic".into(),
+                ordinal: 0,
+                source: CardTypeErrorDetails::NoFrontField,
+            },
+        };
+        assert_eq!(err.help_page(), Some(HelpPage::CardTypeNoFrontField));
+    }
+
+    #[test]
+    fn from_serde_json_error() {
+        let err: serde_json::Result<i32> = serde_json::from_str("invalid");
+        let anki_err: AnkiError = err.unwrap_err().into();
+        assert!(matches!(anki_err, AnkiError::JsonError { .. }));
+    }
+
+    #[test]
+    fn from_regex_error() {
+        let err = regex::Regex::new("[invalid").unwrap_err();
+        let anki_err: AnkiError = err.into();
+        assert!(matches!(anki_err, AnkiError::InvalidRegex { .. }));
+    }
+}
