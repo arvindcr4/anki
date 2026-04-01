@@ -72,6 +72,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Avoid dumping raw **0 cards / 0 notes** rows throughout the week; that reads like database output instead of useful guidance.
 - Collapse consecutive empty non-today rows into a single **Quiet stretch** summary instead of repeating **No cards added** over and over, which reduces noise when most of the week is blank.
 - If that quiet stretch reaches up to yesterday, make the row itself a recovery point with **Restart after quiet stretch**, so a user can jump straight back into capture from the place where momentum visibly stopped.
+- Mark that leading quiet stretch as the **Current gap** so learners can tell at a glance whether the lull is the present problem or just an older part of the week.
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.
 - Pair that empty-today prompt with **Import cards** so starting a new day supports both small manual capture and larger generated/imported sessions.
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.

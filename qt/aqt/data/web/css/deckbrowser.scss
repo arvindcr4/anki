@@ -432,6 +432,10 @@ body {
     color: color(fg-subtle);
 }
 
+.daily-cards-row.is-current-gap {
+    border-color: color(fg-link);
+}
+
 .daily-cards-row.is-capture-target {
     opacity: 1;
     border-style: dashed;

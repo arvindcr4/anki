@@ -50,6 +50,8 @@ checks = [
     ('No cards added on', 2, 'timeline'),
     ('Restart after quiet stretch', 2, 'capture'),
     ('daily-cards-quiet-restart', 1, 'visual'),
+    ('Current gap', 2, 'timeline'),
+    ('is-current-gap', 1, 'visual'),
     ('Browse week context', 1, 'browse'),
     ('0 cards / 0 notes', 1, 'timeline'),
     ('deck-browser-secondary-row', 1, 'visual'),

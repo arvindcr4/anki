@@ -958,6 +958,10 @@ class DeckBrowser:
                     )
                     action = '<a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd(\'browseRecent\')">Browse week context</a>'
                     if first_empty.days_ago == 1 and latest_active_group:
+                        row_classes.append("is-current-gap")
+                        status_badges.append(
+                            '<span class="daily-cards-status daily-cards-status-secondary">Current gap</span>'
+                        )
                         action = """
 <div class="daily-cards-action-stack">
   <a class='daily-cards-link daily-cards-quiet-restart' href=# onclick="return pycmd('addcards')">Restart after quiet stretch</a>
