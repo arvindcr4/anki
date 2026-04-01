@@ -457,6 +457,20 @@ class DeckBrowser:
                 f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
                 f"{gap_summary}</a>"
             )
+        latest_summary = "Latest: no recent capture"
+        latest_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-latest">{latest_summary}</div>'
+        )
+        if latest_active_group:
+            latest_summary = (
+                f"Latest: {latest_active_group.label} {latest_active_group.date_label}"
+            )
+            latest_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-latest" href=# '
+                'title="Browse latest capture" aria-label="Browse latest capture" '
+                f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
+                f"{latest_summary}</a>"
+            )
         range_summary = "Range: this week"
         if self._render_data.daily_groups:
             range_summary = (
@@ -1230,6 +1244,7 @@ class DeckBrowser:
     {quiet_day_markup}
     {consistency_markup}
     {gap_summary_markup}
+    {latest_summary_markup}
     {range_summary_markup}
     {pace_summary_markup}
     {trend_summary_markup}
@@ -1260,6 +1275,7 @@ class DeckBrowser:
             quiet_day_markup=quiet_day_markup,
             consistency_markup=consistency_markup,
             gap_summary_markup=gap_summary_markup,
+            latest_summary_markup=latest_summary_markup,
             range_summary_markup=range_summary_markup,
             pace_summary_markup=pace_summary_markup,
             trend_summary_markup=trend_summary_markup,
