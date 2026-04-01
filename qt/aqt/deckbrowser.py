@@ -569,22 +569,29 @@ class DeckBrowser:
         )
         if streak_count:
             streak_end_group = None
+            streak_title = None
             if latest_active_group:
                 streak_start = latest_active_group.days_ago
                 streak_days_ago = set(range(streak_start, streak_start + streak_count))
                 streak_end_group = self._daily_group_for(streak_start + streak_count - 1)
             streak_summary = f"{streak_label}: {_count_label(streak_count, 'day')}"
             if latest_active_group:
-                streak_title_base = (
-                    "Browse current streak"
-                    if latest_active_group.days_ago == 0
-                    else "Browse last streak"
-                )
-                streak_title = streak_title_base
                 if streak_end_group:
+                    if latest_active_group.days_ago == 0:
+                        streak_title = (
+                            f"Browse current streak ({streak_end_group.date_label} → "
+                            f"{latest_active_group.date_label})"
+                        )
+                    else:
+                        streak_title = (
+                            f"Browse last streak ({streak_end_group.date_label} → "
+                            f"{latest_active_group.date_label})"
+                        )
+                else:
                     streak_title = (
-                        f"{streak_title_base} ({streak_end_group.date_label} → "
-                        f"{latest_active_group.date_label})"
+                        "Browse current streak"
+                        if latest_active_group.days_ago == 0
+                        else "Browse last streak"
                     )
                 streak_summary_markup = (
                     f'<a class="daily-cards-link daily-cards-pill daily-cards-streak" href=# '
@@ -637,8 +644,11 @@ class DeckBrowser:
                 '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">Keep the streak going</a>'
             )
             if latest_active_group:
+                streak_action_label = "Browse current streak"
+                if streak_title:
+                    streak_action_label = streak_title
                 guidance_actions.append(
-                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">Browse current streak</a>'
+                    f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseStreak:{latest_active_group.days_ago},{streak_count}\')">{streak_action_label}</a>'
                 )
             if burst_pct >= 60 and busiest_group:
                 guidance_actions.append(
