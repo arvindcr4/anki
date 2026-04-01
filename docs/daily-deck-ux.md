@@ -69,6 +69,7 @@ This prototype follows common guidance from strong UX systems and books:
   - note count
   - a direct **Browse cards** action that opens an exact added-day search
 - If a day has no cards, keep the row visible and show a soft empty state such as **No cards added**, but visually de-emphasize it so active days stand out first.
+- Avoid dumping raw **0 cards / 0 notes** rows throughout the week; that reads like database output instead of useful guidance.
 - Collapse consecutive empty non-today rows into a single **Quiet stretch** summary instead of repeating **No cards added** over and over, which reduces noise when most of the week is blank.
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.
 - Pair that empty-today prompt with **Import cards** so starting a new day supports both small manual capture and larger generated/imported sessions.

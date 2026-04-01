@@ -144,14 +144,14 @@ summary as (
     select count(distinct nid) as recent_unique_notes
     from recent_cards
 )
-select recent.days_ago,
+select recent.days_ago as days_ago,
        count(*) as card_count,
        count(distinct recent.nid) as note_count,
        (select recent_unique_notes from summary) as recent_unique_notes
 from recent_cards as recent
 where recent.days_ago >= 0 and recent.days_ago < ?
-group by recent.days_ago
-order by recent.days_ago
+group by days_ago
+order by days_ago
 """,
         next_day_cutoff_ms,
         DAY_MS,
