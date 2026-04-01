@@ -3,16 +3,20 @@
 
 """LLM-based card generation for Anki.
 
-Supports OpenAI-compatible APIs (OpenAI, Anthropic via proxy, local models).
-Generates Q&A pairs, cloze deletions, and summaries from source text.
+Supports two backends:
+1. Local MLX inference (Apple Silicon) — no server, no API key needed
+2. OpenAI-compatible APIs — for cloud or external local servers
+
+Set ANKI_LLM_BACKEND=local to force local inference.
+Set ANKI_LLM_BACKEND=api to force API mode.
+Default: auto (tries local first, falls back to API).
 """
 
 from __future__ import annotations
 
 import json
 import os
-import urllib.error
-import urllib.request
+import re
 from dataclasses import dataclass
 from typing import Literal
 
@@ -65,6 +69,14 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
     ),
 }
 
+# Default local model — small enough for most Macs
+DEFAULT_LOCAL_MODEL = "mlx-community/Qwen3-4B-4bit"
+
+
+def get_backend() -> str:
+    """Get the configured backend: 'local', 'api', or 'auto'."""
+    return os.environ.get("ANKI_LLM_BACKEND", "auto")
+
 
 def get_api_key() -> str | None:
     """Get the API key from environment.
@@ -82,7 +94,16 @@ def get_api_base() -> str:
 
 def get_model() -> str:
     """Get the model to use."""
-    return os.environ.get("ANKI_LLM_MODEL", "gpt-4o-mini")
+    return os.environ.get("ANKI_LLM_MODEL", DEFAULT_LOCAL_MODEL)
+
+
+def is_local_available() -> bool:
+    """Check if local MLX inference is available."""
+    try:
+        import mlx_lm  # noqa: F401
+        return True
+    except ImportError:
+        return False
 
 
 def generate_cards(
@@ -94,27 +115,108 @@ def generate_cards(
 ) -> GenerationResult:
     """Generate cards from source text using an LLM.
 
-    Args:
-        source_text: The source material to generate cards from.
-        action: Type of generation (qa, cloze, summarize).
-        num_cards: Target number of cards to generate.
-        context: Optional context (e.g., deck name, existing tags).
-
-    Returns:
-        GenerationResult with generated cards/clozes/summary.
-
-    Raises:
-        LLMError: If the API call fails.
+    Automatically selects local MLX or API backend.
     """
-    api_key = get_api_key()
-    if not api_key:
+    backend = get_backend()
+
+    if backend == "local" or (backend == "auto" and is_local_available()):
+        return _generate_local(source_text, action, num_cards, context)
+    elif backend == "api" or backend == "auto":
+        api_key = get_api_key()
+        if not api_key:
+            raise LLMError(
+                "No API key found. Set OPENAI_API_KEY or install mlx-lm for local inference:\n"
+                "  pip install mlx-lm"
+            )
+        return _generate_api(source_text, action, num_cards, context)
+    else:
+        raise LLMError(f"Unknown backend: {backend}. Use 'local', 'api', or 'auto'.")
+
+
+# ---------------------------------------------------------------------------
+# Local MLX backend
+# ---------------------------------------------------------------------------
+
+_local_model = None
+_local_tokenizer = None
+_local_model_name = None
+
+
+def _get_local_model():
+    """Load the local MLX model, caching across calls."""
+    global _local_model, _local_tokenizer, _local_model_name
+    model_name = get_model()
+
+    if _local_model is not None and _local_model_name == model_name:
+        return _local_model, _local_tokenizer
+
+    try:
+        import mlx_lm
+    except ImportError:
         raise LLMError(
-            "No API key found. Set OPENAI_API_KEY or ANTHROPIC_API_KEY environment variable."
+            "mlx-lm is not installed. Install it with:\n"
+            "  pip install mlx-lm\n"
+            "Or set ANKI_LLM_BACKEND=api to use an API instead."
         )
+
+    # Check for locally cached model (e.g., from oMLX)
+    local_paths = [
+        os.path.expanduser(f"~/.omlx/models/{model_name.split('/')[-1]}"),
+        os.path.expanduser(f"~/.cache/huggingface/hub/models--{model_name.replace('/', '--')}"),
+    ]
+    model_path = model_name
+    for path in local_paths:
+        if os.path.isdir(path):
+            model_path = path
+            break
+
+    _local_model, _local_tokenizer = mlx_lm.load(model_path)
+    _local_model_name = model_name
+    return _local_model, _local_tokenizer
+
+
+def _generate_local(
+    source_text: str, action: ActionType, num_cards: int, context: str
+) -> GenerationResult:
+    """Generate cards using local MLX inference."""
+    import mlx_lm
+
+    model, tokenizer = _get_local_model()
 
     system_prompt = _SYSTEM_PROMPTS[action]
     user_prompt = _build_user_prompt(source_text, action, num_cards, context)
 
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]
+
+    prompt = tokenizer.apply_chat_template(
+        messages, add_generation_prompt=True, tokenize=False
+    )
+
+    response_text = mlx_lm.generate(
+        model, tokenizer, prompt=prompt, max_tokens=2000, verbose=False
+    )
+
+    return _parse_response(response_text, action, get_model())
+
+
+# ---------------------------------------------------------------------------
+# API backend
+# ---------------------------------------------------------------------------
+
+
+def _generate_api(
+    source_text: str, action: ActionType, num_cards: int, context: str
+) -> GenerationResult:
+    """Generate cards using an OpenAI-compatible API."""
+    api_key = get_api_key()
+    if not api_key:
+        raise LLMError("No API key found. Set OPENAI_API_KEY environment variable.")
+
+    system_prompt = _SYSTEM_PROMPTS[action]
+    user_prompt = _build_user_prompt(source_text, action, num_cards, context)
     response_text = _call_api(api_key, system_prompt, user_prompt)
     return _parse_response(response_text, action, get_model())
 

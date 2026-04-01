@@ -691,16 +691,17 @@ class AddCards(QMainWindow):
         self._update_source_preview(target, selected_action=action)
 
         # Run generation in a thread to avoid blocking the UI
-        from aqt.llm_generate import LLMError, generate_cards, get_api_key
+        from aqt.llm_generate import LLMError, generate_cards, get_api_key, is_local_available
 
-        if not get_api_key():
+        if not get_api_key() and not is_local_available():
             showWarning(
-                "No API key configured.\n\n"
-                "Set OPENAI_API_KEY environment variable to enable LLM generation.\n"
-                "For Anthropic models, use an OpenAI-compatible proxy like LiteLLM.",
+                "No LLM backend available.\n\n"
+                "Either:\n"
+                "• Install mlx-lm for local inference: pip install mlx-lm\n"
+                "• Set OPENAI_API_KEY for cloud API access",
                 parent=self,
             )
-            self.intake_frame.set_llm_status("LLM status: provider not configured")
+            self.intake_frame.set_llm_status("LLM status: no backend available")
             return
 
         context = f"Deck: {self.deck_chooser.selected_deck_name()}"
