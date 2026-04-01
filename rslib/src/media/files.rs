@@ -557,4 +557,61 @@ mod test {
             Cow::<str>::Owned(format!("{}_", " ".repeat(MAX_MEDIA_FILENAME_LENGTH - 2)))
         );
     }
+
+    #[test]
+    fn disallowed_chars() {
+        use super::disallowed_char;
+        assert!(disallowed_char('['));
+        assert!(disallowed_char(']'));
+        assert!(disallowed_char('<'));
+        assert!(disallowed_char('>'));
+        assert!(disallowed_char(':'));
+        assert!(disallowed_char('"'));
+        assert!(disallowed_char('/'));
+        assert!(disallowed_char('?'));
+        assert!(disallowed_char('*'));
+        assert!(disallowed_char('^'));
+        assert!(disallowed_char('\\'));
+        assert!(disallowed_char('|'));
+        assert!(disallowed_char('\0'));
+        assert!(disallowed_char('\n'));
+        // normal chars are fine
+        assert!(!disallowed_char('a'));
+        assert!(!disallowed_char('1'));
+        assert!(!disallowed_char('.'));
+        assert!(!disallowed_char(' '));
+        assert!(!disallowed_char('-'));
+    }
+
+    #[test]
+    fn nonbreaking_space_handling() {
+        use super::nonbreaking_space;
+        assert!(nonbreaking_space('\u{a0}'));
+        assert!(!nonbreaking_space(' '));
+        assert!(!nonbreaking_space('a'));
+    }
+
+    #[test]
+    fn normalize_filename_nonbreaking_space() {
+        assert_eq!(
+            normalize_filename("file\u{a0}name.jpg").as_ref(),
+            "file name.jpg"
+        );
+    }
+
+    #[test]
+    fn normalize_filename_windows_devices() {
+        assert_eq!(normalize_filename("CON").as_ref(), "CON_");
+        assert_eq!(normalize_filename("PRN.txt").as_ref(), "PRN_.txt");
+        assert_eq!(normalize_filename("NUL").as_ref(), "NUL_");
+        assert_eq!(normalize_filename("COM1.jpg").as_ref(), "COM1_.jpg");
+    }
+
+    #[test]
+    fn normalize_filename_safe_unchanged() {
+        assert!(matches!(
+            normalize_filename("safe_file-123.mp3"),
+            Cow::Borrowed(_)
+        ));
+    }
 }
