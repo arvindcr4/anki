@@ -102,7 +102,9 @@ impl Collection {
         let nids = self.search_notes_unordered(nt.id)?;
         let usn = self.usn()?;
         for nid in nids {
-            let mut note = self.storage.get_note(nid)?.unwrap();
+            let Some(mut note) = self.storage.get_note(nid)? else {
+                continue;
+            };
             let original = note.clone();
             note.reorder_fields(&ords);
             self.update_note_inner_without_cards(UpdateNoteInnerWithoutCardsArgs {
