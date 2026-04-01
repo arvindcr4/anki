@@ -114,13 +114,22 @@ mod tests {
     fn interval_bucket_learning_kinds() {
         let mut entry = RevlogEntry::default();
         entry.review_kind = RevlogReviewKind::Learning;
-        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Learning)));
+        assert!(matches!(
+            interval_bucket(&entry),
+            Some(IntervalBucket::Learning)
+        ));
 
         entry.review_kind = RevlogReviewKind::Relearning;
-        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Learning)));
+        assert!(matches!(
+            interval_bucket(&entry),
+            Some(IntervalBucket::Learning)
+        ));
 
         entry.review_kind = RevlogReviewKind::Filtered;
-        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Learning)));
+        assert!(matches!(
+            interval_bucket(&entry),
+            Some(IntervalBucket::Learning)
+        ));
     }
 
     #[test]
@@ -128,7 +137,10 @@ mod tests {
         let mut entry = RevlogEntry::default();
         entry.review_kind = RevlogReviewKind::Review;
         entry.last_interval = 20;
-        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Young)));
+        assert!(matches!(
+            interval_bucket(&entry),
+            Some(IntervalBucket::Young)
+        ));
     }
 
     #[test]
@@ -136,7 +148,10 @@ mod tests {
         let mut entry = RevlogEntry::default();
         entry.review_kind = RevlogReviewKind::Review;
         entry.last_interval = 21;
-        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Mature)));
+        assert!(matches!(
+            interval_bucket(&entry),
+            Some(IntervalBucket::Mature)
+        ));
     }
 
     #[test]

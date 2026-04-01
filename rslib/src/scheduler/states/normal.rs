@@ -97,3 +97,116 @@ impl From<RelearnState> for NormalState {
         NormalState::Relearning(state)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_review_state() -> ReviewState {
+        ReviewState {
+            scheduled_days: 10,
+            elapsed_days: 10,
+            ease_factor: 2.5,
+            lapses: 0,
+            leeched: false,
+            memory_state: None,
+        }
+    }
+
+    #[test]
+    fn interval_kind_new() {
+        let state = NormalState::New(NewState { position: 0 });
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn interval_kind_review() {
+        let state = NormalState::Review(default_review_state());
+        assert_eq!(state.interval_kind(), IntervalKind::InDays(10));
+    }
+
+    #[test]
+    fn revlog_kind_new() {
+        let state = NormalState::New(NewState { position: 0 });
+        assert_eq!(state.revlog_kind(), RevlogReviewKind::Learning);
+    }
+
+    #[test]
+    fn revlog_kind_review() {
+        let state = NormalState::Review(default_review_state());
+        assert_eq!(state.revlog_kind(), RevlogReviewKind::Review);
+    }
+
+    #[test]
+    fn review_state_from_new_is_none() {
+        let state = NormalState::New(NewState { position: 0 });
+        assert!(state.review_state().is_none());
+    }
+
+    #[test]
+    fn review_state_from_learning_is_none() {
+        let state = NormalState::Learning(LearnState {
+            remaining_steps: 2,
+            scheduled_secs: 60,
+            elapsed_secs: 0,
+            memory_state: None,
+        });
+        assert!(state.review_state().is_none());
+    }
+
+    #[test]
+    fn review_state_from_review_is_some() {
+        let review = default_review_state();
+        let state = NormalState::Review(review);
+        assert_eq!(state.review_state(), Some(review));
+    }
+
+    #[test]
+    fn review_state_from_relearning() {
+        let review = default_review_state();
+        let state = NormalState::Relearning(RelearnState {
+            review,
+            learning: LearnState {
+                remaining_steps: 1,
+                scheduled_secs: 600,
+                elapsed_secs: 0,
+                memory_state: None,
+            },
+        });
+        assert_eq!(state.review_state(), Some(review));
+    }
+
+    #[test]
+    fn leeched_false_by_default() {
+        let state = NormalState::Review(default_review_state());
+        assert!(!state.leeched());
+    }
+
+    #[test]
+    fn leeched_true_when_set() {
+        let mut review = default_review_state();
+        review.leeched = true;
+        let state = NormalState::Review(review);
+        assert!(state.leeched());
+    }
+
+    #[test]
+    fn leeched_new_is_false() {
+        let state = NormalState::New(NewState { position: 0 });
+        assert!(!state.leeched());
+    }
+
+    #[test]
+    fn from_new_state() {
+        let new = NewState { position: 42 };
+        let normal: NormalState = new.into();
+        assert!(matches!(normal, NormalState::New(s) if s.position == 42));
+    }
+
+    #[test]
+    fn from_review_state() {
+        let review = default_review_state();
+        let normal: NormalState = review.into();
+        assert!(matches!(normal, NormalState::Review(_)));
+    }
+}
