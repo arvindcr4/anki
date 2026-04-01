@@ -559,4 +559,76 @@ mod test {
 
         Ok(())
     }
+
+    use super::*;
+
+    #[test]
+    fn card_new_constructor() {
+        let card = Card::new(NoteId(100), 2, DeckId(5), 42);
+        assert_eq!(card.note_id, NoteId(100));
+        assert_eq!(card.template_idx, 2);
+        assert_eq!(card.deck_id, DeckId(5));
+        assert_eq!(card.due, 42);
+        assert_eq!(card.ctype, CardType::New);
+    }
+
+    #[test]
+    fn review_seed_deterministic() {
+        let mut card = Card::default();
+        card.id = CardId(12345);
+        card.reps = 10;
+        let seed1 = card.review_seed();
+        let seed2 = card.review_seed();
+        assert_eq!(seed1, seed2);
+    }
+
+    #[test]
+    fn review_seed_changes_with_reps() {
+        let mut card = Card::default();
+        card.id = CardId(12345);
+        card.reps = 10;
+        let seed1 = card.review_seed();
+        card.reps = 11;
+        let seed2 = card.review_seed();
+        assert_ne!(seed1, seed2);
+    }
+
+    #[test]
+    fn review_seed_changes_with_id() {
+        let mut card1 = Card::default();
+        card1.id = CardId(1);
+        card1.reps = 5;
+        let mut card2 = Card::default();
+        card2.id = CardId(2);
+        card2.reps = 5;
+        assert_ne!(card1.review_seed(), card2.review_seed());
+    }
+
+    #[test]
+    fn remaining_steps_strips_today() {
+        let mut card = Card::default();
+        card.remaining_steps = 3002; // 3*1000 + 2
+        assert_eq!(card.remaining_steps(), 2);
+    }
+
+    #[test]
+    fn ease_factor_as_float() {
+        let mut card = Card::default();
+        card.ease_factor = 2500;
+        assert!((card.ease_factor() - 2.5).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn is_intraday_learning_learn() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Learn;
+        assert!(card.is_intraday_learning());
+    }
+
+    #[test]
+    fn is_intraday_learning_review() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Review;
+        assert!(!card.is_intraday_learning());
+    }
 }
