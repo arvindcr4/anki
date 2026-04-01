@@ -654,7 +654,7 @@ class DeckBrowser:
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-streak"></span>Streak run</span>'
             )
-        if latest_active_group and latest_active_group.days_ago > 0:
+        if latest_active_group:
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-latest"></span>Latest session</span>'
             )
@@ -979,7 +979,6 @@ class DeckBrowser:
                 latest_active_group
                 and group.days_ago == latest_active_group.days_ago
                 and group.card_count
-                and group.days_ago != 0
             ):
                 row_classes.append("is-latest-session")
                 status_badges.append(

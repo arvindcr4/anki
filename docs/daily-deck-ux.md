@@ -98,6 +98,7 @@ This prototype follows common guidance from strong UX systems and books:
 - In the guidance area, phrase that same recovery action as **Resume last capture** so the next step feels like continuing momentum, not just browsing history.
 - Give that recovery affordance a little more visual emphasis than a generic metadata pill, so missed-today users can spot the way back in quickly.
 - Also mark that most recent active row as **Latest session** so the user can find it at a glance without scanning dates.
+- Even when that latest row is **Today**, keep the **Latest session** meaning available; Today should not erase the fact that this is the freshest capture session.
 - If the latest session is also the busiest day, show both badges instead of forcing one to win, so the row preserves both meanings.
 - Render multiple badges with real spacing so stacked row states stay readable instead of collapsing into a tight blob.
 - When the latest session is not today, pair its browse action with **Create today** so the user can turn yesterday’s momentum into a fresh capture session immediately.
