@@ -37,9 +37,8 @@ impl Collection {
         let image_filename = Path::new(&req.image_path)
             .file_name()
             .or_not_found("expected filename")?
-            .to_str()
-            .unwrap()
-            .to_string();
+            .to_string_lossy()
+            .into_owned();
 
         let mgr = MediaManager::new(&self.media_folder, &self.media_db)?;
         let actual_image_name_after_adding = mgr.add_file(&image_filename, &image_bytes)?;
@@ -123,9 +122,8 @@ impl Collection {
             cloze_note.image_file_name = final_path
                 .file_name()
                 .or_not_found("expected filename")?
-                .to_str()
-                .unwrap()
-                .to_string();
+                .to_string_lossy()
+                .into_owned();
         }
 
         Ok(cloze_note)
