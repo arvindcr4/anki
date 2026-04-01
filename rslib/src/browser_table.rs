@@ -686,3 +686,97 @@ impl RowContext {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use anki_proto::search::browser_columns::Alignment;
+
+    use super::*;
+
+    #[test]
+    fn uses_cell_font_question() {
+        assert!(Column::Question.uses_cell_font());
+    }
+
+    #[test]
+    fn uses_cell_font_answer() {
+        assert!(Column::Answer.uses_cell_font());
+    }
+
+    #[test]
+    fn uses_cell_font_sort_field() {
+        assert!(Column::SortField.uses_cell_font());
+    }
+
+    #[test]
+    fn uses_cell_font_false_for_others() {
+        assert!(!Column::Deck.uses_cell_font());
+        assert!(!Column::Due.uses_cell_font());
+        assert!(!Column::Interval.uses_cell_font());
+        assert!(!Column::Ease.uses_cell_font());
+    }
+
+    #[test]
+    fn alignment_start_for_text_columns() {
+        assert_eq!(Column::Question.alignment(), Alignment::Start);
+        assert_eq!(Column::Answer.alignment(), Alignment::Start);
+        assert_eq!(Column::Deck.alignment(), Alignment::Start);
+        assert_eq!(Column::Tags.alignment(), Alignment::Start);
+        assert_eq!(Column::SortField.alignment(), Alignment::Start);
+    }
+
+    #[test]
+    fn alignment_center_for_numeric_columns() {
+        assert_eq!(Column::Due.alignment(), Alignment::Center);
+        assert_eq!(Column::Interval.alignment(), Alignment::Center);
+        assert_eq!(Column::Ease.alignment(), Alignment::Center);
+        assert_eq!(Column::Lapses.alignment(), Alignment::Center);
+        assert_eq!(Column::Reps.alignment(), Alignment::Center);
+    }
+
+    fn make_note(tags: Vec<String>) -> Note {
+        Note::new_from_storage(
+            NoteId(0),
+            String::new(),
+            NotetypeId(0),
+            TimestampSecs(0),
+            Usn(0),
+            tags,
+            vec![],
+            None,
+            None,
+        )
+    }
+
+    #[test]
+    fn note_is_marked_true() {
+        let note = make_note(vec!["marked".to_string()]);
+        assert!(note.is_marked());
+    }
+
+    #[test]
+    fn note_is_marked_case_insensitive() {
+        assert!(make_note(vec!["MARKED".to_string()]).is_marked());
+        assert!(make_note(vec!["Marked".to_string()]).is_marked());
+    }
+
+    #[test]
+    fn note_is_marked_false() {
+        assert!(!make_note(vec![]).is_marked());
+    }
+
+    #[test]
+    fn note_is_marked_among_other_tags() {
+        let note = make_note(vec![
+            "foo".to_string(),
+            "marked".to_string(),
+            "bar".to_string(),
+        ]);
+        assert!(note.is_marked());
+    }
+
+    #[test]
+    fn column_default() {
+        assert_eq!(Column::default(), Column::Custom);
+    }
+}
