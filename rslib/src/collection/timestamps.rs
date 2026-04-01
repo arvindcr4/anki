@@ -49,3 +49,73 @@ impl Collection {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn collection_changed_since_sync_true() {
+        let ts = CollectionTimestamps {
+            collection_change: TimestampMillis(200),
+            schema_change: TimestampMillis(100),
+            last_sync: TimestampMillis(150),
+        };
+        assert!(ts.collection_changed_since_sync());
+    }
+
+    #[test]
+    fn collection_changed_since_sync_false() {
+        let ts = CollectionTimestamps {
+            collection_change: TimestampMillis(100),
+            schema_change: TimestampMillis(100),
+            last_sync: TimestampMillis(150),
+        };
+        assert!(!ts.collection_changed_since_sync());
+    }
+
+    #[test]
+    fn collection_changed_since_sync_equal() {
+        let ts = CollectionTimestamps {
+            collection_change: TimestampMillis(150),
+            schema_change: TimestampMillis(100),
+            last_sync: TimestampMillis(150),
+        };
+        assert!(!ts.collection_changed_since_sync());
+    }
+
+    #[test]
+    fn schema_changed_since_sync_true() {
+        let ts = CollectionTimestamps {
+            collection_change: TimestampMillis(100),
+            schema_change: TimestampMillis(200),
+            last_sync: TimestampMillis(150),
+        };
+        assert!(ts.schema_changed_since_sync());
+    }
+
+    #[test]
+    fn schema_changed_since_sync_false() {
+        let ts = CollectionTimestamps {
+            collection_change: TimestampMillis(100),
+            schema_change: TimestampMillis(100),
+            last_sync: TimestampMillis(150),
+        };
+        assert!(!ts.schema_changed_since_sync());
+    }
+
+    #[test]
+    fn changed_since_last_backup_no_backup() {
+        let col = Collection::new();
+        // no backup taken yet, should always return true
+        assert!(col.changed_since_last_backup().unwrap());
+    }
+
+    #[test]
+    fn changed_since_last_backup_after_backup() {
+        let mut col = Collection::new();
+        col.update_last_backup_timestamp().unwrap();
+        // immediately after backup, should be false
+        assert!(!col.changed_since_last_backup().unwrap());
+    }
+}
