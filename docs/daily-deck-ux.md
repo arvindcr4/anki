@@ -44,6 +44,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Add compact momentum pills for **today’s status**, **active days**, **quiet days**, **consistency percentage**, **cards-per-note density**, **cards-per-active-day pace**, **trend**, **burst share**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
 - Show **today’s status** explicitly in the meta row too, so learners can tell whether they have already captured today before scanning the strip or the row list.
 - Make that Today pill browseable when cards already exist, and let it become a lightweight **Create today’s first card** entry point when the day is still blank.
+- When today already has activity, include today’s cards-across-notes summary in that pill too, so the learner can tell whether the day reflects a single quick capture or a broader batch without dropping into the row list.
 - When the week already has recent activity but today is empty, let that same pill say **Today: ready to restart** so it reads like continuity language, not a first-time setup prompt.
 - When today is also the busiest session, let the Today pill say so directly instead of forcing the learner to infer that from the separate busiest-day metadata.
 - Show **consistency percentage** so learners can judge week-over-week capture reliability without mentally converting active and quiet day counts into a ratio.

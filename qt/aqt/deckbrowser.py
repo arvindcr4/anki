@@ -495,11 +495,15 @@ class DeckBrowser:
             today_group = self._render_data.daily_groups[0]
             if today_group.card_count:
                 today_summary = (
-                    f"Today: {_count_label(today_group.card_count, 'card')}"
+                    "Today: "
+                    f"{_count_label(today_group.card_count, 'card')} across "
+                    f"{_count_label(today_group.note_count, 'note')}"
                 )
                 if busiest_group and busiest_group.days_ago == 0:
                     today_summary = (
-                        f"Today: {_count_label(today_group.card_count, 'card')} "
+                        "Today: "
+                        f"{_count_label(today_group.card_count, 'card')} across "
+                        f"{_count_label(today_group.note_count, 'note')} "
                         "(most active)"
                     )
                 today_summary_markup = (
