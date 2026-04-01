@@ -463,7 +463,9 @@ class DeckBrowser:
         )
         if latest_active_group:
             latest_summary = (
-                f"Latest: {latest_active_group.label} {latest_active_group.date_label}"
+                "Latest: "
+                f"{latest_active_group.label} {latest_active_group.date_label} "
+                f"({_count_label(latest_active_group.card_count, 'card')})"
             )
             latest_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-latest" href=# '

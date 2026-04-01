@@ -26,6 +26,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When the latest capture is not today, anchor that gap summary to the actual capture date as well, so the learner can verify the jump target without scanning the rows.
 - When the gap spans multiple days, name it explicitly as a **Current gap** in the summary row so the top-level pills use the same recovery language as the strip and row states.
 - Add a separate browseable **Latest** summary pill too, so the most recent active day stays visible in the metadata row even when the gap pill is focused on recovery language.
+- Include that latest session’s card count in the pill, so the metadata row reveals not only when the freshest session happened but also whether it was a tiny capture or a substantial batch.
 - Make the **Gap**, **active days**, and **visible range** pills browseable so the summary row doubles as navigation instead of passive metadata.
 - Add accessible labels to the browseable summary pills and expose the guidance area as a polite status region so the panel reads clearly in assistive tech, not just visually.
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
