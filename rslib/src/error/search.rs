@@ -133,3 +133,82 @@ impl SearchErrorKind {
         tr.search_invalid_search(reason).into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn search_error_message_not_empty() {
+        let tr = I18n::template_only();
+        let kinds = vec![
+            SearchErrorKind::MisplacedAnd,
+            SearchErrorKind::MisplacedOr,
+            SearchErrorKind::EmptyGroup,
+            SearchErrorKind::UnopenedGroup,
+            SearchErrorKind::UnclosedGroup,
+            SearchErrorKind::EmptyQuote,
+            SearchErrorKind::UnclosedQuote,
+            SearchErrorKind::MissingKey,
+            SearchErrorKind::InvalidFlag,
+            SearchErrorKind::Other { info: None },
+        ];
+        for kind in kinds {
+            let msg = kind.message(&tr);
+            assert!(!msg.is_empty(), "empty message for {kind:?}");
+        }
+    }
+
+    #[test]
+    fn search_error_message_with_info() {
+        let tr = I18n::template_only();
+        let kind = SearchErrorKind::Other {
+            info: Some("custom error".into()),
+        };
+        let msg = kind.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn search_error_message_unknown_escape() {
+        let tr = I18n::template_only();
+        let kind = SearchErrorKind::UnknownEscape {
+            provided: "\\x".into(),
+        };
+        let msg = kind.message(&tr);
+        assert!(!msg.is_empty());
+    }
+
+    #[test]
+    fn parse_error_anki_to_anki_error() {
+        let err = ParseError::Anki("input", SearchErrorKind::EmptyGroup);
+        let anki_err: AnkiError = err.into();
+        assert!(matches!(anki_err, AnkiError::SearchError { .. }));
+    }
+
+    #[test]
+    fn parse_error_nom_to_anki_error() {
+        let err = ParseError::Nom("input", NomErrorKind::Tag);
+        let anki_err: AnkiError = err.into();
+        assert!(matches!(anki_err, AnkiError::SearchError { .. }));
+    }
+
+    #[test]
+    fn parse_error_equality() {
+        assert_eq!(
+            ParseError::Anki("x", SearchErrorKind::EmptyGroup),
+            ParseError::Anki("x", SearchErrorKind::EmptyGroup)
+        );
+        assert_ne!(
+            ParseError::Anki("x", SearchErrorKind::EmptyGroup),
+            ParseError::Anki("x", SearchErrorKind::EmptyQuote)
+        );
+    }
+
+    #[test]
+    fn parse_int_error_converts() {
+        let err: std::result::Result<i32, _> = "abc".parse();
+        let anki_err: AnkiError = err.unwrap_err().into();
+        assert!(matches!(anki_err, AnkiError::ParseNumError));
+    }
+}
