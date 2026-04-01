@@ -176,12 +176,17 @@ body {
 }
 
 .daily-cards-today.is-ready-to-capture,
-.daily-cards-today.is-ready-to-restart {
+.daily-cards-today.is-ready-to-restart,
+.daily-cards-today.is-start-this-week {
     border-style: dashed;
 }
 
 .daily-cards-today.is-ready-to-restart {
     border-color: color(fg-link);
+}
+
+.daily-cards-today.is-start-this-week {
+    background: var(--canvas-glass);
 }
 
 .daily-cards-import {

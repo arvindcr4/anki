@@ -534,6 +534,9 @@ class DeckBrowser:
                     today_summary = "Today: ready to restart"
                     today_summary_classes += " is-ready-to-restart"
                     today_title = "Restart today"
+                else:
+                    today_summary = "Today: start this week's timeline"
+                    today_summary_classes += " is-start-this-week"
                 today_summary_markup = (
                     f'<a class="{today_summary_classes}" href=# '
                     f'title="{today_title}" aria-label="{today_title}" '
