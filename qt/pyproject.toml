@@ -20,6 +20,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ai = [
+  "mlx-lm>=0.30; sys.platform == 'darwin' and platform.machine == 'arm64'",
+]
 audio = [
   "anki-audio==0.1.0; sys.platform == 'win32' or sys.platform == 'darwin'",
 ]

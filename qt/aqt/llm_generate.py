@@ -160,9 +160,12 @@ def _get_local_model():
         )
 
     # Check for locally cached model (e.g., from oMLX)
+    short_name = model_name.split("/")[-1]
     local_paths = [
-        os.path.expanduser(f"~/.omlx/models/{model_name.split('/')[-1]}"),
-        os.path.expanduser(f"~/.cache/huggingface/hub/models--{model_name.replace('/', '--')}"),
+        os.path.expanduser(f"~/.omlx/models/{short_name}"),
+        os.path.expanduser(
+            f"~/.cache/huggingface/hub/models--{model_name.replace('/', '--')}"
+        ),
     ]
     model_path = model_name
     for path in local_paths:
@@ -170,9 +173,65 @@ def _get_local_model():
             model_path = path
             break
 
+    # If model not found locally, download it
+    if model_path == model_name and not os.path.isdir(model_path):
+        _download_model(model_name)
+
     _local_model, _local_tokenizer = mlx_lm.load(model_path)
     _local_model_name = model_name
     return _local_model, _local_tokenizer
+
+
+def _download_model(model_name: str) -> None:
+    """Download a model from HuggingFace Hub."""
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError:
+        raise LLMError(
+            f"Model '{model_name}' not found locally and huggingface_hub "
+            "is not installed for downloading.\n"
+            "Install with: pip install mlx-lm\n"
+            "Or manually download the model."
+        )
+
+    dest = os.path.expanduser(f"~/.omlx/models/{model_name.split('/')[-1]}")
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+
+    snapshot_download(
+        repo_id=model_name,
+        local_dir=dest,
+        local_dir_use_symlinks=False,
+    )
+
+
+def ensure_local_model() -> tuple[bool, str]:
+    """Check if local model is available. Downloads if needed.
+
+    Returns (ready, status_message).
+    Call from a background thread — download may take minutes.
+    """
+    if not is_local_available():
+        return False, "mlx-lm not installed"
+
+    model_name = get_model()
+    short_name = model_name.split("/")[-1]
+
+    # Check existing paths
+    for path in [
+        os.path.expanduser(f"~/.omlx/models/{short_name}"),
+        os.path.expanduser(
+            f"~/.cache/huggingface/hub/models--{model_name.replace('/', '--')}"
+        ),
+    ]:
+        if os.path.isdir(path):
+            return True, f"Model ready: {short_name}"
+
+    # Need to download
+    try:
+        _download_model(model_name)
+        return True, f"Downloaded {short_name}"
+    except Exception as e:
+        return False, f"Download failed: {e}"
 
 
 def _generate_local(

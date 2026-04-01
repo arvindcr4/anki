@@ -708,6 +708,29 @@ class AddCards(QMainWindow):
 
         def do_generate() -> None:
             try:
+                from aqt.llm_generate import ensure_local_model
+
+                # Auto-download model on first use if using local backend
+                if is_local_available() and not get_api_key():
+                    self.mw.taskman.run_on_main(
+                        lambda: self.intake_frame.set_llm_status(
+                            "LLM status: checking local model…"
+                        )
+                    )
+                    ready, status = ensure_local_model()
+                    if not ready:
+                        self.mw.taskman.run_on_main(
+                            lambda: self._handle_llm_error(
+                                f"Local model not ready: {status}"
+                            )
+                        )
+                        return
+                    self.mw.taskman.run_on_main(
+                        lambda: self.intake_frame.set_llm_status(
+                            f"LLM status: {status} — generating {action}…"
+                        )
+                    )
+
                 result = generate_cards(source_text, gen_action, context=context)
                 self.mw.taskman.run_on_main(
                     lambda: self._apply_llm_result(result, action)
