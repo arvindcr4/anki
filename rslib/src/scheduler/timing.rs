@@ -480,4 +480,57 @@ mod test {
                 .timestamp()
         );
     }
+
+    #[test]
+    fn unix_epoch_timestamp_detection() {
+        assert!(is_unix_epoch_timestamp(1_000_000_001));
+        assert!(is_unix_epoch_timestamp(1_700_000_000));
+        assert!(is_unix_epoch_timestamp(i32::MAX));
+        assert!(!is_unix_epoch_timestamp(1_000_000_000));
+        assert!(!is_unix_epoch_timestamp(0));
+        assert!(!is_unix_epoch_timestamp(-1));
+        assert!(!is_unix_epoch_timestamp(365));
+    }
+
+    #[test]
+    fn fixed_offset_clamps_extreme_values() {
+        // within bounds
+        let offset = fixed_offset_from_minutes(-600);
+        assert_eq!(offset.utc_minus_local(), -600 * 60);
+
+        // at upper bound
+        let offset = fixed_offset_from_minutes(23 * 60);
+        assert_eq!(offset.utc_minus_local(), 23 * 60 * 60);
+
+        // beyond upper bound — should clamp
+        let offset = fixed_offset_from_minutes(24 * 60);
+        assert_eq!(offset.utc_minus_local(), 23 * 60 * 60);
+
+        // beyond lower bound — should clamp
+        let offset = fixed_offset_from_minutes(-24 * 60);
+        assert_eq!(offset.utc_minus_local(), -23 * 60 * 60);
+    }
+
+    #[test]
+    fn fixed_offset_zero() {
+        let offset = fixed_offset_from_minutes(0);
+        assert_eq!(offset.utc_minus_local(), 0);
+    }
+
+    #[test]
+    fn v1_timing_zero_elapsed() {
+        let crt = TimestampSecs(1_000_000);
+        let now = TimestampSecs(1_000_000);
+        let timing = sched_timing_today_v1(crt, now);
+        assert_eq!(timing.days_elapsed, 0);
+        assert_eq!(timing.next_day_at, TimestampSecs(1_086_400));
+    }
+
+    #[test]
+    fn v1_timing_one_day() {
+        let crt = TimestampSecs(1_000_000);
+        let now = TimestampSecs(1_000_000 + 86_400);
+        let timing = sched_timing_today_v1(crt, now);
+        assert_eq!(timing.days_elapsed, 1);
+    }
 }
