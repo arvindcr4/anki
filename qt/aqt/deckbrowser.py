@@ -1167,6 +1167,18 @@ class DeckBrowser:
                 f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
                 f"{busiest_day_label}</a>"
             )
+        current_gap_action = ""
+        if latest_active_group and latest_active_group.days_ago > 1:
+            current_gap_label = (
+                "Browse current gap week ("
+                f"{latest_active_group.date_label} → {self._render_data.daily_groups[0].date_label})"
+            )
+            current_gap_action = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-current-gap-shortcut" href=# '
+                f'title="{current_gap_label}" aria-label="{current_gap_label}" '
+                "onclick=\"return pycmd('browseRecent')\">"
+                f"{current_gap_label}</a>"
+            )
         create_action_label = "Create first card"
         create_action_title = "Create cards"
         import_action_label = "Import cards"
@@ -1209,6 +1221,7 @@ class DeckBrowser:
     {today_action}
     {latest_day_action}
     {busiest_day_action}
+    {current_gap_action}
     <a class="daily-cards-link daily-cards-pill" href=# title="{browse_recent_label}" aria-label="{browse_recent_label}" onclick="return pycmd('browseRecent')">{browse_recent_label}</a>
   </div>
 """.format(
@@ -1219,6 +1232,7 @@ class DeckBrowser:
                 today_action=today_action,
                 latest_day_action=latest_day_action,
                 busiest_day_action=busiest_day_action,
+                current_gap_action=current_gap_action,
                 browse_recent_label=browse_recent_label,
             )
         guidance_block_class = "daily-cards-guidance-block"

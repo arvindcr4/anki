@@ -93,6 +93,7 @@ This prototype follows common guidance from strong UX systems and books:
 - If today already has cards, surface a top-level **Browse today** shortcut because that is often the fastest way to revisit the freshest generated material.
 - Include today’s date in that shortcut label so the action still makes sense around late-night rollover boundaries.
 - If today is empty but the week is not, surface a **Browse latest day** shortcut so users can jump back to their most recent capture session.
+- If the visible week is currently defined by a multi-day lull, add a panel-level **Browse current gap week** shortcut too, so users can review the whole stalled stretch without losing the broader date-based lens.
 - Include the latest session’s date in that shortcut label, so the user can verify the jump target without cross-referencing the strip first.
 - In the guidance area, phrase that same recovery action as **Resume last capture** so the next step feels like continuing momentum, not just browsing history.
 - Give that recovery affordance a little more visual emphasis than a generic metadata pill, so missed-today users can spot the way back in quickly.
