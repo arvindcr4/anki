@@ -72,3 +72,32 @@ impl Collection {
 pub fn get_aux_notetype_config_key(ntid: NotetypeId, key: &str) -> String {
     format!("_nt_{ntid}_{key}")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn aux_config_key_format() {
+        let key = get_aux_notetype_config_key(NotetypeId(123), "myKey");
+        assert_eq!(key, "_nt_123_myKey");
+    }
+
+    #[test]
+    fn aux_config_key_empty_suffix() {
+        let key = get_aux_notetype_config_key(NotetypeId(42), "");
+        assert_eq!(key, "_nt_42_");
+    }
+
+    #[test]
+    fn aux_config_key_zero_id() {
+        let key = get_aux_notetype_config_key(NotetypeId(0), "test");
+        assert_eq!(key, "_nt_0_test");
+    }
+
+    #[test]
+    fn notetype_config_key_for_notetype() {
+        let key = NotetypeConfigKey::LastDeckAddedTo.for_notetype(NotetypeId(456));
+        assert_eq!(key, "_nt_456_lastDeck");
+    }
+}
