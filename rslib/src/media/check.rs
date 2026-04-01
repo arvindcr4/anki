@@ -353,7 +353,9 @@ impl MediaChecker<'_> {
         let usn = self.col.usn()?;
         for nid in nids {
             self.increment_progress()?;
-            let mut note = self.col.storage.get_note(nid)?.unwrap();
+            let Some(mut note) = self.col.storage.get_note(nid)? else {
+                continue;
+            };
             let nt = notetypes
                 .iter()
                 .find(|nt| nt.id == note.notetype_id)

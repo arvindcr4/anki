@@ -281,7 +281,9 @@ impl SqliteStorage {
                 .as_native_str(),
         ) {
             if let Some(parent_did) = self.get_deck_id(parent_name)? {
-                let parent = self.get_deck(parent_did)?.unwrap();
+                let Some(parent) = self.get_deck(parent_did)? else {
+                    break;
+                };
                 decks.push(parent);
             } else {
                 // missing parent

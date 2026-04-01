@@ -79,7 +79,7 @@ impl Collection {
         }
         // try first available notetype
         if let Some((ntid, _)) = self.storage.get_all_notetype_names()?.first() {
-            Ok(self.get_notetype(*ntid)?.unwrap())
+            self.get_notetype(*ntid)?.or_invalid("notetype not found")
         } else {
             invalid_input!("collection has no notetypes");
         }
