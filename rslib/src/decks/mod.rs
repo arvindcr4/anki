@@ -392,4 +392,44 @@ mod test {
         let deck = Deck::new_normal();
         assert!(deck.filtered().is_err());
     }
+
+    #[test]
+    fn rendered_description_empty_for_non_markdown() {
+        let deck = Deck::new_normal();
+        assert_eq!(deck.rendered_description(), "");
+    }
+
+    #[test]
+    fn rendered_description_empty_for_filtered() {
+        let deck = Deck::new_filtered();
+        assert_eq!(deck.rendered_description(), "");
+    }
+
+    #[test]
+    fn rendered_description_with_markdown() {
+        let mut deck = Deck::new_normal();
+        if let DeckKind::Normal(ref mut normal) = deck.kind {
+            normal.markdown_description = true;
+            normal.description = "**bold**".into();
+        }
+        let desc = deck.rendered_description();
+        assert!(desc.contains("bold"));
+    }
+
+    #[test]
+    fn effective_desired_retention_uses_deck_override() {
+        let mut deck = Deck::new_normal();
+        if let DeckKind::Normal(ref mut normal) = deck.kind {
+            normal.desired_retention = Some(0.85);
+        }
+        let config = DeckConfig::default();
+        assert!((deck.effective_desired_retention(&config) - 0.85).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn effective_desired_retention_falls_back_to_config() {
+        let deck = Deck::new_normal();
+        let config = DeckConfig::default();
+        assert!((deck.effective_desired_retention(&config) - 0.9).abs() < f32::EPSILON);
+    }
 }
