@@ -180,3 +180,142 @@ impl OpChanges {
             || c.deck_config
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn no_changes() -> StateChanges {
+        StateChanges::default()
+    }
+
+    fn make_op_changes(op: Op, changes: StateChanges) -> OpChanges {
+        OpChanges { op, changes }
+    }
+
+    #[test]
+    fn op_output_map() {
+        let output = OpOutput {
+            output: 42,
+            changes: make_op_changes(Op::UpdateNote, no_changes()),
+        };
+        let mapped = output.map(|x| x * 2);
+        assert_eq!(mapped.output, 84);
+        assert_eq!(mapped.changes.op, Op::UpdateNote);
+    }
+
+    #[test]
+    fn op_output_map_type_change() {
+        let output = OpOutput {
+            output: 5,
+            changes: make_op_changes(Op::AddNote, no_changes()),
+        };
+        let mapped = output.map(|x| format!("value: {x}"));
+        assert_eq!(mapped.output, "value: 5");
+    }
+
+    #[test]
+    fn state_changes_default_all_false() {
+        let c = StateChanges::default();
+        assert!(!c.card);
+        assert!(!c.note);
+        assert!(!c.deck);
+        assert!(!c.tag);
+        assert!(!c.notetype);
+        assert!(!c.config);
+        assert!(!c.deck_config);
+        assert!(!c.mtime);
+    }
+
+    #[test]
+    fn had_change_false_when_empty() {
+        let oc = make_op_changes(Op::UpdateNote, no_changes());
+        assert!(!oc.had_change());
+    }
+
+    #[test]
+    fn had_change_true_when_card() {
+        let mut changes = no_changes();
+        changes.card = true;
+        let oc = make_op_changes(Op::UpdateCard, changes);
+        assert!(oc.had_change());
+    }
+
+    #[test]
+    fn requires_browser_table_redraw_card_change() {
+        let mut changes = no_changes();
+        changes.card = true;
+        let oc = make_op_changes(Op::UpdateCard, changes);
+        assert!(oc.requires_browser_table_redraw());
+    }
+
+    #[test]
+    fn requires_browser_table_redraw_no_changes() {
+        let oc = make_op_changes(Op::UpdateCard, no_changes());
+        assert!(!oc.requires_browser_table_redraw());
+    }
+
+    #[test]
+    fn requires_browser_table_redraw_add_note_with_note_change() {
+        let mut changes = no_changes();
+        changes.note = true;
+        let oc = make_op_changes(Op::AddNote, changes);
+        // AddNote + note change should NOT trigger redraw
+        assert!(!oc.requires_browser_table_redraw());
+    }
+
+    #[test]
+    fn requires_sidebar_redraw_tag_change() {
+        let mut changes = no_changes();
+        changes.tag = true;
+        let oc = make_op_changes(Op::UpdateTag, changes);
+        assert!(oc.requires_browser_sidebar_redraw());
+    }
+
+    #[test]
+    fn requires_note_text_redraw() {
+        let mut changes = no_changes();
+        changes.note = true;
+        let oc = make_op_changes(Op::UpdateNote, changes);
+        assert!(oc.requires_note_text_redraw());
+    }
+
+    #[test]
+    fn requires_study_queue_rebuild_card_not_flag() {
+        let mut changes = no_changes();
+        changes.card = true;
+        let oc = make_op_changes(Op::UpdateCard, changes);
+        assert!(oc.requires_study_queue_rebuild());
+    }
+
+    #[test]
+    fn requires_study_queue_rebuild_set_flag_excluded() {
+        let mut changes = no_changes();
+        changes.card = true;
+        let oc = make_op_changes(Op::SetFlag, changes);
+        assert!(!oc.requires_study_queue_rebuild());
+    }
+
+    #[test]
+    fn requires_study_queue_rebuild_config_set_current_deck() {
+        let mut changes = no_changes();
+        changes.config = true;
+        let oc = make_op_changes(Op::SetCurrentDeck, changes);
+        assert!(oc.requires_study_queue_rebuild());
+    }
+
+    #[test]
+    fn requires_study_queue_rebuild_config_unrelated_op() {
+        let mut changes = no_changes();
+        changes.config = true;
+        let oc = make_op_changes(Op::UpdateNote, changes);
+        // config change + unrelated op should NOT trigger rebuild
+        assert!(!oc.requires_study_queue_rebuild());
+    }
+
+    #[test]
+    fn op_custom() {
+        let op = Op::Custom("my action".to_string());
+        assert_eq!(op, Op::Custom("my action".to_string()));
+    }
+}
