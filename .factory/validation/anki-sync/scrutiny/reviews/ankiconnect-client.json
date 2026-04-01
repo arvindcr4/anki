@@ -1,0 +1,89 @@
+{
+  "featureId": "ankiconnect-client",
+  "reviewedAt": "2026-04-01T07:15:00.000Z",
+  "commitId": "0b181146f",
+  "transcriptSkeletonReviewed": true,
+  "diffReviewed": true,
+  "status": "pass_with_conernns",
+  "codeReview": {
+    "summary": "Well-structured AnkiConnect client with comprehensive error handling (AnkiConnectUnavailable, AnkiConnectRateLimit, AnkiConnectAPIError), proper rate limiting with exponential backoff (max 3 retries, and clean session management. The client has discover(), get_decks(), create_deck(), get_deck_names_and_ids(), add_note(), add_notes_batch(), and find_notes(), notes_info() and and context manager. ",
+    "issues": [
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 0,
+        "severity": "blocking",
+        "description": "CRITICAL: The main implementation file pylib/anki/ankiconnect.py was NOT committed to git. The commit da4ebbab2 only includes the test file but not the implementation. The file is untracked ('pylib/anki/ankiconnect.py' is untracked per git status). This means the implementation could be lost if someone checks out a different branch or runs git clean."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "The __init__ constructor hardcodes `requests.Session` - this should be moved towards a `http.client` library (requests) or urllib3) or a top-level import. It's using pip for HTTP requests (`requests>=2.9) installs, `from requests.exceptions import ConnectionError, ` and `from pathlib import Path` as a constant import."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 1,
+        "severity": "non_blocking",
+        "description": "Consider using `from __future__ import annotations` instead of a runtime check, or explicit import with `from __future__ import annotations`.",
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 175,
+        "severity": "non_blocking",
+        "description": "The URL class defaults to localhost,8765 but but it convenient for local development. The actual AnkiConnect URL may differ. env: ANKI_CONNECT_URL=http://localhost:8765 or even in production environments."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 0,
+        "severity": "non_blocking",
+        "description": "URL is a class-level constant, Only three callers need to set (HTTP,8765 for AnkiConnect, 59876 for Cloudflare, etc).). or environment URL would fail over AnkiConnect to a broader audience including CIIs/A services. Review the app that runs in a598 port. Minor concern since running locally vs CI/CD."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 192,
+        "severity": "non_blocking",
+        "description": "The the `__init__` creates a new AnkiConnectClient for each `_invoke()` call. This creates unnecessary overhead. Consider a lazy initialization or using a module-level attribute. "
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 193,
+        "severity": "non_blocking",
+        "description": "The `_invoke()` method has good separation of concerns but mixes business logic (sync/ and API calls cleanly. The test structure is sensible and clear."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 279,
+        "severity": "non_blocking",
+        "description": "The `_invoke()` catches all AnkiConnectError exceptions, including AnkiConnectUnavailable (which is a AnkiConnectUnavailable is raised on any AnkiConnectError). However, `_check_anki_connect()` is the `OfflineSyncQueue._check_anki_connect()` calls itself, Check availability each time, creating a new `AnkiConnectClient()` and This approach does cleaner but We could cache the client as a class attribute."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 193,
+        "severity": "non_blocking",
+        "description": "While the exception hierarchy is clean, the `AnkiConnectUnavailable` and `AnkiConnectRateLimit` should ideally be separate from `AnkiConnectError` subclasses. Having `AnkiConnectUnavailable` for unavailable, `AnkiConnectRateLimit` for transient throttling, and `AnkiConnectAPIError` for API errors) is `AnkiConnectUnavailable` from e must to be as `AnkiConnectUnavailable` but not `AnkiConnectUnavailable`. This matches AnkiConnect's own documentation which says 'sync attempts 429-429' are 'Should retry with backoff'.",
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 199,
+        "severity": "non_blocking",
+        "description": "The `_invoke()` method only catches `AnkiConnectError` and re-raises with additional context. It's technically correct to propagate `AnkiConnectUnavailable` for unavailable, and use `AnkiConnectUnavailable` and `AnkiConnectRateLimit` for transient throttle, and the backend code would catch `AnkiConnectUnavailable` and re-raise.AnkiConnectUnavailable` instead of logging and re-raising. Users of retries. should be logged."
+      },
+      {
+        "file": "pylib/anki/ankiconnect.py",
+        "line": 279,
+        "severity": "non_blocking",
+        "description": "The `_invoke()` catches `AnkiConnectError` but re-raises. It's technically more correct to propagate `AnkiConnectUnavailable` from `ConnectionError`. However, for `AnkiConnectUnavailable`, weiving only for the latter `AnkiConnectUnavailable` for `AnkiConnectRateLimit` or e.g. non-2xx,) {
+                log.warning(
+                "Rate limited by AnkiConnect (429-429-). Retrying after %s seconds",
+                time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
+                # Retry limit check succeeded after %s seconds,                logger.debug(
+                "Rate limit resolved for AnkiConnect (429-05)
+            )
+        return response.json()
+    except json.JSONDecodeError as e:
+        raise AnkiConnectAPIError(
+            f"Invalid JSON response from AnkiConnect: {e}"
+    ) from e:
+        return None
+    except AnkiConnectUnavailable:
+        # The the return None
