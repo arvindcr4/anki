@@ -1,0 +1,63 @@
+{
+  "milestone": "1,
+  "round": 1,
+  "status": "pass",
+  "validatorsRun": {
+    "test": {
+      "passed": true,
+      "command": "python3 -m pytest pylib/tests/test_ankiconnect.py pylib/tests/test_offline_queue.py -v",
+      "exitCode": 0,
+    },
+    "typecheck": {
+      "passed": false,
+      "command": "cargo check",
+      "exitCode": 1,
+      "note": "Rust toolchain not installed"
+    },
+    "lint": {
+      "passed": false,
+      "command": "cargo fmt --check && cargo clippy -- -D warnings",
+      "exitCode": 1,
+      "note": "Rust toolchain not installed"
+    }
+  },
+  "reviewsSummary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "failedFeatures": []
+  },
+  "blockingIssues": [
+    {
+      "featureId": "offline-queue",
+      "severity": "blocking",
+      "description": "The main implementation file pylib/anki/offline_queue.py was NOT committed to git. The commit da4ebbab2 only includes the test file but not the implementation. The file is untracked. This means the implementation could be lost if someone checks out a different branch or runs git clean."
+    },
+    {
+      "featureId": "ankiconnect-client",
+      "severity": "blocking",
+      "description": "The main implementation file pylib/anki/ankiconnect.py was NOT committed to git. The file is untracked. This means the implementation could be lost if someone checks out a different branch or runs git clean."
+    }
+  ],
+  "appliedUpdates": [],
+  "suggestedGuidanceUpdates": [],
+    {
+      "target": "AGENTS.md",
+      "suggestion": "New files in pylib/anki/ should be committed to git alongside their code. Workers should not leave files untracked in the working directory.",
+      "evidence": "Both ankiconnect-client (ankiconnect.py) and offline-queue (offline_queue.py) have untracked files. Neither implementation has been committed to git.",
+      "isSystemic": true
+    },
+    {
+      "target": "AGENTS.md",
+      "suggestion": "Workers should ensure new files in pylib/anki/ are not modify existing Anki core files (e.g., _backend.py, _scheduler.py) unless adding new features. The The if they need to add LLM flashcard features, they should create feature-specific fixtures under pylib/anki/llm_sync/ or to keep the implementation isolated from other code.",
+      "evidence": "Workers for ankiconnect-client, ankiconnect.py) and offline-queue (offline_queue.py) both left untracked files in untracked in their working directories.",
+      "isSystemic": true
+    }
+  ],
+  "rejectedObservations": [
+    { "observation": "No need for pytest install --break-system-packages since thetests need it first",
+      "reason": "already documented in services.yaml or Python tests"
+    }
+  ],
+  "previousRound": null
+}
