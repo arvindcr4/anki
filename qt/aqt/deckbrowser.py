@@ -540,6 +540,16 @@ class DeckBrowser:
         density_summary = "Density: no cards yet"
         if total_notes:
             density_summary = f"Density: {total_cards / total_notes:.1f} cards/note"
+        density_summary_markup = (
+            f'<div class="daily-cards-pill daily-cards-density">{density_summary}</div>'
+        )
+        if has_recent_cards:
+            density_summary_markup = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-density" href=# '
+                'title="Browse weekly density context" aria-label="Browse weekly density context" '
+                "onclick=\"return pycmd('browseRecent')\">"
+                f"{density_summary}</a>"
+            )
         streak_count = 0
         streak_label = "Current streak"
         if (
@@ -1045,7 +1055,7 @@ class DeckBrowser:
     {range_summary_markup}
     {pace_summary_markup}
     {trend_summary_markup}
-    <div class="daily-cards-pill daily-cards-density">{density_summary}</div>
+    {density_summary_markup}
     {streak_summary_markup}
     {burst_summary_markup}
     {busiest_summary_markup}
@@ -1075,7 +1085,7 @@ class DeckBrowser:
             range_summary_markup=range_summary_markup,
             pace_summary_markup=pace_summary_markup,
             trend_summary_markup=trend_summary_markup,
-            density_summary=density_summary,
+            density_summary_markup=density_summary_markup,
             streak_summary_markup=streak_summary_markup,
             burst_summary_markup=burst_summary_markup,
             busiest_summary_markup=busiest_summary_markup,

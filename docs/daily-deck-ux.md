@@ -41,6 +41,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Show **cards-per-active-day pace** so the panel reveals recent capture intensity even when the week has only a few active days.
 - Show **quiet days** explicitly so the panel makes gaps in capture behavior visible, not just productive days.
 - Show **cards-per-note density** to help users distinguish broad note capture from denser card generation such as cloze-heavy sessions or big imports.
+- Make that density pill browseable too, so users can jump from a surprising cards-per-note ratio straight into the visible week context.
 - Make the streak pill browseable so momentum is not just decorative: users can reopen the cards from their current or last active run.
 - Make the **busiest day** summary pill directly browseable so the highest-volume capture session doubles as a quick re-entry point.
 - Pair it with a **burst** pill that quantifies how much of the visible week came from that single day.
