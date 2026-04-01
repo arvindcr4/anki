@@ -333,4 +333,63 @@ mod test {
 
         Ok(())
     }
+
+    use super::*;
+
+    #[test]
+    fn deck_id_or_nonzero() {
+        let id = DeckId(5);
+        assert_eq!(id.or(DeckId(10)), DeckId(5));
+    }
+
+    #[test]
+    fn deck_id_or_zero_uses_fallback() {
+        let id = DeckId(0);
+        assert_eq!(id.or(DeckId(10)), DeckId(10));
+    }
+
+    #[test]
+    fn new_normal_deck() {
+        let deck = Deck::new_normal();
+        assert_eq!(deck.id, DeckId(0));
+        assert!(deck.common.study_collapsed);
+        assert!(deck.common.browser_collapsed);
+        assert!(matches!(deck.kind, DeckKind::Normal(_)));
+    }
+
+    #[test]
+    fn config_id_normal() {
+        let deck = Deck::new_normal();
+        assert_eq!(deck.config_id(), Some(DeckConfigId(1)));
+    }
+
+    #[test]
+    fn config_id_filtered_is_none() {
+        let deck = Deck::new_filtered();
+        assert!(deck.config_id().is_none());
+    }
+
+    #[test]
+    fn normal_ok_for_normal_deck() {
+        let deck = Deck::new_normal();
+        assert!(deck.normal().is_ok());
+    }
+
+    #[test]
+    fn normal_err_for_filtered_deck() {
+        let deck = Deck::new_filtered();
+        assert!(deck.normal().is_err());
+    }
+
+    #[test]
+    fn filtered_ok_for_filtered_deck() {
+        let deck = Deck::new_filtered();
+        assert!(deck.filtered().is_ok());
+    }
+
+    #[test]
+    fn filtered_err_for_normal_deck() {
+        let deck = Deck::new_normal();
+        assert!(deck.filtered().is_err());
+    }
 }
