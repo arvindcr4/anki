@@ -382,6 +382,12 @@ body {
     background: color(border-subtle);
 }
 
+.daily-cards-insight.is-gap-burst {
+    border-color: color(fg-link);
+    border-style: dashed;
+    background: var(--canvas-glass);
+}
+
 .daily-cards-insight.is-consistent {
     background: var(--canvas-glass);
 }
