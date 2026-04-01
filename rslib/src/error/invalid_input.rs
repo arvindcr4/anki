@@ -100,3 +100,98 @@ macro_rules! require {
         }
     };
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn invalid_input_error_message() {
+        let err = InvalidInputError {
+            message: "test error".into(),
+            source: None,
+            backtrace: None,
+        };
+        assert_eq!(err.message(), "test error");
+    }
+
+    #[test]
+    fn invalid_input_error_context_none() {
+        let err = InvalidInputError {
+            message: "test".into(),
+            source: None,
+            backtrace: None,
+        };
+        assert_eq!(err.context(), "");
+    }
+
+    #[test]
+    fn invalid_input_error_context_with_source() {
+        let source: Box<dyn std::error::Error + Send + Sync> = "inner error".into();
+        let err = InvalidInputError {
+            message: "outer".into(),
+            source: Some(source),
+            backtrace: None,
+        };
+        assert_eq!(err.context(), "inner error");
+    }
+
+    #[test]
+    fn invalid_input_error_equality() {
+        let a = InvalidInputError {
+            message: "same".into(),
+            source: None,
+            backtrace: None,
+        };
+        let b = InvalidInputError {
+            message: "same".into(),
+            source: None,
+            backtrace: None,
+        };
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn invalid_input_error_inequality() {
+        let a = InvalidInputError {
+            message: "one".into(),
+            source: None,
+            backtrace: None,
+        };
+        let b = InvalidInputError {
+            message: "two".into(),
+            source: None,
+            backtrace: None,
+        };
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn or_invalid_option_some() {
+        let result: Result<i32> = Some(42).or_invalid("missing");
+        assert_eq!(result.unwrap(), 42);
+    }
+
+    #[test]
+    fn or_invalid_option_none() {
+        let result: Result<i32> = None.or_invalid("value was missing");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn or_invalid_result_ok() {
+        let input: std::result::Result<i32, std::io::Error> = Ok(99);
+        let result: Result<i32> = input.or_invalid("io failed");
+        assert_eq!(result.unwrap(), 99);
+    }
+
+    #[test]
+    fn display_shows_message() {
+        let err = InvalidInputError {
+            message: "bad input".into(),
+            source: None,
+            backtrace: None,
+        };
+        assert_eq!(format!("{err}"), "bad input");
+    }
+}
