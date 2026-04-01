@@ -685,11 +685,11 @@ fn note_differs_from_db(existing_note: &mut Note, note: &mut Note) -> bool {
 
 #[cfg(test)]
 mod test {
-    use super::anki_base91;
-    use super::field_checksum;
+    use super::*;
     use crate::config::BoolKey;
     use crate::decks::DeckId;
     use crate::error::Result;
+    use crate::notetype::NoteField;
     use crate::prelude::*;
     use crate::search::SortMode;
 
@@ -856,5 +856,95 @@ mod test {
         assert_after_remove(&mut col)?;
 
         Ok(())
+    }
+
+    #[test]
+    fn note_fields_access() {
+        let note = Note::new_from_storage(
+            NoteId(1),
+            "guid".into(),
+            NotetypeId(1),
+            TimestampSecs(0),
+            Usn(0),
+            vec![],
+            vec!["front".into(), "back".into()],
+            None,
+            None,
+        );
+        assert_eq!(note.fields(), &vec!["front".to_string(), "back".to_string()]);
+    }
+
+    #[test]
+    fn note_into_fields() {
+        let note = Note::new_from_storage(
+            NoteId(1),
+            "guid".into(),
+            NotetypeId(1),
+            TimestampSecs(0),
+            Usn(0),
+            vec![],
+            vec!["a".into(), "b".into()],
+            None,
+            None,
+        );
+        let fields = note.into_fields();
+        assert_eq!(fields, vec!["a", "b"]);
+    }
+
+    #[test]
+    fn note_set_field_valid() {
+        let mut note = Note::new_from_storage(
+            NoteId(1),
+            "guid".into(),
+            NotetypeId(1),
+            TimestampSecs(0),
+            Usn(0),
+            vec![],
+            vec!["old".into()],
+            None,
+            None,
+        );
+        assert!(note.set_field(0, "new").is_ok());
+        assert_eq!(note.fields()[0], "new");
+    }
+
+    #[test]
+    fn note_set_field_out_of_range() {
+        let mut note = Note::new_from_storage(
+            NoteId(1),
+            "guid".into(),
+            NotetypeId(1),
+            TimestampSecs(0),
+            Usn(0),
+            vec![],
+            vec!["x".into()],
+            None,
+            None,
+        );
+        assert!(note.set_field(5, "y").is_err());
+    }
+
+    #[test]
+    fn note_nonempty_fields() {
+        let note = Note::new_from_storage(
+            NoteId(1),
+            "guid".into(),
+            NotetypeId(1),
+            TimestampSecs(0),
+            Usn(0),
+            vec![],
+            vec!["hello".into(), "".into(), "world".into()],
+            None,
+            None,
+        );
+        let fields = vec![
+            NoteField::new("Front"),
+            NoteField::new("Back"),
+            NoteField::new("Extra"),
+        ];
+        let nonempty = note.nonempty_fields(&fields);
+        assert!(nonempty.contains("Front"));
+        assert!(!nonempty.contains("Back"));
+        assert!(nonempty.contains("Extra"));
     }
 }
