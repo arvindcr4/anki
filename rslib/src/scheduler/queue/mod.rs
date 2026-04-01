@@ -299,3 +299,56 @@ impl Collection {
             .unwrap_or([0; 3])
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn counts_all_zero_true() {
+        let counts = Counts {
+            new: 0,
+            learning: 0,
+            review: 0,
+        };
+        assert!(counts.all_zero());
+    }
+
+    #[test]
+    fn counts_all_zero_false_new() {
+        let counts = Counts {
+            new: 1,
+            learning: 0,
+            review: 0,
+        };
+        assert!(!counts.all_zero());
+    }
+
+    #[test]
+    fn counts_all_zero_false_learning() {
+        let counts = Counts {
+            new: 0,
+            learning: 5,
+            review: 0,
+        };
+        assert!(!counts.all_zero());
+    }
+
+    #[test]
+    fn counts_all_zero_false_review() {
+        let counts = Counts {
+            new: 0,
+            learning: 0,
+            review: 3,
+        };
+        assert!(!counts.all_zero());
+    }
+
+    #[test]
+    fn bury_mode_default() {
+        let mode = BuryMode::default();
+        assert!(!mode.bury_new);
+        assert!(!mode.bury_reviews);
+        assert!(!mode.bury_interday_learning);
+    }
+}
