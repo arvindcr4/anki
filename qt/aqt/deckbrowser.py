@@ -462,10 +462,18 @@ class DeckBrowser:
             f'<div class="daily-cards-pill daily-cards-latest">{latest_summary}</div>'
         )
         if latest_active_group:
+            latest_suffix = f"({_count_label(latest_active_group.card_count, 'card')})"
+            if (
+                busiest_group
+                and latest_active_group.days_ago == busiest_group.days_ago
+            ):
+                latest_suffix = (
+                    f"({_count_label(latest_active_group.card_count, 'card')}, most active)"
+                )
             latest_summary = (
                 "Latest: "
                 f"{latest_active_group.label} {latest_active_group.date_label} "
-                f"({_count_label(latest_active_group.card_count, 'card')})"
+                f"{latest_suffix}"
             )
             latest_summary_markup = (
                 f'<a class="daily-cards-link daily-cards-pill daily-cards-latest" href=# '

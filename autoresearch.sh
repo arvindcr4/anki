@@ -143,6 +143,7 @@ checks = [
     ('Gap:', 2, 'timeline'),
     ('Current gap:', 2, 'timeline'),
     ('Latest:', 2, 'timeline'),
+    ('most active)', 1, 'timeline'),
     ("latest session’s card and note counts", 1, 'timeline'),
     ('captured today', 1, 'timeline'),
     ('last capture', 1, 'timeline'),
