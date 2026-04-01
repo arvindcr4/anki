@@ -559,4 +559,127 @@ mod test {
 
         Ok(())
     }
+
+    use super::*;
+
+    #[test]
+    fn queue_number_new() {
+        let mut card = Card::default();
+        card.queue = CardQueue::New;
+        assert!(matches!(card.queue_number(), CardQueueNumber::New));
+    }
+
+    #[test]
+    fn queue_number_learning() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Learn;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Learning));
+
+        card.queue = CardQueue::PreviewRepeat;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Learning));
+    }
+
+    #[test]
+    fn queue_number_review() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Review;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Review));
+
+        card.queue = CardQueue::DayLearn;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Review));
+    }
+
+    #[test]
+    fn queue_number_invalid() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Suspended;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Invalid));
+
+        card.queue = CardQueue::SchedBuried;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Invalid));
+
+        card.queue = CardQueue::UserBuried;
+        assert!(matches!(card.queue_number(), CardQueueNumber::Invalid));
+    }
+
+    #[test]
+    fn remaining_steps_extraction() {
+        let mut card = Card::default();
+        card.remaining_steps = 3002; // 3 remaining + 2 today
+        assert_eq!(card.remaining_steps(), 2);
+
+        card.remaining_steps = 5;
+        assert_eq!(card.remaining_steps(), 5);
+
+        card.remaining_steps = 0;
+        assert_eq!(card.remaining_steps(), 0);
+    }
+
+    #[test]
+    fn ease_factor_as_multiplier() {
+        let mut card = Card::default();
+        card.ease_factor = 2500;
+        assert!((card.ease_factor() - 2.5).abs() < f32::EPSILON);
+
+        card.ease_factor = 1300;
+        assert!((card.ease_factor() - 1.3).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn is_intraday_learning_true() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Learn;
+        assert!(card.is_intraday_learning());
+
+        card.queue = CardQueue::PreviewRepeat;
+        assert!(card.is_intraday_learning());
+    }
+
+    #[test]
+    fn is_intraday_learning_false() {
+        let mut card = Card::default();
+        card.queue = CardQueue::Review;
+        assert!(!card.is_intraday_learning());
+
+        card.queue = CardQueue::New;
+        assert!(!card.is_intraday_learning());
+    }
+
+    #[test]
+    fn set_flag_changes() {
+        let mut card = Card::default();
+        card.flags = 0;
+        assert!(card.set_flag(3)); // changed
+        assert_eq!(card.flags & 0b111, 3);
+    }
+
+    #[test]
+    fn set_flag_no_change() {
+        let mut card = Card::default();
+        card.flags = 3;
+        assert!(!card.set_flag(3)); // no change
+    }
+
+    #[test]
+    fn set_flag_preserves_upper_bits() {
+        let mut card = Card::default();
+        card.flags = 0b11111_000 | 5; // upper bits set + flag 5
+        card.set_flag(2);
+        assert_eq!(card.flags, 0b11111_010); // upper bits preserved
+    }
+
+    #[test]
+    fn clear_fsrs_data_clears_all() {
+        let mut card = Card::default();
+        card.memory_state = Some(FsrsMemoryState {
+            stability: 1.0,
+            difficulty: 0.5,
+        });
+        card.desired_retention = Some(0.9);
+        card.decay = Some(0.5);
+        card.clear_fsrs_data();
+        assert!(card.memory_state.is_none());
+        assert!(card.desired_retention.is_none());
+        assert!(card.decay.is_none());
+    }
 }
