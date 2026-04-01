@@ -1008,6 +1008,19 @@ class DeckBrowser:
                 f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
                 f"{latest_day_label}</a>"
             )
+        busiest_day_action = ""
+        if (
+            busiest_group
+            and busiest_group.days_ago > 0
+            and (not latest_active_group or busiest_group.days_ago != latest_active_group.days_ago)
+        ):
+            busiest_day_label = f"Browse busiest day ({busiest_group.date_label})"
+            busiest_day_action = (
+                f'<a class="daily-cards-link daily-cards-pill daily-cards-busiest-shortcut" href=# '
+                f'title="{busiest_day_label}" aria-label="{busiest_day_label}" '
+                f"onclick=\"return pycmd('browseAdded:{busiest_group.days_ago}')\">"
+                f"{busiest_day_label}</a>"
+            )
         panel_state = """
   <div class="daily-cards-actions">
     <a class="daily-cards-link daily-cards-pill daily-cards-create" href=# onclick="return pycmd('addcards')">Create cards</a>
@@ -1031,11 +1044,13 @@ class DeckBrowser:
     <a class="daily-cards-link daily-cards-pill daily-cards-import" href=# onclick="return pycmd('importcards')">Import cards</a>
     {today_action}
     {latest_day_action}
+    {busiest_day_action}
     <a class="daily-cards-link daily-cards-pill" href=# title="{browse_recent_label}" aria-label="{browse_recent_label}" onclick="return pycmd('browseRecent')">{browse_recent_label}</a>
   </div>
 """.format(
                 today_action=today_action,
                 latest_day_action=latest_day_action,
+                busiest_day_action=busiest_day_action,
                 browse_recent_label=browse_recent_label,
             )
         return """
