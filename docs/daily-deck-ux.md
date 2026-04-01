@@ -32,7 +32,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Add a tiny legend under the strip so users can decode those bar states without guessing what the highlighting means.
 - Include each strip bar’s date under the day label so the week can be read at a glance without relying on hover alone.
 - Make the activity strip self-explanatory with hover and assistive labels that include the day, date, and cards-across-notes summary.
-- Add a tiny helper line under the strip so users immediately understand that bars are browseable, and that empty bars will light up as they create or import cards.
+- Add a tiny helper line under the strip so users immediately understand that bars are browseable, that they summarize cards-across-notes for each day, and that empty bars will light up as they create or import cards.
 - Make the empty **Today** bar itself a lightweight **create first card** target, so the visual strip can start a capture flow instead of only reflecting past activity.
 - Add compact momentum pills for **active days**, **quiet days**, **consistency percentage**, **cards-per-note density**, **cards-per-active-day pace**, **trend**, **burst share**, **current/last streak**, and **busiest day** so learners can tell at a glance whether their recent capture streak is healthy.
 - Show **consistency percentage** so learners can judge week-over-week capture reliability without mentally converting active and quiet day counts into a ratio.

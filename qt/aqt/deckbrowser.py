@@ -629,7 +629,7 @@ class DeckBrowser:
             )
         heatmap_hint = "Bars light up as you create or import cards."
         if has_recent_cards:
-            heatmap_hint = "Tap a bar to browse that day."
+            heatmap_hint = "Tap a bar to browse that day's cards across notes."
         guidance_actions: list[str] = []
         guidance = "Create or import cards to start this week's timeline."
         if (
