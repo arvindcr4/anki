@@ -95,6 +95,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Pair that browse shortcut with a persistent **Create cards** CTA so users can immediately turn a new idea into study material.
 - Make active rows feel more actionable with a stronger CTA label such as **Browse cards →**.
 - Mark the busiest row with a light **Most active** badge so the user can find the biggest capture session without rereading every line.
+- If that busiest row is not today’s latest session, pair its browse action with **Import more** so large import/generation bursts can continue directly from the same row.
 - Render row separators with real HTML newlines instead of literal **\n** text so the timeline never shows spacer artifacts between days.
 - If the whole week is empty, show a reassuring panel-level hint: **Add cards today and they'll appear here**.
 

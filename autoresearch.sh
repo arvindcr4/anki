@@ -98,6 +98,7 @@ checks = [
     ('Restart today', 2, 'capture'),
     ('Create another', 2, 'capture'),
     ('Import cards', 2, 'capture'),
+    ('Import more', 2, 'capture'),
     ('addcards', 2, 'capture'),
     ('importcards', 2, 'capture'),
     ('daily-cards-create', 1, 'capture'),

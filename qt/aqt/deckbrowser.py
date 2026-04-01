@@ -963,6 +963,13 @@ class DeckBrowser:
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('addcards')">Create today</a>
 </div>
 """
+                elif group.days_ago == busiest_days_ago:
+                    action = f"""
+<div class="daily-cards-action-stack">
+  <a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>
+  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('importcards')">Import more</a>
+</div>
+"""
             else:
                 row_classes.append("is-empty")
                 if group.days_ago == 0:
