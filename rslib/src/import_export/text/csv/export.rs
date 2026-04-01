@@ -291,3 +291,89 @@ impl From<&mut ExportNoteCsvRequest> for SearchNode {
         SearchNode::from(req.limit.take().unwrap_or_default())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn rendered_nodes_text_only() {
+        let nodes = vec![RenderedNode::Text {
+            text: "hello world".into(),
+        }];
+        assert_eq!(rendered_nodes_to_str(&nodes), "hello world");
+    }
+
+    #[test]
+    fn rendered_nodes_replacement() {
+        let nodes = vec![RenderedNode::Replacement {
+            field_name: "Front".into(),
+            current_text: "answer".into(),
+            filters: vec![],
+        }];
+        assert_eq!(rendered_nodes_to_str(&nodes), "answer");
+    }
+
+    #[test]
+    fn rendered_nodes_mixed() {
+        let nodes = vec![
+            RenderedNode::Text {
+                text: "before ".into(),
+            },
+            RenderedNode::Replacement {
+                field_name: "F".into(),
+                current_text: "middle".into(),
+                filters: vec![],
+            },
+            RenderedNode::Text {
+                text: " after".into(),
+            },
+        ];
+        assert_eq!(rendered_nodes_to_str(&nodes), "before middle after");
+    }
+
+    #[test]
+    fn rendered_nodes_empty() {
+        assert_eq!(rendered_nodes_to_str(&[]), "");
+    }
+
+    #[test]
+    fn strip_redundant_removes_style() {
+        assert_eq!(
+            strip_redundant_sections("<style>body{color:red}</style>hello").as_ref(),
+            "hello"
+        );
+    }
+
+    #[test]
+    fn strip_redundant_removes_type() {
+        assert_eq!(
+            strip_redundant_sections("foo[[type:Back]]bar").as_ref(),
+            "foobar"
+        );
+    }
+
+    #[test]
+    fn strip_redundant_no_match() {
+        assert!(matches!(
+            strip_redundant_sections("plain text"),
+            Cow::Borrowed(_)
+        ));
+    }
+
+    #[test]
+    fn strip_answer_side_question_removes() {
+        assert_eq!(
+            strip_answer_side_question("question<hr id=answer>\nanswer").as_ref(),
+            "answer"
+        );
+    }
+
+    #[test]
+    fn strip_answer_side_question_no_hr() {
+        assert!(matches!(
+            strip_answer_side_question("just answer text"),
+            Cow::Borrowed(_)
+        ));
+    }
+}
