@@ -183,4 +183,3 @@ strip = true
 opt-level = "z"
 panic = 'abort'
 overflow-checks = false
-debug = 0
