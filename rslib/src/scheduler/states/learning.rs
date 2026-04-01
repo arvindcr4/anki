@@ -194,3 +194,84 @@ impl LearnState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn default_learn_state() -> LearnState {
+        LearnState {
+            remaining_steps: 2,
+            scheduled_secs: 600,
+            elapsed_secs: 0,
+            memory_state: None,
+        }
+    }
+
+    #[test]
+    fn interval_kind_is_secs() {
+        let state = default_learn_state();
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(600));
+    }
+
+    #[test]
+    fn interval_kind_zero() {
+        let state = LearnState {
+            scheduled_secs: 0,
+            ..default_learn_state()
+        };
+        assert_eq!(state.interval_kind(), IntervalKind::InSecs(0));
+    }
+
+    #[test]
+    fn revlog_kind_is_learning() {
+        assert_eq!(default_learn_state().revlog_kind(), RevlogReviewKind::Learning);
+    }
+
+    #[test]
+    fn next_states_current_is_learning() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_learn_state();
+        let states = state.next_states(&ctx);
+        assert!(matches!(
+            states.current,
+            CardState::Normal(super::super::NormalState::Learning(_))
+        ));
+    }
+
+    #[test]
+    fn next_states_again_is_learning() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_learn_state();
+        let states = state.next_states(&ctx);
+        // again should restart from first step
+        assert!(matches!(
+            states.again,
+            CardState::Normal(super::super::NormalState::Learning(_))
+        ));
+    }
+
+    #[test]
+    fn next_states_easy_is_review() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_learn_state();
+        let states = state.next_states(&ctx);
+        // easy should graduate to review
+        assert!(matches!(
+            states.easy,
+            CardState::Normal(super::super::NormalState::Review(_))
+        ));
+    }
+
+    #[test]
+    fn next_states_easy_interval() {
+        let ctx = StateContext::defaults_for_testing();
+        let state = default_learn_state();
+        let states = state.next_states(&ctx);
+        if let CardState::Normal(super::super::NormalState::Review(review)) = states.easy {
+            assert_eq!(review.scheduled_days, ctx.graduating_interval_easy);
+        } else {
+            panic!("expected review state");
+        }
+    }
+}
