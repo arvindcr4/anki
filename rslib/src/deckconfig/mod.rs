@@ -318,3 +318,124 @@ fn ensure_u32_valid(val: &mut u32, default: u32, min: u32, max: u32) {
         *val = default;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_deck_config_has_learn_steps() {
+        let config = DeckConfig::default();
+        assert_eq!(config.inner.learn_steps, vec![1.0, 10.0]);
+        assert_eq!(config.inner.relearn_steps, vec![10.0]);
+    }
+
+    #[test]
+    fn default_deck_config_values() {
+        let config = DeckConfig::default();
+        assert_eq!(config.inner.new_per_day, 20);
+        assert_eq!(config.inner.reviews_per_day, 200);
+        assert!((config.inner.initial_ease - 2.5).abs() < f32::EPSILON);
+        assert!((config.inner.desired_retention - 0.9).abs() < f32::EPSILON);
+        assert_eq!(config.inner.maximum_review_interval, 36_500);
+    }
+
+    #[test]
+    fn fsrs_params_prefers_v6() {
+        let mut config = DeckConfig::default();
+        config.inner.fsrs_params_4 = vec![1.0];
+        config.inner.fsrs_params_5 = vec![2.0];
+        config.inner.fsrs_params_6 = vec![3.0];
+        assert_eq!(config.fsrs_params(), &vec![3.0]);
+    }
+
+    #[test]
+    fn fsrs_params_falls_back_to_v5() {
+        let mut config = DeckConfig::default();
+        config.inner.fsrs_params_4 = vec![1.0];
+        config.inner.fsrs_params_5 = vec![2.0];
+        assert_eq!(config.fsrs_params(), &vec![2.0]);
+    }
+
+    #[test]
+    fn fsrs_params_falls_back_to_v4() {
+        let mut config = DeckConfig::default();
+        config.inner.fsrs_params_4 = vec![1.0];
+        assert_eq!(config.fsrs_params(), &vec![1.0]);
+    }
+
+    #[test]
+    fn fsrs_params_empty() {
+        let config = DeckConfig::default();
+        assert!(config.fsrs_params().is_empty());
+    }
+
+    #[test]
+    fn ensure_f32_valid_in_range() {
+        let mut val = 2.0;
+        ensure_f32_valid(&mut val, 1.0, 0.5, 3.0);
+        assert_eq!(val, 2.0);
+    }
+
+    #[test]
+    fn ensure_f32_valid_below_min() {
+        let mut val = 0.1;
+        ensure_f32_valid(&mut val, 1.0, 0.5, 3.0);
+        assert_eq!(val, 1.0); // reset to default
+    }
+
+    #[test]
+    fn ensure_f32_valid_above_max() {
+        let mut val = 5.0;
+        ensure_f32_valid(&mut val, 1.0, 0.5, 3.0);
+        assert_eq!(val, 1.0); // reset to default
+    }
+
+    #[test]
+    fn ensure_f32_valid_nan() {
+        let mut val = f32::NAN;
+        ensure_f32_valid(&mut val, 1.0, 0.5, 3.0);
+        assert_eq!(val, 1.0); // reset to default
+    }
+
+    #[test]
+    fn ensure_u32_valid_in_range() {
+        let mut val = 50;
+        ensure_u32_valid(&mut val, 20, 1, 100);
+        assert_eq!(val, 50);
+    }
+
+    #[test]
+    fn ensure_u32_valid_below_min() {
+        let mut val = 0;
+        ensure_u32_valid(&mut val, 20, 1, 100);
+        assert_eq!(val, 20);
+    }
+
+    #[test]
+    fn ensure_u32_valid_above_max() {
+        let mut val = 999;
+        ensure_u32_valid(&mut val, 20, 1, 100);
+        assert_eq!(val, 20);
+    }
+
+    #[test]
+    fn ensure_deck_config_values_valid_fixes_nan() {
+        let mut inner = DeckConfig::default().inner;
+        inner.initial_ease = f32::NAN;
+        inner.desired_retention = f32::NAN;
+        ensure_deck_config_values_valid(&mut inner);
+        assert_eq!(inner.initial_ease, 2.5);
+        assert_eq!(inner.desired_retention, 0.9);
+    }
+
+    #[test]
+    fn ensure_deck_config_values_valid_fixes_zero() {
+        let mut inner = DeckConfig::default().inner;
+        inner.new_per_day = 0; // valid (min 0)
+        inner.leech_threshold = 0; // invalid (min 1)
+        ensure_deck_config_values_valid(&mut inner);
+        assert_eq!(inner.new_per_day, 0);
+        assert_eq!(inner.leech_threshold, 8); // reset to default
+    }
+}
