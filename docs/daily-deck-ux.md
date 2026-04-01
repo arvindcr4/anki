@@ -77,6 +77,7 @@ This prototype follows common guidance from strong UX systems and books:
 - Collapse consecutive empty non-today rows into a single **Quiet stretch** summary instead of repeating **No cards added** over and over, which reduces noise when most of the week is blank.
 - If that quiet stretch reaches up to yesterday, make the row itself a recovery point with **Restart after quiet stretch**, so a user can jump straight back into capture from the place where momentum visibly stopped.
 - If the current gap is only yesterday, give that single quiet row a matching **Restart after quiet day** action instead of leaving the row as passive empty history.
+- Pair current-gap rows with **Resume last capture** so users can either restart today or jump straight back to the most recent active session from the same recovery surface.
 - Mark that leading quiet stretch as the **Current gap** so learners can tell at a glance whether the lull is the present problem or just an older part of the week.
 - When that current gap is already several days long, pair the restart CTA with **Import to rebuild momentum** so recovery supports both one-card restarts and bigger catch-up bursts.
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.

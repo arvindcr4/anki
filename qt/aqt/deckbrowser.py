@@ -1023,12 +1023,19 @@ class DeckBrowser:
                                 'daily-cards-quiet-import" href=# onclick="return pycmd(\'importcards\')">'
                                 'Import to rebuild momentum</a>\n'
                             )
+                        resume_capture_label = (
+                            f"Resume last capture ({latest_active_group.date_label})"
+                        )
                         action = """
 <div class="daily-cards-action-stack">
   <a class='daily-cards-link daily-cards-quiet-restart' href=# onclick="return pycmd('addcards')">Restart after quiet stretch</a>
-{extra_recovery_action}  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('browseRecent')">Browse week context</a>
-</div>
-""".format(extra_recovery_action=extra_recovery_action)
+  <a class="daily-cards-link daily-cards-secondary-link daily-cards-quiet-resume" href=# onclick="return pycmd('browseAdded:{latest_days_ago}')">{resume_capture_label}</a>
+{extra_recovery_action}</div>
+""".format(
+                            latest_days_ago=latest_active_group.days_ago,
+                            resume_capture_label=resume_capture_label,
+                            extra_recovery_action=extra_recovery_action,
+                        )
                     group = replace(
                         group,
                         label="Quiet stretch",
@@ -1044,12 +1051,18 @@ class DeckBrowser:
                         status_badges.append(
                             '<span class="daily-cards-status daily-cards-status-secondary">Current gap</span>'
                         )
+                        resume_capture_label = (
+                            f"Resume last capture ({latest_active_group.date_label})"
+                        )
                         action = """
 <div class="daily-cards-action-stack">
   <a class='daily-cards-link daily-cards-quiet-day-restart' href=# onclick="return pycmd('addcards')">Restart after quiet day</a>
-  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('browseRecent')">Browse week context</a>
+  <a class="daily-cards-link daily-cards-secondary-link daily-cards-quiet-resume" href=# onclick="return pycmd('browseAdded:{latest_days_ago}')">{resume_capture_label}</a>
 </div>
-"""
+""".format(
+                            latest_days_ago=latest_active_group.days_ago,
+                            resume_capture_label=resume_capture_label,
+                        )
             rows.append(
                 """
 <div class="{row_classes}">

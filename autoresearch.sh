@@ -52,6 +52,7 @@ checks = [
     ('Restart after quiet stretch', 2, 'capture'),
     ('daily-cards-quiet-restart', 1, 'visual'),
     ('daily-cards-quiet-day-restart', 1, 'visual'),
+    ('daily-cards-quiet-resume', 1, 'visual'),
     ('Restart after quiet day', 2, 'capture'),
     ('daily-cards-quiet-import', 1, 'visual'),
     ('Current gap', 2, 'timeline'),
