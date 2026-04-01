@@ -396,3 +396,82 @@ impl LimitTreeMap {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn limit_if_today_matches() {
+        let limit = DayLimit { limit: 50, today: 100 };
+        assert_eq!(limit_if_today(limit, 100), Some(50));
+    }
+
+    #[test]
+    fn limit_if_today_different_day() {
+        let limit = DayLimit { limit: 50, today: 100 };
+        assert_eq!(limit_if_today(limit, 101), None);
+    }
+
+    #[test]
+    fn remaining_limits_default() {
+        let limits = RemainingLimits::default();
+        assert_eq!(limits.review, 9999);
+        assert_eq!(limits.new, 9999);
+        assert!(!limits.cap_new_to_review);
+    }
+
+    #[test]
+    fn remaining_limits_get_review() {
+        let limits = RemainingLimits {
+            review: 10,
+            new: 5,
+            cap_new_to_review: false,
+        };
+        assert_eq!(limits.get(LimitKind::Review), 10);
+    }
+
+    #[test]
+    fn remaining_limits_get_new() {
+        let limits = RemainingLimits {
+            review: 10,
+            new: 5,
+            cap_new_to_review: false,
+        };
+        assert_eq!(limits.get(LimitKind::New), 5);
+    }
+
+    #[test]
+    fn remaining_limits_cap_to() {
+        let mut limits = RemainingLimits {
+            review: 20,
+            new: 15,
+            cap_new_to_review: false,
+        };
+        let cap = RemainingLimits {
+            review: 10,
+            new: 5,
+            cap_new_to_review: false,
+        };
+        limits.cap_to(cap);
+        assert_eq!(limits.review, 10);
+        assert_eq!(limits.new, 5);
+    }
+
+    #[test]
+    fn remaining_limits_cap_to_no_change_when_lower() {
+        let mut limits = RemainingLimits {
+            review: 5,
+            new: 3,
+            cap_new_to_review: false,
+        };
+        let cap = RemainingLimits {
+            review: 10,
+            new: 8,
+            cap_new_to_review: false,
+        };
+        limits.cap_to(cap);
+        assert_eq!(limits.review, 5);
+        assert_eq!(limits.new, 3);
+    }
+}
