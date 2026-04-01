@@ -90,3 +90,102 @@ fn button_index(button_chosen: u8) -> Option<usize> {
         None
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn button_index_valid_buttons() {
+        assert_eq!(button_index(1), Some(0));
+        assert_eq!(button_index(2), Some(1));
+        assert_eq!(button_index(3), Some(2));
+        assert_eq!(button_index(4), Some(3));
+    }
+
+    #[test]
+    fn button_index_invalid_buttons() {
+        assert_eq!(button_index(0), None);
+        assert_eq!(button_index(5), None);
+        assert_eq!(button_index(255), None);
+    }
+
+    #[test]
+    fn interval_bucket_learning_kinds() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Learning;
+        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Learning)));
+
+        entry.review_kind = RevlogReviewKind::Relearning;
+        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Learning)));
+
+        entry.review_kind = RevlogReviewKind::Filtered;
+        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Learning)));
+    }
+
+    #[test]
+    fn interval_bucket_review_young() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Review;
+        entry.last_interval = 20;
+        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Young)));
+    }
+
+    #[test]
+    fn interval_bucket_review_mature() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Review;
+        entry.last_interval = 21;
+        assert!(matches!(interval_bucket(&entry), Some(IntervalBucket::Mature)));
+    }
+
+    #[test]
+    fn interval_bucket_manual_returns_none() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Manual;
+        assert!(interval_bucket(&entry).is_none());
+    }
+
+    #[test]
+    fn interval_bucket_rescheduled_returns_none() {
+        let mut entry = RevlogEntry::default();
+        entry.review_kind = RevlogReviewKind::Rescheduled;
+        assert!(interval_bucket(&entry).is_none());
+    }
+
+    #[test]
+    fn increment_button_counts_learning() {
+        let mut counts = ButtonCounts {
+            learning: vec![0; 4],
+            young: vec![0; 4],
+            mature: vec![0; 4],
+        };
+        increment_button_counts(&mut counts, IntervalBucket::Learning, 0);
+        increment_button_counts(&mut counts, IntervalBucket::Learning, 2);
+        assert_eq!(counts.learning, vec![1, 0, 1, 0]);
+        assert_eq!(counts.young, vec![0; 4]);
+        assert_eq!(counts.mature, vec![0; 4]);
+    }
+
+    #[test]
+    fn increment_button_counts_young() {
+        let mut counts = ButtonCounts {
+            learning: vec![0; 4],
+            young: vec![0; 4],
+            mature: vec![0; 4],
+        };
+        increment_button_counts(&mut counts, IntervalBucket::Young, 1);
+        assert_eq!(counts.young, vec![0, 1, 0, 0]);
+    }
+
+    #[test]
+    fn increment_button_counts_mature() {
+        let mut counts = ButtonCounts {
+            learning: vec![0; 4],
+            young: vec![0; 4],
+            mature: vec![0; 4],
+        };
+        increment_button_counts(&mut counts, IntervalBucket::Mature, 3);
+        assert_eq!(counts.mature, vec![0, 0, 0, 1]);
+    }
+}
