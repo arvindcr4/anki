@@ -32,3 +32,51 @@ where
         Ok(result)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn try_collect_exact_match() {
+        let v = vec![1, 2, 3];
+        let result: [i32; 3] = v.into_iter().try_collect().unwrap();
+        assert_eq!(result, [1, 2, 3]);
+    }
+
+    #[test]
+    fn try_collect_single_element() {
+        let v = vec![42];
+        let result: [i32; 1] = v.into_iter().try_collect().unwrap();
+        assert_eq!(result, [42]);
+    }
+
+    #[test]
+    fn try_collect_wrong_size_too_few() {
+        let v = vec![1, 2];
+        let result: Result<[i32; 3], AnkiError> = v.into_iter().try_collect();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn try_collect_wrong_size_too_many() {
+        let v = vec![1, 2, 3, 4];
+        let result: Result<[i32; 3], AnkiError> = v.into_iter().try_collect();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn try_collect_empty_to_zero() {
+        let v: Vec<i32> = vec![];
+        let result: [i32; 0] = v.into_iter().try_collect().unwrap();
+        let expected: [i32; 0] = [];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn try_collect_with_floats() {
+        let v = vec![1.0_f32, 2.5, 3.7];
+        let result: [f32; 3] = v.into_iter().try_collect().unwrap();
+        assert_eq!(result, [1.0, 2.5, 3.7]);
+    }
+}
