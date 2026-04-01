@@ -11,6 +11,7 @@ use super::NotetypeId;
 use super::NotetypeKind;
 use crate::card::CardId;
 use crate::collection::Collection;
+use crate::error::OrInvalid;
 use crate::error::Result;
 use crate::notes::NoteId;
 
@@ -30,7 +31,9 @@ impl Collection {
         let mut out = Vec::with_capacity(by_note.len());
 
         for (nid, existing) in by_note {
-            let note = self.storage.get_note(nid)?.unwrap();
+            let Some(note) = self.storage.get_note(nid)? else {
+                continue;
+            };
             let cards = ctx.new_cards_required(&note, &[], false);
             let nonempty_ords: HashSet<_> = cards.into_iter().map(|c| c.ord).collect();
             let current_count = existing.len();
@@ -61,7 +64,7 @@ impl Collection {
             .get_all_notetype_names()?
             .into_iter()
             .map(|(id, _name)| {
-                let nt = self.get_notetype(id)?.unwrap();
+                let nt = self.get_notetype(id)?.or_invalid("notetype not found")?;
                 self.empty_cards_for_notetype(&nt).map(|v| (id, v))
             })
             .collect()
