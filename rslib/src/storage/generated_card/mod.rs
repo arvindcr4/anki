@@ -582,8 +582,8 @@ CREATE TABLE generated_cards (
         let storage = GeneratedCardStorage::open_or_create(&path).unwrap();
         let cloze = ClozeFlashcard::new("Rust is a {{c1::systems}} programming language.")
             .with_back_extra("Memory safety without garbage collection.");
-        let card = Flashcard::new(cloze.text.clone(), cloze.back_extra.clone())
-            .with_cloze(cloze.clone());
+        let card =
+            Flashcard::new(cloze.text.clone(), cloze.back_extra.clone()).with_cloze(cloze.clone());
 
         let id = storage.add_card(&card).unwrap();
         let round_tripped = storage.get_card(id).unwrap().unwrap().into_flashcard();
