@@ -89,6 +89,7 @@ This prototype follows common guidance from strong UX systems and books:
 - When that current gap is already several days long, pair the restart CTA with **Import to rebuild momentum** so recovery supports both one-card restarts and bigger catch-up bursts.
 - Treat the empty **Today** row specially: turn it into a light **Create first card →** prompt so a blank day becomes an invitation to capture, not a dead end.
 - Pair that empty-today prompt with **Import cards** so starting a new day supports both small manual capture and larger generated/imported sessions.
+- When the week already has activity, also pair that empty-today row with **Resume last capture** so a blank today can still reconnect the learner to the freshest session without forcing them to hunt elsewhere in the panel.
 - When Today already has cards, keep the row bi-directional: users should be able to **Browse cards →** and also **Create another** without leaving the same context.
 - When the panel has activity, offer a panel-level shortcut like **Browse last 7 days** for users who want a broad date-based view before drilling into a specific day.
 - Prefer a visible-range label on that shortcut so the week-level action is anchored to concrete dates, not just a relative count.

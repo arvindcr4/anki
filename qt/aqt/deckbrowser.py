@@ -1052,12 +1052,20 @@ class DeckBrowser:
                         '<div class="daily-cards-empty-summary">No cards added</div>'
                     )
                     row_classes.append("is-capture-target")
+                    resume_today_action = ""
+                    if latest_active_group and latest_active_group.days_ago > 0:
+                        resume_today_action = (
+                            '  <a class="daily-cards-link daily-cards-secondary-link '
+                            'daily-cards-empty-resume" href=# '
+                            f'onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">'
+                            f'Resume last capture ({latest_active_group.date_label})</a>\n'
+                        )
                     action = """
 <div class="daily-cards-action-stack">
   <a class='daily-cards-link' href=# onclick="return pycmd('addcards')">Create first card →</a>
-  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('importcards')">Import cards</a>
+{resume_today_action}  <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('importcards')">Import cards</a>
 </div>
-"""
+""".format(resume_today_action=resume_today_action)
                 elif len(empty_run) > 1:
                     row_classes.extend(["is-empty-cluster", "is-quiet-stretch"])
                     first_empty = empty_run[0]
