@@ -127,6 +127,14 @@ fn extract_archive(archive_path: &str, output_folder: &str) -> Result<()> {
     // extract into a temporary folder
     let output_tmp =
         output_folder.with_file_name(format!("{}.tmp", output_folder.file_name().unwrap()));
+    if output_tmp.exists() {
+        if output_tmp.is_dir() {
+            fs::remove_dir_all(&output_tmp)?;
+        } else {
+            fs::remove_file(&output_tmp)?;
+        }
+    }
+    fs::create_dir_all(&output_tmp)?;
     match archive {
         ArchiveKind::Tar => {
             let mut archive = tar::Archive::new(&uncompressed_data[..]);

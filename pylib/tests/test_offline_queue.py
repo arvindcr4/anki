@@ -19,6 +19,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
+from anki.ankiconnect import AnkiConnectRateLimit, AnkiConnectUnavailable
 from anki.offline_queue import (
     MAX_BATCH_SIZE,
     QUEUE_FILENAME,
@@ -26,6 +27,32 @@ from anki.offline_queue import (
     QueuedCard,
     QueueStatus,
 )
+
+
+class _FakeAnkiConnectClient:
+    def __init__(
+        self,
+        *,
+        discover_result: bool = True,
+        invoke_return: object | None = None,
+        invoke_side_effect: object | None = None,
+    ) -> None:
+        self.discover = Mock(return_value=discover_result)
+        self._invoke = Mock()
+        if invoke_side_effect is not None:
+            self._invoke.side_effect = invoke_side_effect
+        else:
+            self._invoke.return_value = invoke_return
+        self.closed = False
+
+    def __enter__(self) -> "_FakeAnkiConnectClient":
+        return self
+
+    def __exit__(self, *args: object) -> None:
+        self.close()
+
+    def close(self) -> None:
+        self.closed = True
 
 
 class TestQueuedCard:
@@ -228,10 +255,7 @@ class TestSyncNow:
         self.queue.add_card(front="Q", back="A", local_id=1)
 
         with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
-            mock_instance = Mock()
-            MockClient.return_value = mock_instance
-            mock_instance.discover.return_value = True
-            mock_instance.add_note.return_value = 12345  # Success
+            MockClient.return_value = _FakeAnkiConnectClient(invoke_return=12345)
 
             success, failed = self.queue.sync_now()
 
@@ -244,10 +268,7 @@ class TestSyncNow:
         self.queue.add_card(front="Q", back="A", local_id=1)
 
         with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
-            mock_instance = Mock()
-            MockClient.return_value = mock_instance
-            mock_instance.discover.return_value = True
-            mock_instance.add_note.return_value = None  # Failed
+            MockClient.return_value = _FakeAnkiConnectClient(invoke_return=None)
 
             success, failed = self.queue.sync_now()
 
@@ -263,9 +284,7 @@ class TestSyncNow:
         self.queue.add_card(front="Q2", back="A2")
 
         with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
-            mock_instance = Mock()
-            MockClient.return_value = mock_instance
-            mock_instance.discover.return_value = False  # Not available
+            MockClient.return_value = _FakeAnkiConnectClient(discover_result=False)
 
             success, failed = self.queue.sync_now()
 
@@ -274,21 +293,94 @@ class TestSyncNow:
         assert failed == 2
         assert len(self.queue) == 2
 
+    def test_sync_unavailable_reports_all_pending_cards_across_batches(self) -> None:
+        """Test that an initial outage counts every pending card, not just one batch."""
+        total_cards = MAX_BATCH_SIZE + 1
+        for index in range(total_cards):
+            self.queue.add_card(front=f"Q{index}", back=f"A{index}")
+
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
+            MockClient.return_value = _FakeAnkiConnectClient(discover_result=False)
+
+            success, failed = self.queue.sync_now()
+
+        assert success == 0
+        assert failed == total_cards
+        assert len(self.queue) == total_cards
+
     def test_sync_increments_attempt_count(self) -> None:
         """Test that each sync attempt increments the counter."""
         self.queue.add_card(front="Q", back="A", local_id=1)
 
         with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
-            mock_instance = Mock()
-            MockClient.return_value = mock_instance
-            mock_instance.discover.return_value = True
-            mock_instance.add_note.return_value = None  # Failed
+            MockClient.return_value = _FakeAnkiConnectClient(invoke_return=None)
 
             self.queue.sync_now()
             self.queue.sync_now()
 
         cards = self.queue.get_queue()
         assert cards[0].attempt_count == 2
+
+    def test_sync_unexpected_exception_keeps_card_queued(self) -> None:
+        """Test that unexpected client failures do not crash the queue sync."""
+        self.queue.add_card(front="Q", back="A", local_id=1)
+
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
+            MockClient.return_value = _FakeAnkiConnectClient(
+                invoke_side_effect=RuntimeError("boom")
+            )
+
+            success, failed = self.queue.sync_now()
+
+        assert success == 0
+        assert failed == 1
+        cards = self.queue.get_queue()
+        assert len(cards) == 1
+        assert cards[0].last_error == "boom"
+        assert self.queue.get_status().last_error == "boom"
+
+    @pytest.mark.parametrize(
+        "error_type,error_message",
+        [
+            (AnkiConnectUnavailable, "temporary outage"),
+            (AnkiConnectRateLimit, "rate limited"),
+        ],
+    )
+    def test_sync_unavailable_mid_batch_counts_remaining_and_persists(
+        self,
+        error_type: type[Exception],
+        error_message: str,
+    ) -> None:
+        """Test that a mid-batch outage counts the current card and saves progress."""
+        self.queue.add_card(front="Q1", back="A1", local_id=1)
+        self.queue.add_card(front="Q2", back="A2", local_id=2)
+        self.queue.add_card(front="Q3", back="A3", local_id=3)
+
+        with patch("anki.offline_queue.AnkiConnectClient") as MockClient:
+            MockClient.return_value = _FakeAnkiConnectClient(
+                invoke_side_effect=[12345, error_type(error_message)]
+            )
+
+            success, failed = self.queue.sync_now()
+
+        assert success == 1
+        assert failed == 2
+
+        reloaded = OfflineSyncQueue(queue_path=self.queue_path, deck="Test Deck")
+        remaining_ids = [card.local_id for card in reloaded.get_queue()]
+        assert remaining_ids == [2, 3]
+
+    def test_generated_local_ids_remain_unique_when_clock_stalls(self) -> None:
+        """Test that auto-generated local IDs do not collide on a fixed clock."""
+        with (
+            patch("anki.offline_queue.time.time", return_value=1000),
+            patch("anki.offline_queue.time.time_ns", return_value=1_000_000_000),
+        ):
+            self.queue.add_card(front="Q1", back="A1")
+            self.queue.add_card(front="Q2", back="A2")
+
+        cards = self.queue.get_queue()
+        assert cards[0].local_id != cards[1].local_id
 
 
 class TestAutoSync:
@@ -329,6 +421,24 @@ class TestAutoSync:
             or not self.queue._monitor_thread.is_alive()
         )
 
+    def test_stop_auto_sync_handles_monitor_clearing_reference_during_join(
+        self,
+    ) -> None:
+        """Test that stop_auto_sync tolerates the monitor clearing its own reference."""
+        monitor = Mock()
+
+        def join(timeout: int) -> None:
+            self.queue._monitor_thread = None
+
+        monitor.join.side_effect = join
+        monitor.is_alive.return_value = False
+        self.queue._monitor_thread = monitor
+
+        self.queue.stop_auto_sync()
+
+        assert self.queue._monitor_thread is None
+        monitor.join.assert_called_once_with(timeout=5)
+
     def test_multiple_start_calls_dont_create_multiple_threads(self) -> None:
         """Test that calling start multiple times is idempotent."""
         self.queue.start_auto_sync()
@@ -336,6 +446,22 @@ class TestAutoSync:
         self.queue.start_auto_sync()
         thread2 = self.queue._monitor_thread
         assert thread1 is thread2
+
+    def test_stop_timeout_keeps_monitor_reference_and_blocks_restart(self) -> None:
+        """Test that a stop timeout does not let a second monitor thread start."""
+        monitor = Mock()
+        monitor.is_alive.return_value = True
+        self.queue._monitor_thread = monitor
+
+        self.queue.stop_auto_sync()
+
+        assert self.queue._monitor_thread is monitor
+        monitor.join.assert_called_once_with(timeout=5)
+
+        with patch("anki.offline_queue.threading.Thread") as mock_thread:
+            self.queue.start_auto_sync()
+
+        mock_thread.assert_not_called()
 
 
 class TestQueuePersistence:

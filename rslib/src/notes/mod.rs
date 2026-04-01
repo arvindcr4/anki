@@ -549,7 +549,9 @@ impl Collection {
             let mut genctx = None;
             for (_, nid) in group {
                 // grab the note and transform it
-                let mut note = self.storage.get_note(nid)?.unwrap();
+                let Some(mut note) = self.storage.get_note(nid)? else {
+                    continue;
+                };
                 let original = note.clone();
                 let out = transformer(&mut note, &nt)?;
                 if !out.changed {

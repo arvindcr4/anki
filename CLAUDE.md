@@ -5,7 +5,7 @@
 Anki is a spaced repetition flashcard program with a multi-layered architecture. Main components:
 
 - Web frontend: Svelte/TypeScript in ts/
-- PyQt GUI, which embeds the web components in aqt/
+- PyQt GUI, which embeds the web components in qt/aqt/
 - Python library which wraps our rust Layer (pylib/, with Rust module in pylib/rsbridge)
 - Core Rust layer in rslib/
 - Protobuf definitions in proto/ that are used by the different layers to
@@ -22,7 +22,7 @@ During development, you can build/check subsections of our code:
 
 - Rust: 'cargo check'
 - Python: './tools/dmypy', and if wheel-related, './ninja wheels'
-- TypeScript/Svelte: './ninja check:svelte'
+- TypeScript/Svelte: './ninja check:svelte' and './ninja check:vitest'
 
 Be mindful that some changes (such as modifications to .proto files) may
 need a full build with './check' first.

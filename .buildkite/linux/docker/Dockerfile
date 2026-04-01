@@ -28,7 +28,7 @@ RUN apt-get update && apt install --yes gnupg ca-certificates && \
     libgstreamer1.0-0 \
     libnss3 \
     libpulse-mainloop-glib0 \
-    libpulse-mainloop-glib0 \    
+    libpulse-mainloop-glib0 \
     libssl-dev \
     libxcomposite1 \
     libxcursor1 \
@@ -36,7 +36,7 @@ RUN apt-get update && apt install --yes gnupg ca-certificates && \
     libxi6 \
     libxkbcommon-x11-0 \
     libxkbcommon0 \
-    libxkbfile1	\
+    libxkbfile1 \
     libxrandr2 \
     libxrender1 \
     libxtst6 \

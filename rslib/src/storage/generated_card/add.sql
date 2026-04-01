@@ -5,6 +5,7 @@ INSERT INTO generated_cards (
     source_type,
     created_at,
     sync_status,
-    tags
+    tags,
+    is_cloze
   )
-VALUES (?, ?, ?, ?, ?, ?, ?)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)

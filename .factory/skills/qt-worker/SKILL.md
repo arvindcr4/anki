@@ -1,6 +1,6 @@
 ---
 name: qt-worker
-description: Qt GUI implementation for source picker, card review, and deck selection in aqt
+description: Use when implementing or testing Qt GUI changes under qt/aqt/, such as source capture, card review, deck selection, and other desktop flows.
 ---
 
 # Qt Worker
@@ -11,7 +11,7 @@ NOTE: Startup and cleanup are handled by `worker-base`. This skill defines the W
 
 Features that touch the Qt GUI layer:
 
-- Source picker (URL, File, Text input)
+- Source-first capture surfaces (file/URL intake, drag/drop, LLM preview actions)
 - Card review list with edit/delete
 - Deck selection dialog
 - Error message display
@@ -24,13 +24,13 @@ None required for this worker type - uses Qt/Python tooling directly.
 ## Work Procedure
 
 1. **Understand the existing codebase**
-   - Review aqt/ for existing UI patterns
+   - Review qt/aqt/ for existing UI patterns
    - Check how widgets are structured
-   - Review how aqt embeds web components
+   - Review how qt/aqt embeds web components
    - Look at how PyQt is used for dialogs
 
 2. **Write tests first (TDD)**
-   - Create pytest files for Qt components
+   - Create pytest files in qt/tests/ for Qt components
    - Use pytest-qt for widget testing
    - Tests MUST fail before implementation (red phase)
    - Cover enabled/disabled states, input validation
@@ -43,12 +43,12 @@ None required for this worker type - uses Qt/Python tooling directly.
    - Follow Anki's styling if applicable
 
 4. **Verify**
-   - Run `python -m pytest` for the module
+   - Run `./ninja check:pytest:aqt` for repo-native Qt test execution
    - Verify object names are correct
    - Run `ninja check:svelte` if TypeScript/Svelte changes
 
 5. **Manual verification**
-   - All input types work (URL paste, file picker, text area)
+   - All source inputs work (URL paste, file picker, drag/drop)
    - Edit dialog opens and saves changes
    - Delete confirmation appears
    - Error messages display correctly
@@ -57,56 +57,47 @@ None required for this worker type - uses Qt/Python tooling directly.
 
 ```json
 {
-    "salientSummary": "Implemented QuickIntakeFrame with URL, File, and Text input tabs. URL tab has QLineEdit with clipboard paste support. File tab uses QFileDialog for audio/video selection. Text tab has QTextEdit for direct input. All inputs trigger content ingestion via backend.",
-    "whatWasImplemented": "Created QuickIntakeFrame in aqt/quickintake.py. Three tabs via QTabWidget: UrlTab (QLineEdit with paste button), FileTab (QPushButton + QFileDialog filtering audio/video), TextTab (QTextEdit). Each tab has 'Generate' button that calls pylib.ankiconnect. ContentRouter. Added drag-drop support on FileTab.",
+    "salientSummary": "Implemented the source-first QuickIntakeFrame in qt/aqt/addcards.py with file/URL capture, deck and note-type context chips, drag-drop, and preview-first LLM actions before writing notes.",
+    "whatWasImplemented": "Updated qt/aqt/addcards.py to add QuickIntakeFrame with Choose files, Paste URL, Connect Codex, LLM setup, and Organize note actions. Added quickIntake* object names for styling/tests, drag-drop handling, and status labels that guide Summarize, Q&A, and Cloze previews before any note fields are written.",
     "whatWasLeftUndone": "",
     "verification": {
         "commandsRun": [
             {
-                "command": "python -m pytest aqt/tests/test_quickintake.py -v",
+                "command": "./ninja check:pytest:aqt",
                 "exitCode": 0,
-                "observation": "All 15 UI tests pass"
+                "observation": "Qt pytest suite passes, including quick intake widget coverage for action visibility, drag-drop, and status-label updates"
             },
             {
-                "command": "python -m pytest aqt/tests/test_card_review.py -v",
+                "command": "./tools/dmypy",
                 "exitCode": 0,
-                "observation": "All 9 card review tests pass"
+                "observation": "Python type checking passes for the Qt-side changes after the quick intake updates"
             }
         ],
         "interactiveChecks": [
             {
-                "action": "Open QuickIntakeFrame, paste URL, click Generate",
-                "observed": "URL tab active, content shows in card preview"
+                "action": "Open Add Cards, click Paste URL, and confirm the quick intake source preview updates",
+                "observed": "Quick intake banner shows the pasted URL summary and prompts the next preview action"
             },
             {
-                "action": "Click File tab, click Choose File, select audio",
-                "observed": "File path displayed, audio format validated"
+                "action": "Click Choose files and select an audio or PDF source",
+                "observed": "Selected source summary appears and the intake frame updates its status labels"
             },
             {
-                "action": "Drag audio file onto File tab",
-                "observed": "File path auto-populated"
+                "action": "Drag a file onto QuickIntakeFrame",
+                "observed": "Drag styling activates and the dropped source is accepted into the preview flow"
             }
         ]
     },
     "tests": {
         "added": [
             {
-                "file": "aqt/tests/test_quickintake.py",
+                "file": "qt/tests/test_addcards.py",
                 "cases": [
-                    "test_url_input_basic",
-                    "test_url_input_clipboard",
-                    "test_file_input_dialog",
-                    "test_file_input_validation",
-                    "test_text_input_basic",
-                    "test_drag_drop_file"
-                ]
-            },
-            {
-                "file": "aqt/tests/test_card_review.py",
-                "cases": [
-                    "test_list_populates",
-                    "test_edit_dialog_opens",
-                    "test_delete_confirms"
+                    "test_quick_intake_actions_present",
+                    "test_paste_url_updates_preview",
+                    "test_choose_files_updates_status",
+                    "test_drag_drop_source",
+                    "test_llm_preview_actions_require_source"
                 ]
             }
         ]

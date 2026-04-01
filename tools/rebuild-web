@@ -9,4 +9,4 @@
 set -e
 
 ./ninja qt
-./out/pyenv/bin/python tools/reload_webviews.py
+"${PYENV:-out/pyenv}/bin/python" tools/reload_webviews.py

@@ -9,6 +9,7 @@
 use anki_i18n::I18n;
 use anki_proto::notetypes::notetype::config::Kind as NotetypeKind;
 use anki_proto::notetypes::stock_notetype::OriginalStockKind;
+use anki_proto::notetypes::ClozeField;
 
 use crate::notetype::Notetype;
 use crate::notetype::NotetypeConfig;
@@ -58,14 +59,16 @@ pub fn cloze_notetype(tr: &I18n) -> Notetype {
     );
 
     let text = tr.notetypes_text_field();
-    nt.add_field(text.as_ref());
+    let text_config = nt.add_field(text.as_ref());
+    text_config.tag = Some(ClozeField::Text as u32);
+    text_config.prevent_deletion = true;
 
     let back_extra = tr.notetypes_back_extra_field();
-    nt.add_field(back_extra.as_ref());
+    let back_extra_config = nt.add_field(back_extra.as_ref());
+    back_extra_config.tag = Some(ClozeField::BackExtra as u32);
 
-    // Cloze template: uses {{cloze:text}} to hide cloze deletions
-    let qfmt = format!("{{{{cloze:{}}}}}", fieldref(&text));
-    let afmt = format!("{}\n<br>\n{}", qfmt, fieldref(&back_extra));
+    let qfmt = format!("{{{{cloze:{text}}}}}");
+    let afmt = format!("{qfmt}<br>\n{{{{{back_extra}}}}}");
 
     nt.add_template(nt.name.clone(), qfmt, afmt);
 
@@ -103,6 +106,8 @@ fn empty_stock(
 
 #[cfg(test)]
 mod test {
+    use anki_i18n::I18n;
+
     use super::*;
 
     #[test]
@@ -127,6 +132,27 @@ mod test {
         nt.add_field("Back Extra");
         assert_eq!(nt.fields.len(), 2);
         assert!(nt.config.kind() == NotetypeKind::Cloze);
+    }
+
+    #[test]
+    fn test_cloze_notetype_matches_stock_template() {
+        let tr = I18n::template_only();
+        let nt = cloze_notetype(&tr);
+        assert_eq!(nt.name, tr.notetypes_cloze_name());
+        assert_eq!(nt.config.kind(), NotetypeKind::Cloze);
+        assert_eq!(nt.fields.len(), 2);
+        assert_eq!(nt.fields[0].name, tr.notetypes_text_field());
+        assert_eq!(nt.fields[0].config.tag, Some(ClozeField::Text as u32));
+        assert!(nt.fields[0].config.prevent_deletion);
+        assert_eq!(nt.fields[1].name, tr.notetypes_back_extra_field());
+        assert_eq!(nt.fields[1].config.tag, Some(ClozeField::BackExtra as u32));
+        assert!(!nt.fields[1].config.prevent_deletion);
+        assert_eq!(nt.templates.len(), 1);
+        assert_eq!(nt.templates[0].config.q_format, "{{cloze:Text}}");
+        assert_eq!(
+            nt.templates[0].config.a_format,
+            "{{cloze:Text}}<br>\n{{Back Extra}}"
+        );
     }
 
     #[test]

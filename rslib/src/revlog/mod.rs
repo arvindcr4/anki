@@ -198,76 +198,96 @@ mod tests {
 
     #[test]
     fn interval_secs_positive_days() {
-        let mut entry = RevlogEntry::default();
-        entry.interval = 10; // 10 days
+        let entry = RevlogEntry {
+            interval: 10, // 10 days
+            ..Default::default()
+        };
         assert_eq!(entry.interval_secs(), 864_000);
     }
 
     #[test]
     fn interval_secs_negative_is_seconds() {
-        let mut entry = RevlogEntry::default();
-        entry.interval = -600; // -600 seconds
+        let entry = RevlogEntry {
+            interval: -600, // -600 seconds
+            ..Default::default()
+        };
         assert_eq!(entry.interval_secs(), 600);
     }
 
     #[test]
     fn last_interval_secs_positive() {
-        let mut entry = RevlogEntry::default();
-        entry.last_interval = 7;
+        let entry = RevlogEntry {
+            last_interval: 7,
+            ..Default::default()
+        };
         assert_eq!(entry.last_interval_secs(), 604_800);
     }
 
     #[test]
     fn last_interval_secs_negative() {
-        let mut entry = RevlogEntry::default();
-        entry.last_interval = -300;
+        let entry = RevlogEntry {
+            last_interval: -300,
+            ..Default::default()
+        };
         assert_eq!(entry.last_interval_secs(), 300);
     }
 
     #[test]
     fn is_reset_true() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Manual;
-        entry.ease_factor = 0;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Manual,
+            ease_factor: 0,
+            ..Default::default()
+        };
         assert!(entry.is_reset());
     }
 
     #[test]
     fn is_reset_false_with_ease_factor() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Manual;
-        entry.ease_factor = 2500;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Manual,
+            ease_factor: 2500,
+            ..Default::default()
+        };
         assert!(!entry.is_reset());
     }
 
     #[test]
     fn is_reset_false_wrong_kind() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Review;
-        entry.ease_factor = 0;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Review,
+            ease_factor: 0,
+            ..Default::default()
+        };
         assert!(!entry.is_reset());
     }
 
     #[test]
     fn is_cramming_true() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Filtered;
-        entry.ease_factor = 0;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Filtered,
+            ease_factor: 0,
+            ..Default::default()
+        };
         assert!(entry.is_cramming());
     }
 
     #[test]
     fn is_cramming_false_with_ease_factor() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Filtered;
-        entry.ease_factor = 2500;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Filtered,
+            ease_factor: 2500,
+            ..Default::default()
+        };
         assert!(!entry.is_cramming());
     }
 
     #[test]
     fn has_rating_true() {
-        let mut entry = RevlogEntry::default();
-        entry.button_chosen = 1;
+        let entry = RevlogEntry {
+            button_chosen: 1,
+            ..Default::default()
+        };
         assert!(entry.has_rating());
     }
 
@@ -279,27 +299,33 @@ mod tests {
 
     #[test]
     fn has_rating_and_affects_scheduling_normal_review() {
-        let mut entry = RevlogEntry::default();
-        entry.button_chosen = 2;
-        entry.review_kind = RevlogReviewKind::Review;
-        entry.ease_factor = 2500;
+        let entry = RevlogEntry {
+            button_chosen: 2,
+            review_kind: RevlogReviewKind::Review,
+            ease_factor: 2500,
+            ..Default::default()
+        };
         assert!(entry.has_rating_and_affects_scheduling());
     }
 
     #[test]
     fn has_rating_and_affects_scheduling_cramming() {
-        let mut entry = RevlogEntry::default();
-        entry.button_chosen = 2;
-        entry.review_kind = RevlogReviewKind::Filtered;
-        entry.ease_factor = 0; // cramming
+        let entry = RevlogEntry {
+            button_chosen: 2,
+            review_kind: RevlogReviewKind::Filtered,
+            ease_factor: 0, // cramming
+            ..Default::default()
+        };
         assert!(!entry.has_rating_and_affects_scheduling());
     }
 
     #[test]
     fn has_rating_and_affects_scheduling_no_rating() {
-        let mut entry = RevlogEntry::default();
-        entry.button_chosen = 0;
-        entry.review_kind = RevlogReviewKind::Review;
+        let entry = RevlogEntry {
+            button_chosen: 0,
+            review_kind: RevlogReviewKind::Review,
+            ..Default::default()
+        };
         assert!(!entry.has_rating_and_affects_scheduling());
     }
 }

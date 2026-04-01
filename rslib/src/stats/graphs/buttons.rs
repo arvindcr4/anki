@@ -112,8 +112,10 @@ mod tests {
 
     #[test]
     fn interval_bucket_learning_kinds() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Learning;
+        let mut entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Learning,
+            ..Default::default()
+        };
         assert!(matches!(
             interval_bucket(&entry),
             Some(IntervalBucket::Learning)
@@ -134,9 +136,11 @@ mod tests {
 
     #[test]
     fn interval_bucket_review_young() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Review;
-        entry.last_interval = 20;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Review,
+            last_interval: 20,
+            ..Default::default()
+        };
         assert!(matches!(
             interval_bucket(&entry),
             Some(IntervalBucket::Young)
@@ -145,9 +149,11 @@ mod tests {
 
     #[test]
     fn interval_bucket_review_mature() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Review;
-        entry.last_interval = 21;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Review,
+            last_interval: 21,
+            ..Default::default()
+        };
         assert!(matches!(
             interval_bucket(&entry),
             Some(IntervalBucket::Mature)
@@ -156,15 +162,19 @@ mod tests {
 
     #[test]
     fn interval_bucket_manual_returns_none() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Manual;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Manual,
+            ..Default::default()
+        };
         assert!(interval_bucket(&entry).is_none());
     }
 
     #[test]
     fn interval_bucket_rescheduled_returns_none() {
-        let mut entry = RevlogEntry::default();
-        entry.review_kind = RevlogReviewKind::Rescheduled;
+        let entry = RevlogEntry {
+            review_kind: RevlogReviewKind::Rescheduled,
+            ..Default::default()
+        };
         assert!(interval_bucket(&entry).is_none());
     }
 

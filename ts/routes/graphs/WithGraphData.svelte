@@ -25,16 +25,29 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
     let sourceData: GraphsResponse | null = null;
     let loading = true;
+    let sourceDataRequestId = 0;
     $: updateSourceData($search, $days);
 
     async function updateSourceData(search: string, days: number): Promise<void> {
+        const requestId = ++sourceDataRequestId;
+        loading = true;
+
         // ensure the fast-loading preferences come first
         await prefsPromise;
-        loading = true;
+
+        if (requestId !== sourceDataRequestId) {
+            return;
+        }
+
         try {
-            sourceData = await graphs({ search, days });
+            const nextSourceData = await graphs({ search, days });
+            if (requestId === sourceDataRequestId) {
+                sourceData = nextSourceData;
+            }
         } finally {
-            loading = false;
+            if (requestId === sourceDataRequestId) {
+                loading = false;
+            }
         }
     }
 

@@ -29,7 +29,7 @@ pub enum SourceType {
 ///
 /// This struct holds the raw flashcard data before it's converted
 /// into an Anki Note with a specific notetype.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Flashcard {
     /// The front side of the flashcard (question/prompt)
     pub front: String,
@@ -41,6 +41,8 @@ pub struct Flashcard {
     pub source_type: SourceType,
     /// The URL/source URL if generated from a URL
     pub source_url: Option<String>,
+    /// Optional cloze payload preserved for cloze-format responses.
+    pub cloze: Option<ClozeFlashcard>,
 }
 
 impl Flashcard {
@@ -52,6 +54,7 @@ impl Flashcard {
             tags: Vec::new(),
             source_type: SourceType::default(),
             source_url: None,
+            cloze: None,
         }
     }
 
@@ -73,6 +76,12 @@ impl Flashcard {
         self
     }
 
+    /// Attach cloze-specific data to this flashcard.
+    pub fn with_cloze(mut self, cloze: ClozeFlashcard) -> Self {
+        self.cloze = Some(cloze);
+        self
+    }
+
     /// Add a single tag to this flashcard.
     pub fn add_tag(&mut self, tag: impl Into<String>) {
         self.tags.push(tag.into());
@@ -82,7 +91,7 @@ impl Flashcard {
 /// Represents a cloze flashcard with fill-in-the-blank syntax.
 ///
 /// Cloze cards use {{c1::text}} syntax to hide portions of text.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ClozeFlashcard {
     /// The text containing cloze deletions
     pub text: String,
@@ -145,6 +154,7 @@ mod test {
         assert!(card.tags.is_empty());
         assert_eq!(card.source_type, SourceType::Text);
         assert!(card.source_url.is_none());
+        assert!(card.cloze.is_none());
     }
 
     #[test]
@@ -161,6 +171,15 @@ mod test {
             .with_source_url("https://rust-lang.org");
         assert_eq!(card.source_type, SourceType::Url);
         assert_eq!(card.source_url, Some("https://rust-lang.org".into()));
+    }
+
+    #[test]
+    fn test_flashcard_with_cloze_payload() {
+        let cloze = ClozeFlashcard::new("Rust is a {{c1::systems}} programming language.")
+            .with_back_extra("Memory safety without garbage collection.");
+        let card = Flashcard::new("Rust is a {{c1::systems}} programming language.", "")
+            .with_cloze(cloze.clone());
+        assert_eq!(card.cloze, Some(cloze));
     }
 
     #[test]

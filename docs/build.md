@@ -6,15 +6,13 @@ Basic use is described in [development.md](./development.md).
 
 ## Architecture
 
-The build/ folder is made up of 4 packages:
+The build/ folder is made up of 3 packages:
 
 - build/configure defines the actions and inputs/outputs of the build graph -
   this is where you add new build steps or modify existing ones. The defined
   actions are converted at build time to a build.ninja file that Ninja executes.
 - build/ninja_gen is a library for writing a build.ninja file, and includes
   various rules like "build a Rust crate" or "run a command".
-- build/archives is a helper to download/checksum/extract a dependency as part
-  of the build process.
 - build/runner serves a number of purposes:
   - it's the entrypoint to the build process, taking care of generating
     the build file and then invoking Ninja

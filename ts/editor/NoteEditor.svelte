@@ -112,31 +112,37 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
         // * the note, which can be set through this view
         // * the fieldname, font, etc., which cannot be set
 
-        const newFieldNames: string[] = [];
+        hydratingFields = true;
+        fieldSave.clear();
+        try {
+            const newFieldNames: string[] = [];
 
-        for (const [index, [fieldName]] of fs.entries()) {
-            newFieldNames[index] = fieldName;
+            for (const [index, [fieldName]] of fs.entries()) {
+                newFieldNames[index] = fieldName;
+            }
+
+            for (let i = fieldStores.length; i < newFieldNames.length; i++) {
+                const newStore = writable("");
+                fieldStores[i] = newStore;
+                newStore.subscribe((value) => updateField(i, value));
+            }
+
+            for (
+                let i = fieldStores.length;
+                i > newFieldNames.length;
+                i = fieldStores.length
+            ) {
+                fieldStores.pop();
+            }
+
+            for (const [index, [, fieldContent]] of fs.entries()) {
+                fieldStores[index].set(fieldContent);
+            }
+
+            fieldNames = newFieldNames;
+        } finally {
+            hydratingFields = false;
         }
-
-        for (let i = fieldStores.length; i < newFieldNames.length; i++) {
-            const newStore = writable("");
-            fieldStores[i] = newStore;
-            newStore.subscribe((value) => updateField(i, value));
-        }
-
-        for (
-            let i = fieldStores.length;
-            i > newFieldNames.length;
-            i = fieldStores.length
-        ) {
-            fieldStores.pop();
-        }
-
-        for (const [index, [, fieldContent]] of fs.entries()) {
-            fieldStores[index].set(fieldContent);
-        }
-
-        fieldNames = newFieldNames;
     }
 
     let fieldsCollapsed: boolean[] = [];
@@ -291,12 +297,16 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
     }
 
     const fieldSave = new ChangeTimer();
+    let hydratingFields = false;
 
     function transformContentBeforeSave(content: string): string {
         return content.replace(/ data-editor-shrink="(true|false)"/g, "");
     }
 
     function updateField(index: number, content: string): void {
+        if (hydratingFields) {
+            return;
+        }
         fieldSave.schedule(
             () =>
                 bridgeCommand(

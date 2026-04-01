@@ -213,7 +213,9 @@ impl Collection {
             // we expect calling code to ensure all decks already exist
             if let Some(deck) = decks.get(&did) {
                 if !deck.is_filtered() {
-                    let mut card = self.storage.get_card(cid)?.unwrap();
+                    let Some(mut card) = self.storage.get_card(cid)? else {
+                        continue;
+                    };
                     card.original_deck_id.0 = 0;
                     card.original_due = 0;
                     self.storage.update_card(&card)?;
@@ -256,7 +258,10 @@ impl Collection {
             let mut nt = match self.get_notetype(ntid)? {
                 None => {
                     let first_nid = group.peek().or_invalid("empty notetype group")?.1;
-                    let first_note = self.storage.get_note(first_nid)?.or_invalid("note not found")?;
+                    let first_note = self
+                        .storage
+                        .get_note(first_nid)?
+                        .or_invalid("note not found")?;
                     out.notetypes_recovered += 1;
                     self.recover_notetype(stamp_millis, first_note.fields().len(), ntid)?
                 }
@@ -350,7 +355,7 @@ impl Collection {
                     // fix note then fetch again
                     self.storage.fix_invalid_utf8_in_note(nid)?;
                     out.invalid_utf8 += 1;
-                    Ok(self.storage.get_note(nid)?.unwrap())
+                    self.storage.get_note(nid)?.or_invalid("note missing after UTF-8 fix")
                 }
                 // other errors are unhandled
                 _ => Err(err),

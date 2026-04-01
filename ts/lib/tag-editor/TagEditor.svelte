@@ -385,10 +385,11 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
     let height: number;
     let badgeHeight: number;
+    let shortenTags = false;
 
     // typically correct for rows < 7
     $: assumedRows = Math.floor(height / badgeHeight);
-    $: shortenTags = shortenTags || assumedRows > 2;
+    $: shortenTags = assumedRows > 2;
     $: anyTagsSelected = tagTypes.some((tag) => tag.selected);
 </script>
 

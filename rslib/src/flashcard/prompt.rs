@@ -9,6 +9,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
+use super::models::ClozeFlashcard;
 use super::models::Flashcard;
 use super::models::SourceType;
 
@@ -296,6 +297,11 @@ pub fn parse_flashcards_json(json_str: &str) -> Result<Vec<Flashcard>, String> {
             // Handle cloze format: {"text": "{{c1::answer}} in context"}
             let text = text.as_str().unwrap_or("").to_string();
             if !text.is_empty() {
+                let back_extra = item
+                    .get("back_extra")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
                 let tags: Vec<String> = item
                     .get("tags")
                     .and_then(|t| t.as_array())
@@ -306,7 +312,12 @@ pub fn parse_flashcards_json(json_str: &str) -> Result<Vec<Flashcard>, String> {
                     })
                     .unwrap_or_default();
 
-                let card = Flashcard::new(text, String::new()).with_tags(tags);
+                let cloze = ClozeFlashcard::new(text.clone())
+                    .with_back_extra(back_extra.clone())
+                    .with_tags(tags.clone());
+                let card = Flashcard::new(text, back_extra)
+                    .with_tags(tags)
+                    .with_cloze(cloze);
                 flashcards.push(card);
             }
         }
@@ -473,5 +484,28 @@ mod test {
         let json = r#"not json at all"#;
         let result = parse_flashcards_json(json);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_flashcards_json_cloze_preserves_back_extra() {
+        let json = r#"[
+            {
+                "text": "Rust is a {{c1::systems}} programming language.",
+                "back_extra": "Memory safety without garbage collection.",
+                "tags": ["generated", "rust"]
+            }
+        ]"#;
+        let cards = parse_flashcards_json(json).unwrap();
+        assert_eq!(cards.len(), 1);
+        let card = &cards[0];
+        assert_eq!(
+            card.front,
+            "Rust is a {{c1::systems}} programming language."
+        );
+        assert_eq!(card.back, "Memory safety without garbage collection.");
+        let cloze = card.cloze.as_ref().expect("cloze payload");
+        assert_eq!(cloze.text, card.front);
+        assert_eq!(cloze.back_extra, card.back);
+        assert_eq!(cloze.tags, vec!["generated", "rust"]);
     }
 }

@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS generated_cards (
   source_type TEXT NOT NULL DEFAULT 'text',
   created_at INTEGER NOT NULL,
   sync_status TEXT NOT NULL DEFAULT 'pending',
-  tags TEXT NOT NULL DEFAULT ''
+  tags TEXT NOT NULL DEFAULT '',
+  is_cloze INTEGER NOT NULL DEFAULT 0
 );
 -- Indexes for common queries
 CREATE INDEX IF NOT EXISTS idx_sync_status ON generated_cards(sync_status);

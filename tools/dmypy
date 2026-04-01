@@ -3,4 +3,4 @@
 # Run mypy in daemon mode for fast checking
 
 ./ninja pylib qt
-MYPY_CACHE_DIR=out/tests/mypy out/pyenv/bin/dmypy run pylib/anki qt/aqt pylib/tests
+MYPY_CACHE_DIR=out/tests/mypy "${PYENV:-out/pyenv}/bin/dmypy" run pylib/anki qt/aqt pylib/tests

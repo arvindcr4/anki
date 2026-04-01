@@ -16,13 +16,46 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
     export let show: Writable<boolean>;
 
     let suggestionsItems: string[] = [];
-    $: suggestionsPromise.then((items) => {
-        show.set(items.length > 0);
-        if (isApplePlatform() && navigator.userAgent.match(/Chrome\/77/)) {
-            items = items.slice(0, 10);
+    let suggestionsRequestId = 0;
+
+    function clampSelected(length: number): void {
+        if (selected === null || length === 0) {
+            selected = null;
+            return;
         }
-        suggestionsItems = items;
-    });
+
+        if (selected >= length) {
+            selected = length - 1;
+        }
+    }
+
+    $: {
+        const requestId = ++suggestionsRequestId;
+        void suggestionsPromise
+            .then((items) => {
+                if (requestId !== suggestionsRequestId) {
+                    return;
+                }
+
+                show.set(items.length > 0);
+                if (isApplePlatform() && navigator.userAgent.match(/Chrome\/77/)) {
+                    items = items.slice(0, 10);
+                }
+                suggestionsItems = items;
+                clampSelected(items.length);
+            })
+            .catch((error) => {
+                if (requestId !== suggestionsRequestId) {
+                    return;
+                }
+
+                show.set(false);
+                suggestionsItems = [];
+                selected = null;
+                active = false;
+                console.error("Autocomplete suggestions failed", error);
+            });
+    }
 
     let selected: number | null = null;
     let active: boolean = false;
@@ -80,8 +113,9 @@ License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
             return;
         }
 
+        clampSelected(suggestionsItems.length);
         active = true;
-        dispatch("choose", { chosen: suggestionsItems[selected ?? -1] });
+        dispatch("choose", { chosen: suggestionsItems[selected ?? 0] });
 
         await tick();
         show.set(false);

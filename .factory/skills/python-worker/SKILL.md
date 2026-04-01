@@ -41,7 +41,7 @@ None required for this worker type - uses Python tooling directly.
    - Log appropriately for debugging
 
 4. **Verify**
-   - Run `python -m pytest` for the module
+   - Run `./ninja check:pytest:pylib` for repo-native Python test execution
    - Run `./tools/dmypy` for type checking
    - Test with actual AnkiConnect if available
 
@@ -60,14 +60,14 @@ None required for this worker type - uses Python tooling directly.
     "verification": {
         "commandsRun": [
             {
-                "command": "python -m pytest pylib/tests/test_ankiconnect.py -v",
+                "command": "./ninja check:pytest:pylib",
                 "exitCode": 0,
-                "observation": "All 8 AnkiConnect tests pass including mock_connection_refused"
+                "observation": "Python pytest suite passes, including AnkiConnect tests such as mock_connection_refused"
             },
             {
-                "command": "python -m pytest pylib/tests/test_offline_queue.py -v",
+                "command": "./tools/dmypy",
                 "exitCode": 0,
-                "observation": "All 5 queue tests pass including test_fifo_order"
+                "observation": "Python type checking passes after the AnkiConnect/offline queue changes"
             }
         ],
         "interactiveChecks": [

@@ -14,11 +14,15 @@ import json
 import threading
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .ankiconnect import AnkiConnectClient, AnkiConnectUnavailable
+from .ankiconnect import (
+    AnkiConnectAPIError,
+    AnkiConnectClient,
+    AnkiConnectRateLimit,
+    AnkiConnectUnavailable,
+)
 
 # Queue file name in user data directory
 QUEUE_FILENAME = "anki_sync_queue.json"
@@ -96,11 +100,16 @@ class OfflineSyncQueue:
         self._syncing = False
         self._last_success: int | None = None
         self._last_error: str | None = None
+        self._next_generated_local_id = int(time.time_ns())
         self._monitor_thread: threading.Thread | None = None
         self._stop_monitor = threading.Event()
 
         # Load existing queue from disk
         self._load_queue()
+        self._next_generated_local_id = max(
+            self._next_generated_local_id,
+            max((card.local_id for card in self._cards), default=0),
+        )
 
     def _load_queue(self) -> None:
         """Load queue from disk if it exists."""
@@ -127,6 +136,15 @@ class OfflineSyncQueue:
             json.dump(data, f, indent=2)
         temp_path.replace(self.queue_path)
 
+    def _allocate_local_id(self) -> int:
+        """
+        Allocate a queue-local identifier that remains unique even if the
+        wall clock does not advance between calls.
+        """
+        next_id = max(self._next_generated_local_id + 1, int(time.time_ns()))
+        self._next_generated_local_id = next_id
+        return next_id
+
     def add_card(
         self,
         front: str,
@@ -149,8 +167,15 @@ class OfflineSyncQueue:
             The queue position (1-based)
         """
         with self._lock:
+            resolved_local_id = (
+                local_id if local_id is not None else self._allocate_local_id()
+            )
+            self._next_generated_local_id = max(
+                self._next_generated_local_id,
+                resolved_local_id,
+            )
             card = QueuedCard(
-                local_id=local_id or int(time.time() * 1000),
+                local_id=resolved_local_id,
                 front=front,
                 back=back,
                 deck=deck or self.default_deck,
@@ -181,8 +206,16 @@ class OfflineSyncQueue:
             queued_cards = []
             now = int(time.time())
             for i, card_data in enumerate(cards):
+                resolved_local_id = card_data.get("local_id")
+                if resolved_local_id is None:
+                    resolved_local_id = self._allocate_local_id()
+                else:
+                    self._next_generated_local_id = max(
+                        self._next_generated_local_id,
+                        resolved_local_id,
+                    )
                 card = QueuedCard(
-                    local_id=card_data.get("local_id") or now + i,
+                    local_id=resolved_local_id,
                     front=card_data["front"],
                     back=card_data["back"],
                     deck=card_data.get("deck") or self.default_deck,
@@ -229,22 +262,33 @@ class OfflineSyncQueue:
             QueueStatus with counts and state information
         """
         with self._lock:
-            anki_available = self._check_anki_connect()
-            return QueueStatus(
-                pending_count=len(self._cards),
-                syncing=self._syncing,
-                last_success=self._last_success,
-                last_error=self._last_error,
-                anki_connect_available=anki_available,
-            )
+            pending_count = len(self._cards)
+            syncing = self._syncing
+            last_success = self._last_success
+            last_error = self._last_error
+
+        anki_available = self._check_anki_connect()
+        return QueueStatus(
+            pending_count=pending_count,
+            syncing=syncing,
+            last_success=last_success,
+            last_error=last_error,
+            anki_connect_available=anki_available,
+        )
 
     def _check_anki_connect(self) -> bool:
         """Check if AnkiConnect is available."""
+        client = AnkiConnectClient()
         try:
-            client = AnkiConnectClient()
             return client.discover()
         except Exception:
             return False
+        finally:
+            client.close()
+
+    def _remove_card_instance(self, card: QueuedCard) -> None:
+        """Remove the exact queued card instance that just synced."""
+        self._cards = [queued for queued in self._cards if queued is not card]
 
     def sync_now(self) -> tuple[int, int]:
         """
@@ -264,58 +308,70 @@ class OfflineSyncQueue:
 
             # Get cards to process (in FIFO order)
             cards_to_process = []
+            pending_count = 0
             with self._lock:
                 cards_to_process = list(self._cards)
+                pending_count = len(cards_to_process)
                 self._last_error = None
+            cards_to_process = cards_to_process[:MAX_BATCH_SIZE]
 
-            client = AnkiConnectClient()
+            with AnkiConnectClient() as client:
+                # Check if AnkiConnect is available
+                if not client.discover():
+                    with self._lock:
+                        self._last_error = "AnkiConnect unavailable"
+                    return 0, pending_count
 
-            # Check if AnkiConnect is available
-            if not client.discover():
-                with self._lock:
-                    self._last_error = "AnkiConnect unavailable"
-                return 0, len(cards_to_process)
+                # Process cards in batches
+                for index, card in enumerate(cards_to_process):
+                    with self._lock:
+                        card.attempt_count += 1
 
-            # Process cards in batches
-            for card in cards_to_process[:MAX_BATCH_SIZE]:
-                with self._lock:
-                    card.attempt_count += 1
+                    note = {
+                        "deckName": card.deck,
+                        "modelName": "Basic",
+                        "fields": {
+                            "Front": card.front,
+                            "Back": card.back,
+                        },
+                    }
+                    if card.tags:
+                        note["tags"] = card.tags
 
-                try:
-                    note_id = client.add_note(
-                        front=card.front,
-                        back=card.back,
-                        deck=card.deck,
-                        tags=card.tags,
-                    )
+                    try:
+                        note_id = client._invoke("addNote", {"note": note})
 
-                    if note_id is not None:
-                        # Success - remove from queue
+                        if note_id is not None:
+                            # Success - remove the exact queued entry that synced.
+                            with self._lock:
+                                self._remove_card_instance(card)
+                                self._last_success = int(time.time())
+                            success_count += 1
+                        else:
+                            with self._lock:
+                                card.last_error = "Anki returned null"
+                            failed_count += 1
+
+                    except (AnkiConnectUnavailable, AnkiConnectRateLimit) as e:
                         with self._lock:
-                            self._cards = [
-                                c for c in self._cards if c.local_id != card.local_id
-                            ]
-                            self._last_success = int(time.time())
-                        success_count += 1
-                    else:
+                            card.last_error = str(e)
+                            self._last_error = str(e)
+                            # Persist partial progress before returning early.
+                            self._save_queue()
+                        remaining_cards = len(cards_to_process) - index
+                        return success_count, failed_count + remaining_cards
+
+                    except AnkiConnectAPIError as e:
                         with self._lock:
-                            card.last_error = "Anki returned null"
+                            card.last_error = str(e)
+                            self._last_error = str(e)
                         failed_count += 1
 
-                except AnkiConnectUnavailable as e:
-                    with self._lock:
-                        card.last_error = str(e)
-                    # AnkiConnect went offline - stop processing
-                    with self._lock:
-                        self._last_error = "AnkiConnect unavailable during sync"
-                    return success_count, failed_count + len(
-                        cards_to_process
-                    ) - cards_to_process.index(card) - 1
-
-                except Exception as e:
-                    with self._lock:
-                        card.last_error = str(e)
-                    failed_count += 1
+                    except Exception as e:
+                        with self._lock:
+                            card.last_error = str(e)
+                            self._last_error = str(e)
+                        failed_count += 1
 
             # Save state after sync attempt
             self._save_queue()
@@ -341,26 +397,35 @@ class OfflineSyncQueue:
     def stop_auto_sync(self) -> None:
         """Stop the background auto-sync thread."""
         self._stop_monitor.set()
-        if self._monitor_thread is not None:
-            self._monitor_thread.join(timeout=5)
-            self._monitor_thread = None
+        thread = self._monitor_thread
+        if thread is not None:
+            thread.join(timeout=5)
+            if not thread.is_alive():
+                with self._lock:
+                    if self._monitor_thread is thread:
+                        self._monitor_thread = None
 
     def _monitor_loop(self) -> None:
         """Background loop that monitors AnkiConnect and retries sync."""
-        while not self._stop_monitor.is_set():
-            # Check if there are pending cards
+        try:
+            while not self._stop_monitor.is_set():
+                # Check if there are pending cards
+                with self._lock:
+                    has_pending = len(self._cards) > 0
+
+                if has_pending:
+                    # Try to sync
+                    success, failed = self.sync_now()
+                    if success > 0:
+                        # Cards were synced successfully
+                        pass
+
+                # Wait for next retry interval or until stopped
+                self._stop_monitor.wait(timeout=self.retry_interval)
+        finally:
             with self._lock:
-                has_pending = len(self._cards) > 0
-
-            if has_pending:
-                # Try to sync
-                success, failed = self.sync_now()
-                if success > 0:
-                    # Cards were synced successfully
-                    pass
-
-            # Wait for next retry interval or until stopped
-            self._stop_monitor.wait(timeout=self.retry_interval)
+                if threading.current_thread() is self._monitor_thread:
+                    self._monitor_thread = None
 
     def clear_queue(self) -> int:
         """

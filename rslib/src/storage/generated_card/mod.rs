@@ -13,6 +13,7 @@ use rusqlite::Result as SqliteResult;
 
 use crate::error::AnkiError;
 use crate::error::Result;
+use crate::flashcard::ClozeFlashcard;
 use crate::flashcard::Flashcard;
 use crate::flashcard::SourceType;
 
@@ -72,22 +73,47 @@ pub struct StoredCard {
     pub sync_status: SyncStatus,
     /// Tags associated with the card (stored as comma-separated string).
     pub tags: String,
+    /// Whether this card should rehydrate a cloze payload.
+    pub is_cloze: bool,
 }
 
 #[allow(dead_code)]
 impl StoredCard {
     /// Convert to a Flashcard struct.
     pub fn into_flashcard(self) -> Flashcard {
+        let StoredCard {
+            id: _,
+            front,
+            back,
+            source_url,
+            source_type,
+            created_at: _,
+            sync_status: _,
+            tags,
+            is_cloze,
+        } = self;
+        let tags_vec = if tags.is_empty() {
+            Vec::new()
+        } else {
+            tags.split('\x1f').map(|s| s.to_string()).collect()
+        };
+        let cloze = is_cloze.then(|| {
+            let mut card = ClozeFlashcard::new(front.clone())
+                .with_back_extra(back.clone())
+                .with_tags(tags_vec.clone())
+                .with_source_type(source_type.clone());
+            if let Some(url) = source_url.clone() {
+                card = card.with_source_url(url);
+            }
+            card
+        });
         Flashcard {
-            front: self.front,
-            back: self.back,
-            tags: if self.tags.is_empty() {
-                Vec::new()
-            } else {
-                self.tags.split('\x1f').map(|s| s.to_string()).collect()
-            },
-            source_type: self.source_type,
-            source_url: self.source_url,
+            front,
+            back,
+            tags: tags_vec,
+            source_type,
+            source_url,
+            cloze,
         }
     }
 
@@ -113,6 +139,7 @@ impl GeneratedCardStorage {
     pub fn open_or_create(path: &Path) -> Result<Self> {
         let db = Connection::open(path)?;
         db.execute_batch(include_str!("schema.sql"))?;
+        migrate_schema(&db)?;
         Ok(GeneratedCardStorage { db })
     }
 
@@ -145,6 +172,7 @@ impl GeneratedCardStorage {
                     created_at,
                     SyncStatus::Pending.as_str(),
                     &tags,
+                    card.cloze.is_some(),
                 ],
             )
             .map_err(AnkiError::from)?;
@@ -293,7 +321,32 @@ fn row_to_stored_card(row: &rusqlite::Row) -> SqliteResult<StoredCard> {
         created_at: row.get(5)?,
         sync_status,
         tags: row.get(7)?,
+        is_cloze: row.get(8)?,
     })
+}
+
+fn migrate_schema(db: &Connection) -> Result<()> {
+    let mut stmt = db.prepare("PRAGMA table_info(generated_cards)")?;
+    let mut rows = stmt.query([])?;
+    let mut has_is_cloze = false;
+    while let Some(row) = rows.next()? {
+        let column_name: String = row.get(1)?;
+        if column_name == "is_cloze" {
+            has_is_cloze = true;
+            break;
+        }
+    }
+    drop(rows);
+    drop(stmt);
+
+    if !has_is_cloze {
+        db.execute(
+            "ALTER TABLE generated_cards ADD COLUMN is_cloze INTEGER NOT NULL DEFAULT 0",
+            [],
+        )?;
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -448,6 +501,7 @@ mod test {
             created_at: 1234567890,
             sync_status: SyncStatus::Pending,
             tags: "tag1\x1ftag2\x1ftag3".into(),
+            is_cloze: false,
         };
 
         let flashcard = stored.into_flashcard();
@@ -455,6 +509,70 @@ mod test {
         assert_eq!(flashcard.back, "Back");
         assert_eq!(flashcard.tags, vec!["tag1", "tag2", "tag3"]);
         assert_eq!(flashcard.source_type, SourceType::Url);
+        assert!(flashcard.cloze.is_none());
+    }
+
+    #[test]
+    fn test_into_flashcard_rehydrates_cloze_payload() {
+        let stored = StoredCard {
+            id: 1,
+            front: "Rust is a {{c1::systems}} programming language.".into(),
+            back: "Memory safety without garbage collection.".into(),
+            source_url: Some("https://example.com".into()),
+            source_type: SourceType::Url,
+            created_at: 1234567890,
+            sync_status: SyncStatus::Pending,
+            tags: "generated\x1frust".into(),
+            is_cloze: true,
+        };
+
+        let flashcard = stored.into_flashcard();
+        let cloze = flashcard.cloze.expect("cloze payload should be restored");
+        assert_eq!(cloze.text, flashcard.front);
+        assert_eq!(cloze.back_extra, flashcard.back);
+        assert_eq!(cloze.tags, flashcard.tags);
+        assert_eq!(cloze.source_type, flashcard.source_type);
+        assert_eq!(cloze.source_url, flashcard.source_url);
+    }
+
+    #[test]
+    fn test_storage_round_trip_preserves_cloze_payload() {
+        let (storage, _dir) = temp_storage();
+        let cloze = ClozeFlashcard::new("Rust is a {{c1::systems}} programming language.")
+            .with_back_extra("Memory safety without garbage collection.")
+            .with_tags(vec!["generated".into(), "rust".into()])
+            .with_source_type(SourceType::Url)
+            .with_source_url("https://example.com");
+        let card = Flashcard::new(cloze.text.clone(), cloze.back_extra.clone())
+            .with_tags(cloze.tags.clone())
+            .with_source_type(cloze.source_type.clone())
+            .with_source_url(cloze.source_url.clone().expect("source URL"))
+            .with_cloze(cloze.clone());
+
+        let id = storage.add_card(&card).unwrap();
+        let round_tripped = storage.get_card(id).unwrap().unwrap().into_flashcard();
+
+        assert_eq!(round_tripped.front, card.front);
+        assert_eq!(round_tripped.back, card.back);
+        assert_eq!(round_tripped.cloze, Some(cloze));
+    }
+
+    #[test]
+    fn test_literal_cloze_syntax_without_flag_stays_basic() {
+        let stored = StoredCard {
+            id: 1,
+            front: "The literal string {{c1::example}} appears in docs.".into(),
+            back: "This should remain a basic card.".into(),
+            source_url: None,
+            source_type: SourceType::Text,
+            created_at: 1234567890,
+            sync_status: SyncStatus::Pending,
+            tags: "".into(),
+            is_cloze: false,
+        };
+
+        let flashcard = stored.into_flashcard();
+        assert!(flashcard.cloze.is_none());
     }
 
     #[test]
@@ -502,6 +620,7 @@ mod test {
             created_at: 0,
             sync_status: SyncStatus::Pending,
             tags: "one\x1ftwo\x1fthree".into(),
+            is_cloze: false,
         };
 
         let tags = stored.tags_vec();
@@ -519,6 +638,7 @@ mod test {
             created_at: 0,
             sync_status: SyncStatus::Pending,
             tags: "".into(),
+            is_cloze: false,
         };
 
         assert!(stored.tags_vec().is_empty());

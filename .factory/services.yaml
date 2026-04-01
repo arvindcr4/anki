@@ -3,8 +3,8 @@ commands:
   typecheck: cargo check
   build: ./check
   test: cargo test --lib
-  python-test: python -m pytest pylib/tests -v
-  qt-test: python -m pytest aqt/tests -v
+  python-test: ./ninja check:pytest:pylib
+  qt-test: ./ninja check:pytest:aqt
   lint: cargo fmt --check && cargo clippy -- -D warnings
 
 services:

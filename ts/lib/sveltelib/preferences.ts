@@ -15,11 +15,17 @@ export async function autoSavingPrefs<T>(
 ): Promise<PreferenceStore<T>> {
     let currentValue = await getter() as T;
     const { subscribe, set: origSet } = writable(currentValue);
+    let saveQueue: Promise<void> = Promise.resolve();
 
     function set(value: T): void {
         currentValue = value;
         origSet(value);
-        setter(value);
+        saveQueue = saveQueue
+            .then(() => setter(value))
+            .then(() => undefined)
+            .catch((error) => {
+                console.error("Failed to save preference", error);
+            });
     }
 
     function update(updater: (value: T) => T): void {

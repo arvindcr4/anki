@@ -5,6 +5,7 @@ SELECT id,
   source_type,
   created_at,
   sync_status,
-  tags
+  tags,
+  is_cloze
 FROM generated_cards
 ORDER BY created_at DESC
