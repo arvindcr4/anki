@@ -179,14 +179,13 @@ where
 
     let mut target_path = folder.as_ref().join(normalized_name.as_ref());
 
-    let existing_file_hash = existing_file_sha1(&target_path)?;
-    if existing_file_hash.is_none() {
+    let Some(existing_file_hash) = existing_file_sha1(&target_path)? else {
         // no file with that name exists yet
         write_file(&target_path, data)?;
         return Ok(normalized_name);
-    }
+    };
 
-    if existing_file_hash.unwrap() == sha1 {
+    if existing_file_hash == sha1 {
         // existing file has same checksum, nothing to do
         return Ok(normalized_name);
     }
