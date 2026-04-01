@@ -43,3 +43,38 @@ impl Collection {
 fn build_aux_deck_key(deck: DeckId, key: &str) -> String {
     format!("_deck_{deck}_{key}")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn aux_deck_key_format() {
+        let key = build_aux_deck_key(DeckId(123), "myKey");
+        assert_eq!(key, "_deck_123_myKey");
+    }
+
+    #[test]
+    fn aux_deck_key_empty_suffix() {
+        let key = build_aux_deck_key(DeckId(1), "");
+        assert_eq!(key, "_deck_1_");
+    }
+
+    #[test]
+    fn deck_config_key_last_notetype() {
+        let key = DeckConfigKey::LastNotetype.for_deck(DeckId(42));
+        assert_eq!(key, "_deck_42_lastNotetype");
+    }
+
+    #[test]
+    fn deck_config_key_custom_study_include_tags() {
+        let key = DeckConfigKey::CustomStudyIncludeTags.for_deck(DeckId(99));
+        assert_eq!(key, "_deck_99_customStudyIncludeTags");
+    }
+
+    #[test]
+    fn deck_config_key_custom_study_exclude_tags() {
+        let key = DeckConfigKey::CustomStudyExcludeTags.for_deck(DeckId(7));
+        assert_eq!(key, "_deck_7_customStudyExcludeTags");
+    }
+}

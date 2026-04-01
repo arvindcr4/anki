@@ -78,3 +78,67 @@ impl From<crate::revlog::RevlogEntry> for fsrs::RevlogEntry {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::revlog::RevlogId;
+
+    #[test]
+    fn review_kind_learning_converts() {
+        let kind: fsrs::RevlogReviewKind = crate::revlog::RevlogReviewKind::Learning.into();
+        assert_eq!(kind, fsrs::RevlogReviewKind::Learning);
+    }
+
+    #[test]
+    fn review_kind_review_converts() {
+        let kind: fsrs::RevlogReviewKind = crate::revlog::RevlogReviewKind::Review.into();
+        assert_eq!(kind, fsrs::RevlogReviewKind::Review);
+    }
+
+    #[test]
+    fn review_kind_relearning_converts() {
+        let kind: fsrs::RevlogReviewKind = crate::revlog::RevlogReviewKind::Relearning.into();
+        assert_eq!(kind, fsrs::RevlogReviewKind::Relearning);
+    }
+
+    #[test]
+    fn review_kind_filtered_converts() {
+        let kind: fsrs::RevlogReviewKind = crate::revlog::RevlogReviewKind::Filtered.into();
+        assert_eq!(kind, fsrs::RevlogReviewKind::Filtered);
+    }
+
+    #[test]
+    fn review_kind_manual_converts() {
+        let kind: fsrs::RevlogReviewKind = crate::revlog::RevlogReviewKind::Manual.into();
+        assert_eq!(kind, fsrs::RevlogReviewKind::Manual);
+    }
+
+    #[test]
+    fn review_kind_rescheduled_maps_to_manual() {
+        let kind: fsrs::RevlogReviewKind = crate::revlog::RevlogReviewKind::Rescheduled.into();
+        assert_eq!(kind, fsrs::RevlogReviewKind::Manual);
+    }
+
+    #[test]
+    fn revlog_entry_converts_fields() {
+        let anki_entry = crate::revlog::RevlogEntry {
+            id: RevlogId(1_700_000_000_000),
+            cid: CardId(12345),
+            usn: Usn(99),
+            button_chosen: 3,
+            interval: 10,
+            last_interval: 5,
+            ease_factor: 2500,
+            taken_millis: 8000,
+            review_kind: crate::revlog::RevlogReviewKind::Review,
+        };
+        let fsrs_entry: fsrs::RevlogEntry = anki_entry.into();
+        assert_eq!(fsrs_entry.button_chosen, 3);
+        assert_eq!(fsrs_entry.interval, 10);
+        assert_eq!(fsrs_entry.last_interval, 5);
+        assert_eq!(fsrs_entry.ease_factor, 2500);
+        assert_eq!(fsrs_entry.taken_millis, 8000);
+        assert_eq!(fsrs_entry.review_kind, fsrs::RevlogReviewKind::Review);
+    }
+}
