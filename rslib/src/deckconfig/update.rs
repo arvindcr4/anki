@@ -205,7 +205,7 @@ impl Collection {
         // loop through all normal decks
         let usn = self.usn()?;
         let today = self.timing_today()?.days_elapsed;
-        let selected_config = req.configs.last().unwrap();
+        let selected_config = req.configs.last().or_invalid("no configs provided")?;
         let mut decks_needing_memory_recompute: HashMap<DeckConfigId, Vec<DeckId>> =
             Default::default();
         let fsrs_toggled = self.get_config_bool(BoolKey::Fsrs) != req.fsrs;

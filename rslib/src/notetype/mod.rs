@@ -563,7 +563,10 @@ impl Notetype {
         parsed: &mut [(Option<ParsedTemplate>, Option<ParsedTemplate>)],
         parsed_browser: &mut [(Option<ParsedTemplate>, Option<ParsedTemplate>)],
     ) {
-        let first_remaining_field_name = &self.fields.first().unwrap().name;
+        let Some(first_field) = self.fields.first() else {
+            return;
+        };
+        let first_remaining_field_name = &first_field.name;
         let is_cloze = self.is_cloze();
 
         let q_update_fields = |q_opt: &mut Option<ParsedTemplate>, template_target: &mut String| {

@@ -436,7 +436,7 @@ impl super::SqliteStorage {
 
     pub(crate) fn max_new_card_position(&self) -> Result<u32> {
         self.db
-            .prepare("select max(due)+1 from cards where type=0")?
+            .prepare("select coalesce(max(due)+1, 0) from cards where type=0")?
             .query_row([], |r| r.get(0))
             .map_err(Into::into)
     }
