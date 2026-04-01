@@ -221,3 +221,72 @@ impl Collection {
         &self.tr
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prelude::*;
+
+    #[test]
+    fn collection_new_creates_in_memory() {
+        let col = Collection::new();
+        assert_eq!(col.col_path.to_str().unwrap(), ":memory:");
+    }
+
+    #[test]
+    fn collection_builder_default_in_memory() {
+        let col = CollectionBuilder::default().build().unwrap();
+        assert_eq!(col.col_path.to_str().unwrap(), ":memory:");
+        assert!(!col.server);
+    }
+
+    #[test]
+    fn collection_builder_set_server() {
+        let col = CollectionBuilder::default()
+            .set_server(true)
+            .build()
+            .unwrap();
+        assert!(col.server);
+    }
+
+    #[test]
+    fn collection_usn_default() {
+        let col = Collection::new();
+        let usn = col.usn().unwrap();
+        assert_eq!(usn, Usn(-1)); // client default
+    }
+
+    #[test]
+    fn collection_usn_server() {
+        let col = CollectionBuilder::default()
+            .set_server(true)
+            .build()
+            .unwrap();
+        let usn = col.usn().unwrap();
+        assert_eq!(usn, Usn(0)); // server starts at 0
+    }
+
+    #[test]
+    fn collection_as_builder_roundtrip() {
+        let col = Collection::new();
+        let mut builder = col.as_builder();
+        let col2 = builder.build().unwrap();
+        assert_eq!(col2.server, col.server);
+    }
+
+    #[test]
+    fn collection_debug_format() {
+        let col = Collection::new();
+        let debug = format!("{col:?}");
+        assert!(debug.contains("Collection"));
+        assert!(debug.contains(":memory:"));
+    }
+
+    #[test]
+    fn collection_changes_since_open() {
+        let col = Collection::new();
+        // should be some positive number due to initial setup
+        let changes = col.changes_since_open().unwrap();
+        assert!(changes > 0);
+    }
+}
