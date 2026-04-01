@@ -36,3 +36,70 @@ impl IntervalKind {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn maybe_as_days_stays_in_secs_when_below_rollover() {
+        let kind = IntervalKind::InSecs(3600);
+        assert_eq!(kind.maybe_as_days(7200), IntervalKind::InSecs(3600));
+    }
+
+    #[test]
+    fn maybe_as_days_converts_at_rollover_boundary() {
+        let kind = IntervalKind::InSecs(7200);
+        assert_eq!(kind.maybe_as_days(7200), IntervalKind::InDays(1));
+    }
+
+    #[test]
+    fn maybe_as_days_converts_past_rollover() {
+        // 2 days past rollover
+        let kind = IntervalKind::InSecs(7200 + 86_400 * 2);
+        assert_eq!(kind.maybe_as_days(7200), IntervalKind::InDays(3));
+    }
+
+    #[test]
+    fn maybe_as_days_preserves_in_days() {
+        let kind = IntervalKind::InDays(5);
+        assert_eq!(kind.maybe_as_days(3600), IntervalKind::InDays(5));
+    }
+
+    #[test]
+    fn as_seconds_from_secs() {
+        assert_eq!(IntervalKind::InSecs(600).as_seconds(), 600);
+    }
+
+    #[test]
+    fn as_seconds_from_days() {
+        assert_eq!(IntervalKind::InDays(1).as_seconds(), 86_400);
+        assert_eq!(IntervalKind::InDays(7).as_seconds(), 604_800);
+    }
+
+    #[test]
+    fn as_seconds_from_zero_days() {
+        assert_eq!(IntervalKind::InDays(0).as_seconds(), 0);
+    }
+
+    #[test]
+    fn as_revlog_interval_days() {
+        assert_eq!(IntervalKind::InDays(10).as_revlog_interval(), 10);
+        assert_eq!(IntervalKind::InDays(0).as_revlog_interval(), 0);
+    }
+
+    #[test]
+    fn as_revlog_interval_secs_is_negative() {
+        assert_eq!(IntervalKind::InSecs(600).as_revlog_interval(), -600);
+        assert_eq!(IntervalKind::InSecs(0).as_revlog_interval(), 0);
+    }
+
+    #[test]
+    fn as_revlog_interval_large_secs() {
+        // u32::MAX can't fit in i32, so try_from fails → unwrap_or(i32::MAX) → negated
+        assert_eq!(
+            IntervalKind::InSecs(u32::MAX).as_revlog_interval(),
+            -i32::MAX
+        );
+    }
+}
