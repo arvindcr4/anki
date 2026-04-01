@@ -16,13 +16,13 @@ Prototype a Roam-like daily cards view on the main deck browser so learners can 
 The script performs a fast Python syntax check and scores whether the deck browser exposes a date-oriented daily cards UX:
 
 - daily timeline data model in deck browser rendering
-- clickable browse-by-date actions, including date-labeled today, week-range, date-bounded streak, resume-your-last-capture, busiest-day, and summary-pill shortcuts
+- clickable browse-by-date actions, including date-labeled today, week-range, date-bounded streak, date-labeled burst-day review, resume-your-last-capture, busiest-day, and summary-pill shortcuts
 - dedicated daily cards panel styling, including a compact 7-day activity strip with visible dates, stateful highlighting, a decoding legend, capture hints, accessible labels, discoverability hints, and assistive-tech semantics
 - burst-heavy weeks should be legible both in the summary pills and directly on the relevant row/bar
 - empty/zero state support for dates with no cards, without noisy repeated zero-count pills
 - card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt with import fallback, a capture-enabled Today bar, and a keep-capturing shortcut for Today
 - momentum cues such as active/quiet day balance, consistency, gap, visible range, pace, trend, density, burst share, streaks, busiest-day summaries, and next-step guidance so the panel encourages continuity, not just navigation
-- context-sensitive guidance and row actions so the right next step is one click away, including trend-aware restart prompts, consistency nudges, and burst-review followups
+- context-sensitive guidance and row actions so the right next step is one click away, including trend-aware restart prompts, consistency nudges, burst-review followups, and recovery imports
 - an insight summary with stateful styling that interprets the week before suggesting what to do next
 - overlapping row states should be preserved and remain readable when a day is both latest and busiest
 - database-side aggregation so the week summary stays lightweight, ideally with a single recent-cards aggregation query

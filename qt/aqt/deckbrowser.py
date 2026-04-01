@@ -669,6 +669,10 @@ class DeckBrowser:
             guidance_actions.append(
                 f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'addcards\')">{restart_label}</a>'
             )
+            if trend_summary == "Trend: cooling":
+                guidance_actions.append(
+                    '<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'importcards\')">Import to rebuild momentum</a>'
+                )
             if latest_active_group:
                 guidance_actions.append(
                     f'<a class="daily-cards-link daily-cards-pill" href=# onclick="return pycmd(\'browseAdded:{latest_active_group.days_ago}\')">Browse latest day</a>'
