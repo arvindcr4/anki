@@ -29,8 +29,8 @@ This prototype follows common guidance from strong UX systems and books:
 - Present the rollover hint and week summary as a compact meta row of pills so the panel scans quickly before the user reads the day-by-day list.
 - Split the week summary into a short range label plus a separate counts segment, so the sentence reads cleanly while still emphasizing the totals.
 - Add a compact 7-day activity strip so learners can scan recent capture volume before reading the detailed rows.
-- Carry streak, latest-session, and busiest-day cues into the strip itself so the mini-visualization is not just decorative volume bars.
-- Add a tiny legend under the strip so users can decode those bar states without guessing what the highlighting means.
+- Carry streak, latest-session, busiest-day, and current-gap cues into the strip itself so the mini-visualization is not just decorative volume bars.
+- Add a tiny legend under the strip so users can decode those bar states without guessing what the highlighting means, including when empty bars represent the current gap rather than older quiet history.
 - Include each strip bar’s date under the day label so the week can be read at a glance without relying on hover alone.
 - Make the activity strip self-explanatory with hover and assistive labels that include the day, date, and cards-across-notes summary.
 - Add a tiny helper line under the strip so users immediately understand that bars are browseable, that they summarize cards-across-notes for each day, and that empty bars will light up as they create or import cards.

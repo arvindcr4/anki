@@ -637,6 +637,10 @@ class DeckBrowser:
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-latest"></span>Latest session</span>'
             )
+        if latest_active_group and latest_active_group.days_ago > 1:
+            legend_items.append(
+                '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-gap"></span>Current gap</span>'
+            )
         if busiest_group:
             legend_items.append(
                 '<span class="daily-cards-legend-item"><span class="daily-cards-legend-swatch is-busiest"></span>Most active</span>'
@@ -872,6 +876,13 @@ class DeckBrowser:
                 )
             else:
                 bar_classes.append("is-empty")
+                if (
+                    latest_active_group
+                    and latest_active_group.days_ago > 1
+                    and group.days_ago > 0
+                    and group.days_ago < latest_active_group.days_ago
+                ):
+                    bar_classes.append("is-gap-bar")
                 if group.days_ago == 0:
                     bar_classes.append("is-capture-bar")
                     create_today_summary = html.escape(

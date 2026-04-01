@@ -17,7 +17,7 @@ The script performs a fast Python syntax check and scores whether the deck brows
 
 - daily timeline data model in deck browser rendering
 - clickable browse-by-date actions, including date-labeled today, a last-7-days action that still shows the concrete visible range, date-bounded streak, date-labeled burst-day review, resume-your-last-capture, panel-level busiest-day recovery, and summary-pill shortcuts
-- dedicated daily cards panel styling, including a compact 7-day activity strip with visible dates, stateful highlighting, a decoding legend, capture hints, accessible labels, discoverability hints, and assistive-tech semantics
+- dedicated daily cards panel styling, including a compact 7-day activity strip with visible dates, stateful highlighting for streak/latest/busiest/current-gap states, a decoding legend, capture hints, accessible labels, discoverability hints, and assistive-tech semantics
 - burst-heavy weeks should be legible both in the summary pills and directly on the relevant row/bar
 - empty/zero state support for dates with no cards, including collapsed quiet stretches so repeated empty rows do not drown out active days
 - card-creation affordances from the daily cards surface, including context-aware create/import actions, a zero-to-first-card prompt with import fallback, a capture-enabled Today bar, and a keep-capturing shortcut for Today

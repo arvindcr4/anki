@@ -249,6 +249,11 @@ body {
     opacity: 0.5;
 }
 
+.daily-cards-bar.is-gap-bar {
+    border-style: dashed;
+    border-color: color(fg-link);
+}
+
 .daily-cards-bar.is-capture-bar {
     opacity: 1;
     border-style: dashed;
@@ -317,6 +322,11 @@ body {
 
 .daily-cards-legend-swatch.is-latest {
     border-style: dashed;
+}
+
+.daily-cards-legend-swatch.is-gap {
+    border-style: dashed;
+    border-color: color(fg-link);
 }
 
 .daily-cards-legend-swatch.is-busiest {
