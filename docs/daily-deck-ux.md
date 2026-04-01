@@ -53,6 +53,7 @@ This prototype follows common guidance from strong UX systems and books:
 - If the visible week is burst-heavy, promote that same top-row shortcut to **Review burst day** so the panel explains why that specific day matters before the user clicks.
 - Pair it with a **burst** pill that quantifies how much of the visible week came from that single day.
 - When the week is burst-heavy, offer a **Review burst day** action so users can revisit the dominant session before generating more material.
+- Carry that same **Review burst day** language down into the dominant row’s primary CTA, so the row itself explains why that day is worth revisiting instead of falling back to a generic browse label.
 - Mirror burst-heavy weeks in the strip and row badges with a **Burst session** marker so users can spot the dominant day without cross-referencing the summary pills.
 - Follow those metrics with a short guidance sentence that answers the next-step question: keep capturing, restart the streak today, or start this week’s timeline.
 - Add a short **Insight** line above the guidance actions so the panel explains what kind of week this is: a single burst, a rising trend, cooling activity, a paused timeline with a current gap, a burst followed by a current gap, a week that just started moving, or steady consistency.

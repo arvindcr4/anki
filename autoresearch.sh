@@ -165,6 +165,8 @@ checks = [
     ('Browse burst day (', 1, 'browse'),
     ('Review burst day', 2, 'browse'),
     ('Review burst day (', 1, 'browse'),
+    ('Review burst day →', 2, 'browse'),
+    ('daily-cards-burst-row-action', 1, 'visual'),
     ('daily-cards-density', 1, 'visual'),
     ('Density:', 2, 'timeline'),
     ('cards/note', 2, 'timeline'),

@@ -1001,12 +1001,19 @@ class DeckBrowser:
                     card_count_label=_count_label(group.card_count, "card"),
                     note_count_label=_count_label(group.note_count, "note"),
                 )
-                action = f"<a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>"
+                primary_row_action_label = "Browse cards →"
+                primary_row_action_class = "daily-cards-link"
+                if group.days_ago == busiest_days_ago and bursty_week:
+                    primary_row_action_label = "Review burst day →"
+                    primary_row_action_class = (
+                        "daily-cards-link daily-cards-burst-row-action"
+                    )
+                action = f"<a class='{primary_row_action_class}' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>{primary_row_action_label}</a>"
                 row_classes.append("has-cards")
                 if group.days_ago == 0:
-                    action = """
+                    action = f"""
 <div class="daily-cards-action-stack">
-  <a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:0\")'>Browse cards →</a>
+  <a class='{primary_row_action_class}' href=# onclick='return pycmd(\"browseAdded:0\")'>{primary_row_action_label}</a>
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('addcards')">Create another</a>
 </div>
 """
@@ -1016,14 +1023,14 @@ class DeckBrowser:
                 ):
                     action = f"""
 <div class="daily-cards-action-stack">
-  <a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>
+  <a class='{primary_row_action_class}' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>{primary_row_action_label}</a>
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('addcards')">Create today</a>
 </div>
 """
                 elif group.days_ago == busiest_days_ago:
                     action = f"""
 <div class="daily-cards-action-stack">
-  <a class='daily-cards-link' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>Browse cards →</a>
+  <a class='{primary_row_action_class}' href=# onclick='return pycmd(\"browseAdded:{group.days_ago}\")'>{primary_row_action_label}</a>
   <a class="daily-cards-link daily-cards-secondary-link" href=# onclick="return pycmd('importcards')">Import more</a>
 </div>
 """
