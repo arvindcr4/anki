@@ -2,7 +2,7 @@
 // License: GNU AGPL, version 3 or later; http://www.gnu.org/licenses/agpl.html
 
 export class ChangeTimer {
-    private value: number | null = null;
+    private value: ReturnType<typeof setTimeout> | null = null;
     private action: (() => void) | null = null;
 
     constructor() {
@@ -12,11 +12,11 @@ export class ChangeTimer {
     schedule(action: () => void, delay: number): void {
         this.clear();
         this.action = action;
-        this.value = setTimeout(this.fireImmediately, delay) as any;
+        this.value = setTimeout(this.fireImmediately, delay);
     }
 
     clear(): void {
-        if (this.value) {
+        if (this.value !== null) {
             clearTimeout(this.value);
             this.value = null;
         }

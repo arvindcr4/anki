@@ -1,8 +1,6 @@
 /** @type {import('@sveltejs/kit').HandleClientError} */
-export async function handleError({ error, event, status, message }) {
-    /** @type {any} */
-    const anyError = error;
+export async function handleError({ error }) {
     return {
-        message: anyError.message,
+        message: error instanceof Error ? error.message : String(error),
     };
 }

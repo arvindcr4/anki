@@ -21,11 +21,7 @@ export function withFontColor(
 }
 
 export class Flag {
-    private flag: boolean;
-
-    constructor() {
-        this.flag = false;
-    }
+    private flag = false;
 
     setFlag(on: boolean): void {
         this.flag = on;

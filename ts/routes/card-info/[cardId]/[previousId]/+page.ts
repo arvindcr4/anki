@@ -3,15 +3,8 @@
 
 import { cardStats } from "@generated/backend";
 
+import { optionalBigInt } from "../../parse-optional-bigint";
 import type { PageLoad } from "./$types";
-
-function optionalBigInt(x: any): bigint | null {
-    try {
-        return BigInt(x);
-    } catch (e) {
-        return null;
-    }
-}
 
 export const load = (async ({ params }) => {
     const currentId = optionalBigInt(params.cardId);

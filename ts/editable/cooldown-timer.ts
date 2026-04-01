@@ -4,7 +4,7 @@
 export class CooldownTimer {
     private executing = false;
     private queuedAction: (() => void) | null = null;
-    private delay: number;
+    private readonly delay: number;
 
     constructor(delayMs: number) {
         this.delay = delayMs;

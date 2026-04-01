@@ -39,7 +39,7 @@ export class ChangeNotetypeInfoWrapper {
     /** A list with an entry for each field/template in the new notetype, with
     the values pointing back to indexes in the original notetype. */
     mapForContext(ctx: MapContext): (number | null)[] {
-        return ctx == MapContext.Template ? this.templates ?? [] : this.fields;
+        return ctx == MapContext.Template ? (this.templates ?? []) : this.fields;
     }
 
     /** Return index of old fields/templates, with null values mapped to "Nothing"
@@ -128,10 +128,7 @@ export class ChangeNotetypeState {
     private notetypeNames: NotetypeNames;
     private notetypesSetter!: (val: NotetypeListEntry[]) => void;
 
-    constructor(
-        notetypes: NotetypeNames,
-        info: ChangeNotetypeInfo,
-    ) {
+    constructor(notetypes: NotetypeNames, info: ChangeNotetypeInfo) {
         this.info_ = new ChangeNotetypeInfoWrapper(info);
         this.info = readable(this.info_, (set) => {
             this.infoSetter = set;
@@ -152,7 +149,6 @@ export class ChangeNotetypeState {
             newNotetypeId,
         });
         this.info_ = new ChangeNotetypeInfoWrapper(newInfo);
-        this.info_.unusedItems(MapContext.Field);
         this.infoSetter(this.info_);
     }
 
@@ -190,11 +186,12 @@ export class ChangeNotetypeState {
     private buildNotetypeList(): NotetypeListEntry[] {
         const currentId = this.info_.input().newNotetypeId;
         return this.notetypeNames.entries.map(
-            (entry, idx) => ({
-                idx,
-                name: entry.name,
-                current: entry.id === currentId,
-            } satisfies NotetypeListEntry),
+            (entry, idx) =>
+                ({
+                    idx,
+                    name: entry.name,
+                    current: entry.id === currentId,
+                }) satisfies NotetypeListEntry,
         );
     }
 }
