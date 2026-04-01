@@ -768,7 +768,18 @@ class DeckBrowser:
         insight_summary = "Insight: no recent capture yet."
         insight_markup = f'<div class="{insight_class}">{insight_summary}</div>'
         if total_cards:
-            if burst_pct >= 60:
+            if latest_active_group and latest_active_group.days_ago > 1:
+                insight_class = "daily-cards-insight is-gap"
+                insight_summary = (
+                    f"Insight: capture has paused since {latest_active_group.date_label}."
+                )
+                insight_markup = (
+                    f'<a class="{insight_class} daily-cards-insight-link" href=# '
+                    f'title="Browse latest capture" aria-label="Browse latest capture" '
+                    f"onclick=\"return pycmd('browseAdded:{latest_active_group.days_ago}')\">"
+                    f"{insight_summary}</a>"
+                )
+            elif burst_pct >= 60:
                 insight_class = "daily-cards-insight is-burst"
                 insight_summary = (
                     "Insight: most of this week came from one big capture session."

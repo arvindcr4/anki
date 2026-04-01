@@ -23,7 +23,7 @@ The script performs a fast Python syntax check and scores whether the deck brows
 - card-creation affordances from the daily cards surface, including create/import actions, a zero-to-first-card prompt with import fallback, a capture-enabled Today bar, and a keep-capturing shortcut for Today
 - momentum cues such as active/quiet day balance, consistency, gap, visible range, pace, trend, density, burst share, streaks, busiest-day summaries, and next-step guidance so the panel encourages continuity, not just navigation, with density remaining directly browseable when users want to inspect high-card-output weeks and gap summaries calling out the latest capture date
 - context-sensitive guidance and row actions so the right next step is one click away, including trend-aware restart prompts, consistency nudges, visually emphasized resume-last-capture shortcuts, current-gap recovery for both quiet days and quiet stretches, date-anchored current-gap guidance, gap-length-aware import recovery, burst-review followups, and recovery imports
-- an insight summary with stateful styling that interprets the week before suggesting what to do next, and can jump straight into the relevant date view
+- an insight summary with stateful styling that interprets the week before suggesting what to do next, including a paused-timeline/current-gap state, and can jump straight into the relevant date view
 - overlapping row states should be preserved and remain readable when a day is both latest and busiest
 - database-side aggregation so the week summary stays lightweight, ideally with a single recent-cards aggregation query
 - docs that explain the daily timeline UX

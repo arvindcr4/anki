@@ -361,6 +361,12 @@ body {
     border-style: dashed;
 }
 
+.daily-cards-insight.is-gap {
+    border-color: color(fg-link);
+    border-style: dashed;
+    background: color(border-subtle);
+}
+
 .daily-cards-insight.is-consistent {
     background: var(--canvas-glass);
 }
