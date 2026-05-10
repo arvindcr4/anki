@@ -236,6 +236,8 @@ class DeckBrowser:
             self.set_current_deck(DeckId(int(arg)))
         elif cmd == "study":
             self._study_deck_now(DeckId(int(arg)))
+        elif cmd == "intake":
+            self._handle_intake_drop(arg)
         elif cmd == "opts":
             self._showOptions(arg)
         elif cmd == "shared":
@@ -288,6 +290,90 @@ class DeckBrowser:
         set_current_deck(parent=self.mw, deck_id=deck_id).success(
             _enter_review
         ).run_in_background(initiator=self)
+
+    def _handle_intake_drop(self, payload: str) -> None:
+        """Process URLs / PDF file paths dropped on the deck-browser drop zone."""
+        import urllib.parse as _urlparse
+
+        raw_items = [s.strip() for s in payload.split("|") if s.strip()]
+        sources: list[str] = []
+        rejected: list[str] = []
+        for item in raw_items:
+            if item.lower().startswith("file://"):
+                # decode percent-encoded path
+                parsed = _urlparse.urlparse(item)
+                path = _urlparse.unquote(parsed.path)
+                if path.lower().endswith(".pdf"):
+                    sources.append(path)
+                else:
+                    rejected.append(path or item)
+            elif re.match(r"^https?://", item, re.IGNORECASE):
+                sources.append(item)
+            else:
+                rejected.append(item)
+
+        if rejected:
+            from aqt.utils import showWarning
+
+            showWarning(
+                "Only PDFs and http(s) URLs are supported. Skipped:\n  "
+                + "\n  ".join(rejected[:10])
+                + ("\n  …" if len(rejected) > 10 else ""),
+                parent=self.mw,
+            )
+        if not sources:
+            return
+
+        self._set_dropzone_status(
+            f"Generating cards for {len(sources)} item(s)…"
+        )
+
+        from aqt.utils import tooltip
+        from aqt.llm_intake import ingest_sources
+
+        def _on_progress(src: str, status: str) -> None:
+            short = (src.rsplit("/", 1)[-1] or src)[:60]
+            self._set_dropzone_status(f"{status}: {short}")
+
+        def _on_done(results: list[dict]) -> None:
+            ok = [r for r in results if r.get("ok")]
+            err = [r for r in results if not r.get("ok")]
+            total_added = sum(r.get("added", 0) for r in ok)
+
+            if ok:
+                deck_lines = "\n".join(
+                    f"  • {r['added']} cards → {r['deck']} ({r['label']})" for r in ok
+                )
+                summary = f"Added {total_added} cards across {len(ok)} source(s):\n{deck_lines}"
+                if err:
+                    summary += "\n\nFailures:\n" + "\n".join(
+                        f"  • {r.get('error', 'unknown')}" for r in err
+                    )
+                tooltip(
+                    f"Added {total_added} cards from {len(ok)} source(s)",
+                    period=4000,
+                )
+                self._set_dropzone_status(
+                    f"Added {total_added} cards across {len(ok)} source(s)."
+                )
+                # Force the deck browser to redraw with the new decks visible
+                self.refresh()
+            else:
+                from aqt.utils import showWarning
+
+                showWarning(
+                    "Could not generate cards:\n"
+                    + "\n".join(f"• {r.get('error', 'unknown')}" for r in err),
+                    parent=self.mw,
+                )
+                self._set_dropzone_status("Failed.")
+
+        ingest_sources(self.mw, sources, on_progress=_on_progress, on_done=_on_done)
+
+    def _set_dropzone_status(self, msg: str) -> None:
+        # Escape for inline JS string literal
+        safe = msg.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
+        self.web.eval(f"dropzoneSetStatus('{safe}');")
 
     def _daily_group_for(self, days_ago: int) -> DailyCardsGroup | None:
         if 0 <= days_ago < len(self._render_data.daily_groups):
@@ -366,8 +452,73 @@ a.deck-row-study.soft:hover {
   background: rgba(127, 127, 127, 0.32);
   color: rgba(60, 60, 60, 1) !important;
 }
+#llm-dropzone {
+  margin: 6px 0 14px 0;
+  padding: 18px 14px;
+  border: 2px dashed rgba(37, 99, 235, 0.55);
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.06);
+  text-align: center;
+  font-weight: 600;
+  color: #1e3a8a;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+  user-select: none;
+}
+#llm-dropzone:hover { background: rgba(37, 99, 235, 0.10); }
+#llm-dropzone.drag-active {
+  background: rgba(37, 99, 235, 0.18);
+  border-color: #1d4ed8;
+}
+#llm-dropzone .hint { font-weight: 500; font-size: 0.92em; opacity: 0.75; display: block; margin-top: 4px; }
+#llm-dropzone .status { font-weight: 500; font-size: 0.92em; opacity: 0.85; display: block; margin-top: 6px; }
+#llm-dropzone-paste {
+  margin-top: 8px; padding: 4px 10px; border-radius: 6px;
+  background: #2563eb; color: #fff; border: 0; cursor: pointer; font-weight: 600;
+}
+#llm-dropzone-paste:hover { background: #1d4ed8; }
 </style>
 <div class="deck-browser-shell">
+<div id="llm-dropzone"
+     ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('drag-active');"
+     ondragleave="this.classList.remove('drag-active');"
+     ondrop="dropzoneHandleDrop(event);"
+     onclick="dropzonePromptUrl();">
+  ✦ Drop a PDF or URL here to generate flashcards
+  <span class="hint">or click to paste a URL — cards land in a new <code>topic_&lt;today&gt;</code> deck</span>
+  <button id="llm-dropzone-paste" type="button"
+          onclick="event.stopPropagation(); dropzonePromptUrl();">Paste URL…</button>
+  <span class="status" id="llm-dropzone-status"></span>
+</div>
+<script>
+function dropzonePromptUrl() {
+  const u = window.prompt("Paste a URL to generate flashcards from:");
+  if (u && u.trim()) pycmd("intake:" + u.trim());
+}
+function dropzoneSetStatus(msg) {
+  const s = document.getElementById("llm-dropzone-status");
+  if (s) s.textContent = msg || "";
+}
+function dropzoneHandleDrop(ev) {
+  ev.preventDefault(); ev.stopPropagation();
+  const dz = document.getElementById("llm-dropzone");
+  if (dz) dz.classList.remove("drag-active");
+  const items = [];
+  if (ev.dataTransfer) {
+    // text/uri-list works for both URL drops and Finder file drops
+    // (Finder yields file:///abs/path/to.pdf entries here).
+    const text = ev.dataTransfer.getData("text/uri-list")
+              || ev.dataTransfer.getData("text/plain") || "";
+    for (const line of text.split(/\r?\n/)) {
+      const t = line.trim();
+      if (t && !t.startsWith("#")) items.push(t);
+    }
+  }
+  if (!items.length) { dropzoneSetStatus("Nothing dropped."); return; }
+  dropzoneSetStatus("Sending " + items.length + " item(s) to LLM…");
+  pycmd("intake:" + items.join("|"));
+}
+</script>
 <div class="deck-browser-table-wrap">
 <table cellspacing=0 cellpadding=3>
 %(tree)s

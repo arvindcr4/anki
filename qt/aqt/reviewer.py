@@ -682,6 +682,8 @@ class Reviewer:
             self.mw.onEditCurrent()
         elif url == "more":
             self.showContextMenu()
+        elif url == "diagram":
+            self._on_generate_diagram()
         elif url.startswith("play:"):
             play_clicked_audio(url, self.card)
         elif url.startswith("updateToolbar"):
@@ -812,7 +814,10 @@ class Reviewer:
 <table id=innertable width=100%% cellspacing=0 cellpadding=0>
 <tr>
 <td align=start valign=top class=stat>
-<button title="%(editkey)s" onclick="pycmd('edit');">%(edit)s</button></td>
+<button title="%(editkey)s" onclick="pycmd('edit');">%(edit)s</button>
+<button id="ankiDiagramBtn" title="Generate a TikZ/Mermaid diagram for this card with the configured LLM"
+        onclick="pycmd('diagram');">%(diagram)s</button>
+</td>
 <td align=center valign=top id=middle>
 </td>
 <td align=end valign=top class=stat>
@@ -833,6 +838,7 @@ timerStopped = false;
             editkey=tr.actions_shortcut_key(val="E"),
             more=tr.studying_more(),
             morekey=tr.actions_shortcut_key(val="M"),
+            diagram="✦ Diagram",
             downArrow=downArrow(),
             time=self.card.time_taken() // 1000,
         )
@@ -1046,6 +1052,118 @@ timerStopped = false;
             ],
         ]
         return opts
+
+    # On-demand LLM diagram generation
+    ##########################################################################
+
+    _DIAGRAM_SYSTEM_PROMPT = (
+        "You are an expert at producing minimal pedagogical diagrams. "
+        "Given the front and back of a flashcard, produce ONE diagram that "
+        "would help a learner remember it. Pick the better of:\n"
+        "  • TikZ — for geometry, vectors, simple graphs, structural diagrams. "
+        "Restrict to TikZ core: arrows, positioning, calc, shapes, "
+        "decorations.pathreplacing, patterns. No pgfplots, no shell-escape, "
+        "no \\input.\n"
+        "  • Mermaid — for flowcharts, sequence diagrams, state machines, "
+        "ER diagrams, simple class diagrams.\n\n"
+        "Respond with EXACTLY one of these forms (no surrounding prose, "
+        "no markdown fences):\n"
+        "  [tikz]<tikz body>[/tikz]\n"
+        "  [mermaid]<mermaid body>[/mermaid]\n\n"
+        "If the card content does not benefit from a visual, respond with "
+        "the literal string SKIP and nothing else."
+    )
+
+    def _on_generate_diagram(self) -> None:
+        """Ask the LLM for a [tikz]/[mermaid] block and append it to the card's back."""
+        from concurrent.futures import Future
+
+        from aqt.llm_generate import LLMError, get_api_key, is_local_available
+        from anki.utils import html_to_text_line
+
+        if self.card is None:
+            return
+        note = self.card.note()
+        if note is None or len(note.fields) < 2:
+            tooltip("Card has no separate back field to attach a diagram to.")
+            return
+        if "[tikz]" in note.fields[1] or "[mermaid]" in note.fields[1]:
+            tooltip("This card already has a diagram.")
+            return
+        if not get_api_key() and not is_local_available():
+            tooltip(
+                "No LLM configured. Open Add/Capture → LLM setup to set a key.",
+                period=3500,
+            )
+            return
+
+        front = html_to_text_line(note.fields[0]) or note.fields[0]
+        back = html_to_text_line(note.fields[1]) or note.fields[1]
+
+        # Lift the existing API plumbing (Claude / Gemini / OpenAI dispatch).
+        def task() -> str:
+            from aqt.llm_generate import (
+                _call_anthropic_api,
+                _call_api,
+                _call_gemini_api,
+                get_api_key as _gak,
+                get_provider,
+            )
+
+            api_key = _gak()
+            assert api_key is not None
+            user_prompt = (
+                f"Front: {front}\n\nBack: {back}\n\n"
+                "Produce a diagram per the rules above (or SKIP)."
+            )
+            provider = get_provider()
+            if provider == "claude":
+                return _call_anthropic_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
+            if provider == "gemini":
+                return _call_gemini_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
+            return _call_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
+
+        tooltip("Generating diagram…", period=2000)
+
+        def on_done(future: Future) -> None:
+            try:
+                raw = future.result()
+            except LLMError as exc:
+                show_warning(f"LLM error generating diagram:\n{exc}", parent=self.mw)
+                return
+            except Exception as exc:
+                show_warning(f"Diagram generation failed:\n{exc}", parent=self.mw)
+                return
+            text = (raw or "").strip()
+            # Strip any markdown fences the model might have added anyway.
+            if text.startswith("```"):
+                text = re.sub(r"^```[a-zA-Z]*\n?", "", text)
+                text = re.sub(r"\n?```\s*$", "", text).strip()
+            if text.upper() == "SKIP" or not text:
+                tooltip("LLM said this card doesn't need a diagram.", period=2500)
+                return
+            if not (
+                ("[tikz]" in text and "[/tikz]" in text)
+                or ("[mermaid]" in text and "[/mermaid]" in text)
+            ):
+                show_warning(
+                    "LLM didn't return a recognised diagram block. "
+                    f"Raw response (first 500 chars):\n\n{text[:500]}",
+                    parent=self.mw,
+                )
+                return
+
+            # Persist the diagram on the note's back field.
+            note.fields[1] = note.fields[1].rstrip() + "<br><br>" + text
+            self.mw.col.update_note(note)
+            tooltip("Diagram added — refreshing card.", period=1800)
+            # Re-render the current side so the new diagram appears.
+            if self.state == "answer":
+                self._showAnswer()
+            else:
+                self._showQuestion()
+
+        self.mw.taskman.run_in_background(task, on_done)
 
     def showContextMenu(self) -> None:
         opts = self._contextMenu()
