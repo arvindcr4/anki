@@ -234,6 +234,8 @@ class DeckBrowser:
             arg = ""
         if cmd == "open":
             self.set_current_deck(DeckId(int(arg)))
+        elif cmd == "study":
+            self._study_deck_now(DeckId(int(arg)))
         elif cmd == "opts":
             self._showOptions(arg)
         elif cmd == "shared":
@@ -273,6 +275,18 @@ class DeckBrowser:
     def set_current_deck(self, deck_id: DeckId) -> None:
         set_current_deck(parent=self.mw, deck_id=deck_id).success(
             lambda _: self.mw.onOverview()
+        ).run_in_background(initiator=self)
+
+    def _study_deck_now(self, deck_id: DeckId) -> None:
+        """Select the deck and jump straight into the review queue."""
+
+        def _enter_review(_: object) -> None:
+            self.mw.col.startTimebox()
+            self.mw.moveToState("overview")
+            self.mw.moveToState("review")
+
+        set_current_deck(parent=self.mw, deck_id=deck_id).success(
+            _enter_review
         ).run_in_background(initiator=self)
 
     def _daily_group_for(self, days_ago: int) -> DailyCardsGroup | None:
@@ -330,6 +344,29 @@ class DeckBrowser:
     ##########################################################################
 
     _body = """
+<style>
+td.study-cell { padding: 2px 8px; }
+a.deck-row-study {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff !important;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+a.deck-row-study:hover { background: #1d4ed8; }
+a.deck-row-study.soft {
+  background: rgba(127, 127, 127, 0.18);
+  color: rgba(127, 127, 127, 0.95) !important;
+}
+a.deck-row-study.soft:hover {
+  background: rgba(127, 127, 127, 0.32);
+  color: rgba(60, 60, 60, 1) !important;
+}
+</style>
 <div class="deck-browser-shell">
 <div class="deck-browser-table-wrap">
 <table cellspacing=0 cellpadding=3>
@@ -1434,6 +1471,7 @@ class DeckBrowser:
 <th class=count>{}</th>
 <th class=count>{}</th>
 <th class=count>{}</th>
+<th class=studycol></th>
 <th class=optscol></th></tr>""".format(
             tr.decks_deck(),
             tr.actions_new(),
@@ -1508,6 +1546,28 @@ class DeckBrowser:
             learn,
             review,
         )
+        # per-deck Study button — always clickable. When the deck has cards
+        # due today, the button starts review directly. When nothing's due,
+        # clicking still opens the deck so the user can browse, do Custom
+        # Study, or check why the queue is empty.
+        due_total = (
+            (node.review_count or 0) + (node.learn_count or 0) + (node.new_count or 0)
+        )
+        if due_total > 0:
+            study_btn = (
+                "<a class='deck-row-study' "
+                f"onclick='return pycmd(\"study:{node.deck_id}\");' "
+                f"title='Start review for this deck'>Study</a>"
+            )
+        else:
+            # Open the deck overview instead — the page surfaces Custom Study
+            # and lets the user investigate why nothing is due.
+            study_btn = (
+                "<a class='deck-row-study soft' "
+                f"onclick='return pycmd(\"open:{node.deck_id}\");' "
+                f"title='Open deck (no cards due right now — try Custom Study)'>Open</a>"
+            )
+        buf += f"<td align=center class='study-cell'>{study_btn}</td>"
         # options
         buf += (
             "<td align=center class=opts><a onclick='return pycmd(\"opts:%d\");'>"
@@ -1520,7 +1580,7 @@ class DeckBrowser:
         return buf
 
     def _topLevelDragRow(self) -> str:
-        return "<tr class='top-level-drag-row'><td colspan='6'>&nbsp;</td></tr>"
+        return "<tr class='top-level-drag-row'><td colspan='7'>&nbsp;</td></tr>"
 
     # Options
     ##########################################################################

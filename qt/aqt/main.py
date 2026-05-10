@@ -25,6 +25,7 @@ import aqt.mediasrv
 import aqt.mpv
 import aqt.operations
 import aqt.progress
+import aqt.diagrams
 import aqt.sound
 import aqt.stats
 import aqt.toolbar
@@ -968,6 +969,16 @@ title="{}" {}>{}</button>""".format(
         sweb = self.bottomWeb = BottomWebView(self)
         sweb.setFocusPolicy(Qt.FocusPolicy.WheelFocus)
         sweb.disable_zoom()
+        # Apply ANKI_UI_SCALE (set in aqt/__init__.py) to webview zooms so the
+        # deck browser, reviewer, and toolbar match the scaled-up Qt font.
+        try:
+            _ui_scale = float(os.environ.get("ANKI_UI_SCALE", "1.25"))
+        except ValueError:
+            _ui_scale = 1.0
+        if _ui_scale > 0 and abs(_ui_scale - 1.0) > 0.01:
+            tweb.setZoomFactor(_ui_scale)
+            self.web.setZoomFactor(_ui_scale)
+            sweb.setZoomFactor(_ui_scale)
         # add in a layout
         self.mainLayout = QVBoxLayout()
         self.mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -1628,6 +1639,9 @@ title="{}" {}>{}</button>""".format(
         gui_hooks.av_player_did_end_playing.append(self.on_av_player_did_end_playing)
         gui_hooks.operation_did_execute.append(self.on_operation_did_execute)
         gui_hooks.focus_did_change.append(self.on_focus_did_change)
+
+        # [tikz] / [mermaid] tags → rendered in the reviewer webview.
+        aqt.diagrams.setup_hook()
 
         self._activeWindowOnPlay: QWidget | None = None
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import html
 import os
+import re
 from dataclasses import dataclass
 
 import anki
@@ -14,6 +15,50 @@ from anki.config import Config
 from anki.models import NotetypeDict
 from anki.template import TemplateRenderContext, TemplateRenderOutput
 from anki.utils import call, is_mac, namedtmp, tmpdir
+
+# TikZ support — adds tikz/pgfplots when a card uses [tikz]...[/tikz] or
+# embeds \begin{tikzpicture}…\end{tikzpicture} inside a [latex] block.
+_TIKZ_TAG_RE = re.compile(r"\[tikz\](.+?)\[/tikz\]", re.DOTALL | re.IGNORECASE)
+_TIKZ_PREAMBLE = (
+    r"\usepackage{tikz}"
+    "\n"
+    r"\usepackage{pgfplots}"
+    "\n"
+    r"\pgfplotsset{compat=1.18}"
+    "\n"
+    r"\usetikzlibrary{"
+    r"arrows.meta,positioning,calc,shapes,shapes.geometric,"
+    r"decorations.pathreplacing,decorations.pathmorphing,"
+    r"intersections,patterns,fit,backgrounds,matrix"
+    r"}"
+    "\n"
+)
+
+
+def _wrap_tikz_block(match: re.Match[str]) -> str:
+    body = match.group(1).strip()
+    if r"\begin{tikzpicture}" not in body:
+        body = "\\begin{tikzpicture}\n" + body + "\n\\end{tikzpicture}"
+    return f"[latex]{body}[/latex]"
+
+
+def _normalize_tikz(text: str) -> str:
+    """Rewrite [tikz]…[/tikz] into [latex]\\begin{tikzpicture}…\\end{tikzpicture}[/latex]."""
+    return _TIKZ_TAG_RE.sub(_wrap_tikz_block, text)
+
+
+def _needs_tikz(latex_body: str) -> bool:
+    return r"\begin{tikzpicture}" in latex_body or r"\tikz" in latex_body
+
+
+def _inject_tikz_preamble(header: str) -> str:
+    """Insert tikz/pgfplots preamble before \\begin{document} if not already loaded."""
+    if "\\usepackage{tikz}" in header:
+        return header
+    marker = "\\begin{document}"
+    if marker in header:
+        return header.replace(marker, _TIKZ_PREAMBLE + marker)
+    return header + "\n" + _TIKZ_PREAMBLE
 
 pngCommands = [
     ["latex", "-interaction=nonstopmode", "tmp.tex"],
@@ -68,6 +113,12 @@ class ExtractedLatexOutput:
 def on_card_did_render(
     output: TemplateRenderOutput, ctx: TemplateRenderContext
 ) -> None:
+    # Note: [tikz]…[/tikz] tags are NOT rewritten here — they're handled at
+    # display time by aqt/diagrams.py via gui_hooks.card_will_show, which
+    # renders them with TikZJax in the reviewer webview (no LaTeX install
+    # required). The tikz preamble injection in _save_latex_image still kicks
+    # in if a user explicitly uses [latex]\begin{tikzpicture}…[/latex] AND has
+    # a working LaTeX install.
     output.question_text = render_latex(
         output.question_text, ctx.note_type(), ctx.col()
     )
@@ -125,6 +176,10 @@ def _save_latex_image(
     footer: str,
     svg: bool,
 ) -> str | None:
+    # Inject tikz preamble on demand so existing note types render TikZ
+    # without requiring a manual edit to latexPre.
+    if _needs_tikz(extracted.latex_body):
+        header = _inject_tikz_preamble(header)
     # add header/footer
     latex = f"{header}\n{extracted.latex_body}\n{footer}"
 

@@ -98,7 +98,10 @@ class Overview:
             self.mw.col.startTimebox()
             self.mw.moveToState("review")
             if self.mw.state == "overview":
-                tooltip(tr.studying_no_cards_are_due_yet())
+                # The current deck has nothing in its queue. If another deck
+                # has due cards, offer to jump there instead — this is what
+                # users expect when they hit Study Now and nothing happens.
+                self._offer_switch_to_deck_with_due()
         elif url == "anki":
             print("anki menu")
         elif url == "opts":
@@ -320,3 +323,48 @@ class Overview:
         import aqt.customstudy
 
         aqt.customstudy.CustomStudy.fetch_data_and_show(self.mw)
+
+    def _offer_switch_to_deck_with_due(self) -> None:
+        """When Study Now finds nothing here, offer to jump to a deck that has cards."""
+        col = self.mw.col
+        try:
+            tree = col.sched.deck_due_tree()
+        except Exception:
+            tooltip(tr.studying_no_cards_are_due_yet())
+            return
+
+        current_did = col.decks.get_current_id()
+
+        def walk(node: Any) -> int | None:
+            count = (
+                (getattr(node, "review_count", 0) or 0)
+                + (getattr(node, "new_count", 0) or 0)
+                + (getattr(node, "learn_count", 0) or 0)
+            )
+            did = getattr(node, "deck_id", None)
+            if count > 0 and did and did != current_did:
+                return did
+            for child in getattr(node, "children", []):
+                r = walk(child)
+                if r:
+                    return r
+            return None
+
+        target = walk(tree)
+        if not target:
+            tooltip(tr.studying_no_cards_are_due_yet())
+            return
+
+        target_name = col.decks.name(target) or "(unknown)"
+        from aqt.utils import askUser
+
+        if askUser(
+            f"No cards are due in this deck.\n\nSwitch to “{target_name}” "
+            f"and study there instead?",
+            parent=self.mw,
+            defaultno=False,
+        ):
+            col.decks.select(target)
+            col.startTimebox()
+            self.mw.moveToState("overview")
+            self.mw.moveToState("review")

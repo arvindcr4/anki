@@ -8,6 +8,7 @@ import os
 import re
 import urllib.parse
 from collections.abc import Callable, Sequence
+from concurrent.futures import Future
 
 import aqt.editor
 import aqt.forms
@@ -363,6 +364,26 @@ QPushButton#quickIntakeGhostAction:disabled {
         super().dropEvent(event)
 
 
+def _apply_llm_env(cfg: dict[str, str]) -> None:
+    """Apply a saved LLM config to environment variables consumed by llm_generate."""
+    provider = cfg.get("provider", "claude")
+    if provider == "local":
+        os.environ["ANKI_LLM_BACKEND"] = "local"
+    else:
+        os.environ["ANKI_LLM_BACKEND"] = "api"
+        os.environ["ANKI_LLM_PROVIDER"] = provider
+    if cfg.get("model"):
+        os.environ["ANKI_LLM_MODEL"] = cfg["model"]
+    elif "ANKI_LLM_MODEL" in os.environ:
+        del os.environ["ANKI_LLM_MODEL"]
+    if cfg.get("anthropic_api_key"):
+        os.environ["ANTHROPIC_API_KEY"] = cfg["anthropic_api_key"]
+    if cfg.get("openai_api_key"):
+        os.environ["OPENAI_API_KEY"] = cfg["openai_api_key"]
+    if cfg.get("gemini_api_key"):
+        os.environ["GEMINI_API_KEY"] = cfg["gemini_api_key"]
+
+
 class AddCards(QMainWindow):
     def __init__(self, mw: AnkiQt) -> None:
         super().__init__(None, Qt.WindowType.Window)
@@ -373,8 +394,12 @@ class AddCards(QMainWindow):
         form.setupUi(self)
         self.form = form
         self.setWindowTitle(f"{tr.actions_add()} / Capture")
-        self.setMinimumHeight(300)
-        self.setMinimumWidth(400)
+        self.setMinimumHeight(720)
+        self.setMinimumWidth(900)
+        if mw.pm.profile is not None:
+            saved_cfg = mw.pm.profile.get("llm_config")
+            if isinstance(saved_cfg, dict):
+                _apply_llm_env(saved_cfg)
         self.setup_choosers()
         self.setup_intake_panel()
         self.setupEditor()
@@ -383,7 +408,7 @@ class AddCards(QMainWindow):
         self.history: list[NoteId] = []
         self._last_added_note: Note | None = None
         gui_hooks.operation_did_execute.append(self.on_operation_did_execute)
-        restoreGeom(self, "add")
+        restoreGeom(self, "add", default_size=(1020, 880))
         gui_hooks.add_cards_did_init(self)
         if not is_mac:
             self.setMenuBar(None)
@@ -472,6 +497,9 @@ class AddCards(QMainWindow):
 
     def _reset_source_workflow(self) -> None:
         self._last_source_summary = None
+        self._captured_source_text: str = ""
+        self._captured_source_title: str = ""
+        self._captured_source_url: str = ""
         self._refresh_llm_readiness()
         self.intake_frame.set_source_preview(
             "Source preview: drop a file or URL, then preview Summarize, Q&A, or Cloze."
@@ -480,6 +508,54 @@ class AddCards(QMainWindow):
             "Source details: waiting for a file or URL"
         )
         self.intake_frame.set_llm_actions_enabled(False)
+
+    def _fetch_source_url(self, url: str) -> tuple[str, str]:
+        """Fetch a URL and extract its main textual content. Returns (title, text)."""
+        import requests
+        from bs4 import BeautifulSoup
+
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 Anki-LLM-Capture/1.0"
+            )
+        }
+        resp = requests.get(url, headers=headers, timeout=30)
+        resp.raise_for_status()
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+        for tag in soup(
+            [
+                "script",
+                "style",
+                "noscript",
+                "nav",
+                "footer",
+                "aside",
+                "header",
+                "form",
+                "iframe",
+                "svg",
+                "button",
+            ]
+        ):
+            tag.decompose()
+
+        title = ""
+        if soup.title and soup.title.string:
+            title = soup.title.string.strip()
+
+        container = soup.find("article") or soup.find("main") or soup.body or soup
+        parts: list[str] = []
+        for el in container.find_all(
+            ["h1", "h2", "h3", "h4", "h5", "p", "li", "blockquote", "pre"]
+        ):
+            text = el.get_text(" ", strip=True)
+            if text:
+                parts.append(text)
+        text = "\n\n".join(parts)
+        # Cap to keep prompts under provider context limits.
+        return title, text[:80_000]
 
     def _refresh_llm_readiness(self, source_summary: str | None = None) -> None:
         if source_summary is not None:
@@ -625,29 +701,392 @@ class AddCards(QMainWindow):
         self._insert_source_links(paths, source_kind="file")
 
     def _prompt_for_source_url(self) -> None:
-        url, ok = QInputDialog.getText(
-            self,
-            "Paste a source URL",
-            "Paste a web page, video, or document URL to capture into the current note:",
+        from aqt.llm_generate import (
+            LLMError,
+            generate_cards,
+            get_api_key,
+            is_local_available,
         )
-        if ok and url.strip():
-            self._insert_source_links([url.strip()], source_kind="web")
+
+        # Reapply any saved profile config so generation has the right keys.
+        if self.mw.pm.profile is not None:
+            saved_cfg = self.mw.pm.profile.get("llm_config")
+            if isinstance(saved_cfg, dict):
+                _apply_llm_env(saved_cfg)
+
+        if not get_api_key() and not is_local_available():
+            showWarning(
+                "No LLM backend configured.\n\n"
+                "Click “LLM setup” in the intake panel and add an Anthropic or OpenAI API key first.",
+                parent=self,
+            )
+            return
+
+        url, num_cards, ok = self._ask_url_and_count()
+        if not ok or not url:
+            return
+
+        auto_count = num_cards == 0
+
+        self.intake_frame.set_llm_actions_enabled(False)
+        self.intake_frame.set_status(f"Fetching {url}…")
+        self.intake_frame.set_llm_status(f"LLM status: fetching {url}…")
+
+        def task() -> dict[str, object]:
+            title, content = self._fetch_source_url(url)
+            if not content.strip():
+                return {"error": "No textual content extracted from that URL."}
+            requested_n = (
+                self._optimal_card_count(content) if auto_count else num_cards
+            )
+            self.mw.taskman.run_on_main(
+                lambda label=title or url, n=requested_n: self.intake_frame.set_llm_status(
+                    f"LLM status: generating {n} cards from {label}…"
+                )
+            )
+            result = generate_cards(
+                content,
+                "qa",
+                num_cards=requested_n,
+                context=(
+                    f"Source URL: {url}\nSource title: {title}"
+                    if title
+                    else f"Source URL: {url}"
+                ),
+            )
+            return {"title": title, "result": result, "requested_n": requested_n}
+
+        def on_done(future: Future) -> None:
+            try:
+                payload = future.result()
+            except LLMError as exc:
+                showWarning(f"LLM error:\n{exc}", parent=self)
+                self.intake_frame.set_status(f"LLM error: {exc}")
+                return
+            except Exception as exc:
+                showWarning(f"Could not fetch URL:\n{exc}", parent=self)
+                self.intake_frame.set_status(f"Fetch failed: {exc}")
+                return
+            if "error" in payload:
+                showWarning(str(payload["error"]), parent=self)
+                self.intake_frame.set_status(str(payload["error"]))
+                return
+            title = str(payload.get("title", "") or "")
+            result = payload["result"]
+            from aqt.llm_generate import GenerationResult
+
+            assert isinstance(result, GenerationResult)
+            if not result.cards:
+                showWarning(
+                    "LLM returned no usable cards. Try increasing the count or changing model.",
+                    parent=self,
+                )
+                self.intake_frame.set_status("LLM returned no cards.")
+                return
+            # Always create/use a topic_<date> deck for LLM-generated cards
+            # (must run on the main thread — touches the collection).
+            deck_id = self._target_deck_for_url(url, title)
+            deck_name = self.col.decks.name(deck_id) or "(unknown)"
+            added = self._add_cards_from_url(
+                result.cards,
+                deck_id,
+                source_url=url,
+                source_title=title,
+            )
+            label = title or url
+            requested = int(payload.get("requested_n", added) or added)
+            count_note = (
+                f" (auto-sized to {requested})"
+                if auto_count
+                else ""
+            )
+            self.intake_frame.set_status(
+                f"Added {added} cards from {label} → deck “{deck_name}”{count_note}"
+            )
+            self.intake_frame.set_llm_status(
+                f"LLM status: added {added}/{len(result.cards)} cards with {result.model_used} → {deck_name}{count_note}"
+            )
+            tooltip(
+                f"Added {added} cards to {deck_name}{count_note}", period=3000
+            )
+
+        self.mw.taskman.run_in_background(task, on_done)
+
+    def _ask_url_and_count(self) -> tuple[str, int, bool]:
+        """Ask for URL + number of cards. Returns (url, n, ok).
+
+        ``n == 0`` means "auto-determine from article length" — the caller will
+        compute it after fetching.
+        """
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Paste a URL — generate Q&A cards")
+        dlg.setMinimumWidth(560)
+        layout = QVBoxLayout(dlg)
+        layout.setSpacing(10)
+
+        intro = QLabel(
+            "Anki will fetch the page, extract the main text, and add Q&A cards "
+            "to a new deck named <code>&lt;topic&gt;_&lt;today&gt;</code> "
+            "(topic from the article title; created if it doesn't exist)."
+        )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        url_row = QHBoxLayout()
+        url_row.addWidget(QLabel("URL:"))
+        url_edit = QLineEdit()
+        url_edit.setPlaceholderText("https://example.com/article")
+        url_row.addWidget(url_edit)
+        layout.addLayout(url_row)
+
+        assert self.mw.pm.profile is not None
+        saved_n = int(self.mw.pm.profile.get("llm_url_card_count", 0) or 0)
+        saved_auto = bool(self.mw.pm.profile.get("llm_url_card_count_auto", True))
+
+        count_row = QHBoxLayout()
+        count_row.addWidget(QLabel("Cards:"))
+        auto_check = QCheckBox("Auto (from article length)")
+        auto_check.setChecked(saved_auto)
+        count_row.addWidget(auto_check)
+        count_spin = QSpinBox()
+        count_spin.setRange(1, 50)
+        count_spin.setValue(saved_n if saved_n > 0 else 10)
+        count_spin.setEnabled(not saved_auto)
+        count_row.addWidget(count_spin)
+        count_row.addStretch(1)
+        layout.addLayout(count_row)
+
+        qconnect(
+            auto_check.stateChanged,
+            lambda _: count_spin.setEnabled(not auto_check.isChecked()),
+        )
+
+        hint = QLabel(
+            "Auto picks roughly one card per 150 words of extracted text, "
+            "clamped between 3 and 25."
+        )
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: palette(mid);")
+        layout.addWidget(hint)
+
+        deck_label = QLabel(
+            "Deck: <i>auto — “&lt;topic&gt;_&lt;today&gt;” based on the article title</i>"
+        )
+        deck_label.setWordWrap(True)
+        layout.addWidget(deck_label)
+
+        btns = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        layout.addWidget(btns)
+        qconnect(btns.accepted, dlg.accept)
+        qconnect(btns.rejected, dlg.reject)
+
+        url_edit.setFocus()
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return "", 0, False
+        url = url_edit.text().strip()
+        if not url:
+            return "", 0, False
+        if not re.match(r"^https?://", url, re.IGNORECASE):
+            url = "https://" + url
+
+        is_auto = auto_check.isChecked()
+        self.mw.pm.profile["llm_url_card_count_auto"] = is_auto
+        if not is_auto:
+            self.mw.pm.profile["llm_url_card_count"] = count_spin.value()
+            return url, count_spin.value(), True
+        # 0 signals "auto" — the caller computes after fetching.
+        return url, 0, True
+
+    @staticmethod
+    def _optimal_card_count(text: str) -> int:
+        """Heuristic: ~1 card per 150 words of extracted content, clamped [3, 25]."""
+        words = len(text.split())
+        return max(3, min(25, words // 150))
+
+    @staticmethod
+    def _slugify_topic(text: str, max_len: int = 50) -> str:
+        """Turn an article title or URL fragment into a deck-safe slug."""
+        text = (text or "").strip()
+        if not text:
+            return "untitled"
+        # drop anything that's not word chars / spaces / hyphens
+        text = re.sub(r"[^\w\s\-]", " ", text)
+        text = re.sub(r"[\s\-_]+", "_", text).strip("_").lower()
+        if not text:
+            return "untitled"
+        return text[:max_len].rstrip("_") or "untitled"
+
+    def _target_deck_for_url(self, url: str, title: str) -> DeckId:
+        """Create-or-find a `topic_YYYY-MM-DD` deck for LLM-generated cards.
+
+        Topic comes from the article title; falls back to URL hostname.
+        """
+        from datetime import date
+
+        topic_source = title.strip() if title else ""
+        if not topic_source:
+            try:
+                topic_source = urllib.parse.urlparse(url).netloc or url
+            except Exception:
+                topic_source = url
+        slug = self._slugify_topic(topic_source)
+        deck_name = f"{slug}_{date.today().isoformat()}"
+        return DeckId(self.col.decks.id(deck_name, create=True))
+
+    def _add_cards_from_url(
+        self,
+        cards: Sequence,
+        deck_id: DeckId,
+        *,
+        source_url: str,
+        source_title: str,
+    ) -> int:
+        """Add Front/Back cards generated from a URL directly to deck_id."""
+        col = self.col
+        basic = col.models.by_name("Basic") or col.models.current()
+        added = 0
+        for card in cards:
+            note = col.new_note(basic)
+            if len(note.fields) >= 1:
+                note.fields[0] = card.front
+            if len(note.fields) >= 2:
+                back = card.back
+                if source_url:
+                    label = source_title or source_url
+                    back = (
+                        f'{back}<br><br>'
+                        f'<i>Source: <a href="{source_url}">{label}</a></i>'
+                    )
+                note.fields[1] = back
+            note.tags = list(card.tags) if getattr(card, "tags", None) else [
+                "llm-generated",
+                "from-url",
+            ]
+            try:
+                col.add_note(note, deck_id)
+                added += 1
+            except Exception:
+                pass
+        self.mw.reset()
+        return added
 
     def _show_llm_setup(self) -> None:
+        from aqt.llm_generate import DEFAULT_API_MODEL
+
+        assert self.mw.pm.profile is not None
+        cfg = dict(self.mw.pm.profile.get("llm_config", {}))
+
+        dlg = QDialog(self)
+        dlg.setWindowTitle("LLM setup")
+        dlg.setMinimumWidth(520)
+        layout = QVBoxLayout(dlg)
+        layout.setSpacing(10)
+
+        intro = QLabel(
+            "Pick a provider and paste an API key. Settings persist per profile and "
+            "are also exposed via environment variables to llm_generate.py."
+        )
+        intro.setWordWrap(True)
+        layout.addWidget(intro)
+
+        provider_row = QHBoxLayout()
+        provider_row.addWidget(QLabel("Provider:"))
+        provider_combo = QComboBox()
+        provider_combo.addItems(["claude", "openai", "gemini", "local"])
+        provider_combo.setCurrentText(cfg.get("provider", "claude"))
+        provider_row.addWidget(provider_combo)
+        provider_row.addStretch(1)
+        layout.addLayout(provider_row)
+
+        model_row = QHBoxLayout()
+        model_row.addWidget(QLabel("Model:"))
+        model_edit = QLineEdit()
+        model_edit.setPlaceholderText("(provider default)")
+        model_edit.setText(cfg.get("model", ""))
+        model_row.addWidget(model_edit)
+        layout.addLayout(model_row)
+
+        claude_row = QHBoxLayout()
+        claude_row.addWidget(QLabel("Anthropic key:"))
+        claude_edit = QLineEdit()
+        claude_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        claude_edit.setText(cfg.get("anthropic_api_key", ""))
+        claude_row.addWidget(claude_edit)
+        layout.addLayout(claude_row)
+
+        openai_row = QHBoxLayout()
+        openai_row.addWidget(QLabel("OpenAI key:"))
+        openai_edit = QLineEdit()
+        openai_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        openai_edit.setText(cfg.get("openai_api_key", ""))
+        openai_row.addWidget(openai_edit)
+        layout.addLayout(openai_row)
+
+        gemini_row = QHBoxLayout()
+        gemini_row.addWidget(QLabel("Gemini key:"))
+        gemini_edit = QLineEdit()
+        gemini_edit.setEchoMode(QLineEdit.EchoMode.Password)
+        gemini_edit.setText(cfg.get("gemini_api_key", ""))
+        gemini_row.addWidget(gemini_edit)
+        layout.addLayout(gemini_row)
+
+        show_keys = QCheckBox("Show keys")
+        layout.addWidget(show_keys)
+
+        def _toggle_echo() -> None:
+            mode = (
+                QLineEdit.EchoMode.Normal
+                if show_keys.isChecked()
+                else QLineEdit.EchoMode.Password
+            )
+            claude_edit.setEchoMode(mode)
+            openai_edit.setEchoMode(mode)
+            gemini_edit.setEchoMode(mode)
+
+        qconnect(show_keys.stateChanged, lambda _: _toggle_echo())
+
+        hint = QLabel("")
+        hint.setWordWrap(True)
+        hint.setStyleSheet("color: palette(mid);")
+        layout.addWidget(hint)
+
+        def _refresh_hint() -> None:
+            provider = provider_combo.currentText()
+            default = DEFAULT_API_MODEL.get(provider, "(local)")
+            hint.setText(f"Default model for {provider}: {default}")
+
+        qconnect(provider_combo.currentTextChanged, lambda _: _refresh_hint())
+        _refresh_hint()
+
+        btns = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Save
+            | QDialogButtonBox.StandardButton.Cancel
+        )
+        layout.addWidget(btns)
+        qconnect(btns.accepted, dlg.accept)
+        qconnect(btns.rejected, dlg.reject)
+
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        new_cfg = {
+            "provider": provider_combo.currentText(),
+            "model": model_edit.text().strip(),
+            "anthropic_api_key": claude_edit.text().strip(),
+            "openai_api_key": openai_edit.text().strip(),
+            "gemini_api_key": gemini_edit.text().strip(),
+        }
+        self.mw.pm.profile["llm_config"] = new_cfg
+        _apply_llm_env(new_cfg)
+
         self.intake_frame.set_llm_status(
-            "LLM status: provider setup surface reserved • preview first with Summarize, Q&A, or Cloze"
+            f"LLM status: {new_cfg['provider']} configured • "
+            f"model {new_cfg['model'] or DEFAULT_API_MODEL.get(new_cfg['provider'], '(local)')}"
         )
+        self._refresh_llm_readiness(self._last_source_summary)
         self._refresh_codex_connection()
-        showInfo(
-            "LLM-era capture belongs here.\n\n"
-            "Prototype goals:\n"
-            "• make provider/API setup impossible to miss\n"
-            "• summarize dropped files and URLs into card drafts\n"
-            "• expose prompt actions like Summarize, Q&A, and Cloze in the banner\n"
-            "• keep organization defaults visible while capturing\n\n"
-            "This experiment focuses on lowering capture friction first, while reserving a front-and-center surface for future LLM APIs.",
-            parent=self,
-        )
 
     def _show_codex_connect(self) -> None:
         self._set_codex_preferred(True)
@@ -676,17 +1115,28 @@ class AddCards(QMainWindow):
         }
         gen_action: ActionType = action_map.get(action, "qa")
 
-        # Gather source text from current note fields
+        # Source text: prefer fetched URL/file content, otherwise note fields.
         note = self.editor.note
         if note is None:
             showWarning("No note loaded.", parent=self)
             return
 
-        source_text = "\n".join(field for field in note.fields if field.strip())
+        captured = getattr(self, "_captured_source_text", "")
+        if captured.strip():
+            source_text = captured
+            if self._captured_source_title:
+                target = self._captured_source_title
+            elif self._captured_source_url:
+                target = self._captured_source_url
+        else:
+            source_text = "\n".join(
+                html_to_text_line(field) if "<" in field else field
+                for field in note.fields
+                if field.strip()
+            )
         if not source_text.strip():
             showWarning(
-                "No source text in note fields. Add text to a field first, "
-                "or drop a file/URL.",
+                "No source text yet. Paste a URL, drop a file, or type into a field first.",
                 parent=self,
             )
             return
@@ -706,10 +1156,10 @@ class AddCards(QMainWindow):
 
         if not get_api_key() and not is_local_available():
             showWarning(
-                "No LLM backend available.\n\n"
-                "Either:\n"
-                "• Install mlx-lm for local inference: pip install mlx-lm\n"
-                "• Set OPENAI_API_KEY for cloud API access",
+                "No LLM backend configured.\n\n"
+                "Open “LLM setup” to set a provider and API key, or:\n"
+                "• Set ANTHROPIC_API_KEY (Claude) or OPENAI_API_KEY (OpenAI)\n"
+                "• Install mlx-lm for local inference: pip install mlx-lm",
                 parent=self,
             )
             self.intake_frame.set_llm_status("LLM status: no backend available")

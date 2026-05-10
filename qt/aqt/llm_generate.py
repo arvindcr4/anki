@@ -3,13 +3,16 @@
 
 """LLM-based card generation for Anki.
 
-Supports two backends:
+Supports four backends:
 1. Local MLX inference (Apple Silicon) — no server, no API key needed
-2. OpenAI-compatible APIs — for cloud or external local servers
+2. Anthropic Claude — set ANTHROPIC_API_KEY, ANKI_LLM_PROVIDER=claude
+3. OpenAI-compatible APIs — set OPENAI_API_KEY, ANKI_LLM_PROVIDER=openai
+4. Google Gemini — set GEMINI_API_KEY, ANKI_LLM_PROVIDER=gemini
 
 Set ANKI_LLM_BACKEND=local to force local inference.
 Set ANKI_LLM_BACKEND=api to force API mode.
-Default: auto (tries local first, falls back to API).
+Default: auto — uses whichever provider has a key set; local only if no key.
+ANKI_LLM_PROVIDER picks among claude/openai/gemini when multiple keys are set.
 """
 
 from __future__ import annotations
@@ -50,9 +53,35 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
     "qa": (
         "You are an expert flashcard creator for spaced repetition learning. "
         "Given source material, create high-quality question-answer pairs. "
-        "Each question should test one specific concept. Answers should be concise but complete. "
-        "Return a JSON array of objects with 'front' and 'back' keys. "
-        'Example: [{"front": "What is the capital of France?", "back": "Paris"}]'
+        "Each question tests one specific concept; answers are concise but "
+        "complete.\n\n"
+        "VISUAL DIAGRAMS\n"
+        "When a concept benefits from a picture (geometry, vectors, simple "
+        "graphs, processes, structure, relationships, state machines, "
+        "data flow, ordering), append a small diagram to the back of the "
+        "card. Two syntaxes are recognised by the reviewer:\n"
+        "  • TikZ — wrap with [tikz] ... [/tikz]. Restricted to the TikZ "
+        "core: arrows, positioning, calc, shapes, decorations.pathreplacing, "
+        "patterns. Do NOT use pgfplots, pgfplotsset, externalization, "
+        "shell-escape, or \\input. Keep diagrams under ~5cm. Plain ASCII "
+        "characters only inside the diagram body.\n"
+        "  • Mermaid — wrap with [mermaid] ... [/mermaid]. Best for "
+        "flowcharts, sequence diagrams, class diagrams, state machines, "
+        "ER diagrams. Use the standard Mermaid grammar.\n\n"
+        "Be selective: only add a diagram when it materially aids "
+        "understanding. If plain text already conveys the answer, skip the "
+        "diagram. Do NOT add diagrams to definition-style cards or simple "
+        "factual recall.\n\n"
+        "OUTPUT\n"
+        "Return ONLY a JSON array of objects with 'front' and 'back' keys "
+        "— no markdown fences, no commentary. Strings must be valid JSON "
+        "(escape backslashes as \\\\ and quotes as \\\"). Example:\n"
+        '[{"front":"Pythagorean theorem?","back":"For a right triangle '
+        'with legs a, b and hypotenuse c: a² + b² = c². '
+        '[tikz]\\\\draw (0,0)--(3,0)--(3,4)--cycle; '
+        '\\\\node[below] at (1.5,0) {a}; \\\\node[right] at (3,2) {b}; '
+        '\\\\node[above left] at (1.5,2) {c};[/tikz]"}, '
+        '{"front":"Year of the French Revolution?","back":"1789"}]'
     ),
     "cloze": (
         "You are an expert flashcard creator for spaced repetition learning. "
@@ -73,29 +102,63 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
 # Default local model — small enough for most Macs
 DEFAULT_LOCAL_MODEL = "mlx-community/Qwen3-4B-4bit"
 
+DEFAULT_API_MODEL = {
+    "claude": "claude-opus-4-7",
+    "openai": "gpt-4o-mini",
+    "gemini": "gemini-3-flash-preview",
+}
+
 
 def get_backend() -> str:
     """Get the configured backend: 'local', 'api', or 'auto'."""
     return os.environ.get("ANKI_LLM_BACKEND", "auto")
 
 
-def get_api_key() -> str | None:
-    """Get the API key from environment.
+def get_provider() -> str:
+    """Return the API provider: 'claude', 'openai', or 'gemini'.
 
-    Only supports OpenAI-compatible API endpoints. For Anthropic,
-    use an OpenAI-compatible proxy (e.g., LiteLLM) and set OPENAI_API_KEY.
+    Honors ANKI_LLM_PROVIDER. Otherwise falls back to whichever key is set,
+    preferring gemini > claude > openai. If none, defaults to openai.
     """
+    explicit = os.environ.get("ANKI_LLM_PROVIDER", "").strip().lower()
+    if explicit in {"claude", "anthropic"}:
+        return "claude"
+    if explicit in {"openai", "compat"}:
+        return "openai"
+    if explicit in {"gemini", "google"}:
+        return "gemini"
+    if os.environ.get("GEMINI_API_KEY"):
+        return "gemini"
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return "claude"
+    if os.environ.get("OPENAI_API_KEY"):
+        return "openai"
+    return "openai"
+
+
+def get_api_key() -> str | None:
+    """Return the API key for the current provider (None if not set)."""
+    provider = get_provider()
+    if provider == "claude":
+        return os.environ.get("ANTHROPIC_API_KEY")
+    if provider == "gemini":
+        return os.environ.get("GEMINI_API_KEY")
     return os.environ.get("OPENAI_API_KEY")
 
 
 def get_api_base() -> str:
-    """Get the API base URL, supporting local models."""
+    """Get the OpenAI-compatible API base URL (ignored for Claude)."""
     return os.environ.get("OPENAI_API_BASE", "https://api.openai.com/v1")
 
 
 def get_model() -> str:
-    """Get the model to use."""
-    return os.environ.get("ANKI_LLM_MODEL", DEFAULT_LOCAL_MODEL)
+    """Get the model to use, with provider-aware defaults."""
+    explicit = os.environ.get("ANKI_LLM_MODEL")
+    if explicit:
+        return explicit
+    if get_backend() == "local":
+        return DEFAULT_LOCAL_MODEL
+    return DEFAULT_API_MODEL.get(get_provider(), DEFAULT_LOCAL_MODEL)
 
 
 def is_local_available() -> bool:
@@ -117,22 +180,27 @@ def generate_cards(
 ) -> GenerationResult:
     """Generate cards from source text using an LLM.
 
-    Automatically selects local MLX or API backend.
+    Selects backend in this order:
+      - ANKI_LLM_BACKEND=local → local MLX
+      - ANKI_LLM_BACKEND=api → cloud API (provider per ANKI_LLM_PROVIDER)
+      - auto → API if a key is set; otherwise local if available; else error
     """
     backend = get_backend()
 
-    if backend == "local" or (backend == "auto" and is_local_available()):
+    if backend == "local":
         return _generate_local(source_text, action, num_cards, context)
-    elif backend in {"api", "auto"}:
-        api_key = get_api_key()
-        if not api_key:
+    if backend == "auto" and not get_api_key() and is_local_available():
+        return _generate_local(source_text, action, num_cards, context)
+    if backend in {"api", "auto"}:
+        if not get_api_key():
             raise LLMError(
-                "No API key found. Set OPENAI_API_KEY or install mlx-lm for local inference:\n"
-                "  pip install mlx-lm"
+                "No LLM API key set. Configure one of:\n"
+                "  • ANTHROPIC_API_KEY (with ANKI_LLM_PROVIDER=claude)\n"
+                "  • OPENAI_API_KEY (with ANKI_LLM_PROVIDER=openai)\n"
+                "Or install mlx-lm for local inference: pip install mlx-lm"
             )
         return _generate_api(source_text, action, num_cards, context)
-    else:
-        raise LLMError(f"Unknown backend: {backend}. Use 'local', 'api', or 'auto'.")
+    raise LLMError(f"Unknown backend: {backend}. Use 'local', 'api', or 'auto'.")
 
 
 # ---------------------------------------------------------------------------
@@ -271,14 +339,24 @@ def _generate_local(
 def _generate_api(
     source_text: str, action: ActionType, num_cards: int, context: str
 ) -> GenerationResult:
-    """Generate cards using an OpenAI-compatible API."""
+    """Generate cards using the configured cloud API (Claude or OpenAI)."""
     api_key = get_api_key()
+    provider = get_provider()
     if not api_key:
-        raise LLMError("No API key found. Set OPENAI_API_KEY environment variable.")
+        if provider == "claude":
+            raise LLMError("No ANTHROPIC_API_KEY set.")
+        if provider == "gemini":
+            raise LLMError("No GEMINI_API_KEY set.")
+        raise LLMError("No OPENAI_API_KEY set.")
 
     system_prompt = _SYSTEM_PROMPTS[action]
     user_prompt = _build_user_prompt(source_text, action, num_cards, context)
-    response_text = _call_api(api_key, system_prompt, user_prompt)
+    if provider == "claude":
+        response_text = _call_anthropic_api(api_key, system_prompt, user_prompt)
+    elif provider == "gemini":
+        response_text = _call_gemini_api(api_key, system_prompt, user_prompt)
+    else:
+        response_text = _call_api(api_key, system_prompt, user_prompt)
     return _parse_response(response_text, action, get_model())
 
 
@@ -342,6 +420,99 @@ def _call_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
         raise LLMError(f"Unexpected API response format: {data}") from e
+
+
+def _call_gemini_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
+    """Call Google's Gemini generateContent API."""
+    import urllib.parse
+
+    model = get_model()
+    url = (
+        "https://generativelanguage.googleapis.com/v1beta/models/"
+        f"{urllib.parse.quote(model)}:generateContent?key={urllib.parse.quote(api_key)}"
+    )
+
+    payload = json.dumps(
+        {
+            "systemInstruction": {"parts": [{"text": system_prompt}]},
+            "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
+            "generationConfig": {
+                "temperature": 0.4,
+                "maxOutputTokens": 4096,
+                "responseMimeType": "application/json",
+            },
+        }
+    ).encode("utf-8")
+
+    headers = {"Content-Type": "application/json"}
+    req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise LLMError(f"Gemini API error {e.code}: {body}") from e
+    except urllib.error.URLError as e:
+        raise LLMError(f"Network error: {e.reason}") from e
+    except TimeoutError:
+        raise LLMError("Gemini API request timed out after 120 seconds")
+
+    try:
+        candidates = data.get("candidates") or []
+        if not candidates:
+            raise KeyError(f"no candidates in Gemini response: {data}")
+        parts = candidates[0].get("content", {}).get("parts", [])
+        for part in parts:
+            if isinstance(part, dict) and "text" in part:
+                return part["text"]
+        raise KeyError(f"no text part in Gemini response: {data}")
+    except (KeyError, IndexError, TypeError) as e:
+        raise LLMError(f"Unexpected Gemini response format: {data}") from e
+
+
+def _call_anthropic_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
+    """Call Anthropic's Messages API."""
+    model = get_model()
+    url = "https://api.anthropic.com/v1/messages"
+
+    payload = json.dumps(
+        {
+            "model": model,
+            "max_tokens": 4096,
+            "system": system_prompt,
+            "messages": [{"role": "user", "content": user_prompt}],
+            "temperature": 0.4,
+        }
+    ).encode("utf-8")
+
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+    }
+
+    req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        raise LLMError(f"Anthropic API error {e.code}: {body}") from e
+    except urllib.error.URLError as e:
+        raise LLMError(f"Network error: {e.reason}") from e
+    except TimeoutError:
+        raise LLMError("Anthropic API request timed out after 120 seconds")
+
+    try:
+        # Messages API returns {"content": [{"type": "text", "text": "..."}], ...}
+        for block in data.get("content", []):
+            if block.get("type") == "text" and "text" in block:
+                return block["text"]
+        raise KeyError("no text block in Anthropic response")
+    except (KeyError, IndexError, TypeError) as e:
+        raise LLMError(f"Unexpected Anthropic response format: {data}") from e
 
 
 def _parse_response(

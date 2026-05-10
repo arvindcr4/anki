@@ -275,6 +275,14 @@ class Toolbar:
             "study": self._studyLinkHandler,
         }
         self.web.requiresCol = False
+        # Keep the "Study Today" badge live: refresh after every state change
+        # and after each card answer.
+        gui_hooks.state_did_change.append(
+            lambda *_args: self.update_study_today_count()
+        )
+        gui_hooks.reviewer_did_answer_card.append(
+            lambda *_args: self.update_study_today_count()
+        )
 
     def draw(
         self,
@@ -301,6 +309,7 @@ class Toolbar:
     def redraw(self) -> None:
         self.set_sync_active(self.mw.media_syncer.is_syncing())
         self.update_sync_status()
+        self.update_study_today_count()
         gui_hooks.top_toolbar_did_redraw(self)
 
     # Available links
@@ -344,6 +353,7 @@ class Toolbar:
 
     def _centerLinks(self) -> str:
         links = [
+            self._create_study_today_link(),
             self.create_link(
                 "decks",
                 tr.actions_decks(),
@@ -399,6 +409,81 @@ class Toolbar:
     # Sync
     ######################################################################
 
+    def _create_study_today_link(self) -> str:
+        """Prominent first-link CTA for studying due cards from any deck."""
+        self.link_handlers["study_today"] = self._studyTodayLinkHandler
+        return (
+            '<a class="hitem study-today-link" id="study_today" tabindex="-1" '
+            'aria-label="Study cards due today" '
+            'title="Jump straight into today\'s review queue (S)" '
+            'href="#" onclick="return pycmd(\'study_today\')">'
+            'Study Today<span class="study-today-badge" id="study-today-badge">0</span>'
+            "</a>"
+        )
+
+    def _study_today_total(self) -> int:
+        col = self.mw.col
+        if col is None:
+            return 0
+        try:
+            tree = col.sched.deck_due_tree()
+        except Exception:
+            return 0
+
+        def walk(node: Any) -> int:
+            n = (
+                (getattr(node, "review_count", 0) or 0)
+                + (getattr(node, "new_count", 0) or 0)
+                + (getattr(node, "learn_count", 0) or 0)
+            )
+            for child in getattr(node, "children", []):
+                n += walk(child)
+            return n
+
+        return walk(tree)
+
+    def _find_first_deck_with_due(self) -> int | None:
+        col = self.mw.col
+        if col is None:
+            return None
+        try:
+            tree = col.sched.deck_due_tree()
+        except Exception:
+            return None
+
+        def walk(node: Any) -> int | None:
+            count = (
+                (getattr(node, "review_count", 0) or 0)
+                + (getattr(node, "new_count", 0) or 0)
+                + (getattr(node, "learn_count", 0) or 0)
+            )
+            did = getattr(node, "deck_id", None)
+            if count > 0 and did:
+                return did
+            for child in getattr(node, "children", []):
+                r = walk(child)
+                if r:
+                    return r
+            return None
+
+        return walk(tree)
+
+    def update_study_today_count(self) -> None:
+        """Refresh the badge count via JS — cheap, no toolbar re-render."""
+        if self.mw.col is None:
+            return
+        n = self._study_today_total()
+        # toggle a "zero" class so CSS can grey out the badge when nothing's due
+        zero_flag = "true" if n == 0 else "false"
+        self.web.eval(
+            "(()=>{"
+            "const e=document.getElementById('study-today-badge');"
+            "if(!e)return;"
+            f"e.textContent={n!r};"
+            f"e.classList.toggle('zero',{zero_flag});"
+            "})();"
+        )
+
     def _create_sync_link(self) -> str:
         name = tr.qt_misc_sync()
         title = tr.actions_shortcut_key(val="Y")
@@ -433,6 +518,20 @@ class Toolbar:
     def _deckLinkHandler(self) -> None:
         self.mw.moveToState("deckBrowser")
 
+    def _studyTodayLinkHandler(self) -> None:
+        from aqt.utils import tooltip
+
+        col = self.mw.col
+        if col is None:
+            return
+        target_did = self._find_first_deck_with_due()
+        if target_did is None:
+            tooltip("No cards due right now.", period=2200)
+            return
+        col.decks.select(target_did)
+        col.startTimebox()
+        self.mw.moveToState("overview")
+
     def _studyLinkHandler(self) -> None:
         # if overview already shown, switch to review
         if self.mw.state == "overview":
@@ -457,6 +556,29 @@ class Toolbar:
     ######################################################################
 
     _body = """
+<style>
+.study-today-link {{
+  font-weight: 700;
+  color: #fff !important;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  padding: 4px 14px !important;
+  border-radius: 999px;
+  margin-right: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}}
+.study-today-link:hover {{ filter: brightness(1.1); }}
+.study-today-badge {{
+  display: inline-block;
+  margin-left: 8px;
+  min-width: 22px;
+  padding: 1px 8px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  font-weight: 700;
+  text-align: center;
+}}
+.study-today-badge.zero {{ background: rgba(255, 255, 255, 0.10); opacity: 0.65; }}
+</style>
 <div class="header">
   <div class="left-tray">{left_tray_content}</div>
   <div class="toolbar">{toolbar_content}</div>

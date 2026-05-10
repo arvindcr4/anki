@@ -705,6 +705,23 @@ def _run(argv: list[str] | None = None, exec: bool = True) -> AnkiApp | None:
         level=logging.DEBUG if int(os.getenv("ANKIDEV", "0")) else logging.INFO,
     )
 
+    # ANKI_UI_SCALE makes the UI proportionally bigger (font + Qt widget metrics
+    # which size off the font, plus the main webview zoom — wired in main.py).
+    try:
+        _scale = float(os.environ.get("ANKI_UI_SCALE", "1.25"))
+    except ValueError:
+        _scale = 1.0
+    if _scale > 0 and abs(_scale - 1.0) > 0.01:
+        _font = app.font()
+        # Qt may report pointSize == -1 when the font is sized in pixels.
+        if _font.pointSizeF() > 0:
+            _font.setPointSizeF(_font.pointSizeF() * _scale)
+        elif _font.pixelSize() > 0:
+            _font.setPixelSize(int(_font.pixelSize() * _scale))
+        else:
+            _font.setPointSizeF(13.0 * _scale)
+        app.setFont(_font)
+
     # disable icons on mac; this must be done before window created
     if is_mac:
         app.setAttribute(Qt.ApplicationAttribute.AA_DontShowIconsInMenus)
