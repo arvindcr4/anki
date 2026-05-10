@@ -60,6 +60,69 @@ def render_error_html(kind: str, body: str, msg: str) -> str:
     )
 
 
+# ---------------------------------------------------------------------------
+# Offline / vendored loader
+# ---------------------------------------------------------------------------
+
+# Version of TikZJax pinned to the install_tikzjax_assets helper. Pinning here
+# makes the cache key stable across Anki launches and lets us bump the bundled
+# copy explicitly.
+VENDORED_TIKZJAX_VERSION = "v1"
+VENDORED_TIKZJAX_URL = (
+    f"https://tikzjax.com/{VENDORED_TIKZJAX_VERSION}/tikzjax.js"
+)
+VENDORED_TIKZJAX_FONTS_URL = (
+    f"https://tikzjax.com/{VENDORED_TIKZJAX_VERSION}/fonts.css"
+)
+VENDORED_TIKZJAX_FILENAME = f"_anki-tikzjax-{VENDORED_TIKZJAX_VERSION}.js"
+VENDORED_TIKZJAX_FONTS_FILENAME = (
+    f"_anki-tikzjax-fonts-{VENDORED_TIKZJAX_VERSION}.css"
+)
+
+
+def install_tikzjax_assets(col: object) -> tuple[bool, str]:
+    """Download TikZJax + its fonts CSS into the collection.media folder.
+
+    Returns ``(ok, message)``. Idempotent — if both files are already present,
+    skips the network round-trip. Errors during download are swallowed and
+    surfaced through the ``ok`` flag rather than raising, because rendering
+    must always degrade gracefully back to the CDN loader.
+    """
+    media = getattr(col, "media", None)
+    if media is None:
+        return False, "collection has no media manager"
+    have = getattr(media, "have", None)
+    write_data = getattr(media, "write_data", None)
+    if not callable(have) or not callable(write_data):
+        return False, "media manager missing have/write_data"
+
+    if have(VENDORED_TIKZJAX_FILENAME) and have(VENDORED_TIKZJAX_FONTS_FILENAME):
+        return True, "already installed"
+
+    import urllib.error
+    import urllib.request
+
+    targets = [
+        (VENDORED_TIKZJAX_URL, VENDORED_TIKZJAX_FILENAME),
+        (VENDORED_TIKZJAX_FONTS_URL, VENDORED_TIKZJAX_FONTS_FILENAME),
+    ]
+    for url, fname in targets:
+        if have(fname):
+            continue
+        try:
+            with urllib.request.urlopen(url, timeout=30) as resp:
+                data = resp.read()
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
+            # error path — leave whatever was already cached intact
+            return False, f"download failed for {fname}: {exc}"
+        try:
+            write_data(fname, data)
+        except Exception as exc:  # pragma: no cover - depends on backend
+            return False, f"could not write {fname}: {exc}"
+
+    return True, "installed"
+
+
 def _wrap_tikz(match: re.Match[str]) -> str:
     body = match.group(1).strip()
     if r"\begin{tikzpicture}" not in body:
