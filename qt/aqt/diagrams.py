@@ -32,6 +32,34 @@ _TIKZ_RE = re.compile(r"\[tikz\](.+?)\[/tikz\]", re.DOTALL | re.IGNORECASE)
 _MERMAID_RE = re.compile(r"\[mermaid\](.+?)\[/mermaid\]", re.DOTALL | re.IGNORECASE)
 
 
+# Inline error_html template used when a TikZ/Mermaid block fails to render.
+# Surfacing the raw source + the renderer's complaint is far more useful than
+# a silent failure (or a half-rendered box that leaves the user staring).
+_RENDER_ERROR_HTML = (
+    '<div class="diagram-error" style="border:1px solid #b91c1c;'
+    'background:#fef2f2;color:#7f1d1d;padding:8px 12px;border-radius:6px;'
+    'font-family:menlo,monospace;font-size:12px;white-space:pre-wrap;">'
+    "<strong>{kind} render failed:</strong> {msg}\n\n"
+    "<small style=\"opacity:.85\">Source:</small>\n{body}"
+    "</div>"
+)
+
+
+def render_error_html(kind: str, body: str, msg: str) -> str:
+    """Build the inline error fallback shown when a diagram fails to render.
+
+    Used as a JS template (see _DIAGRAM_RUNNER_JS) and reachable from Python
+    for any future server-side render path.
+    """
+    import html as _html
+
+    return _RENDER_ERROR_HTML.format(
+        kind=_html.escape(kind),
+        msg=_html.escape(msg),
+        body=_html.escape(body)[:1000],
+    )
+
+
 def _wrap_tikz(match: re.Match[str]) -> str:
     body = match.group(1).strip()
     if r"\begin{tikzpicture}" not in body:
@@ -66,14 +94,43 @@ _DIAGRAM_RUNNER_JS = r"""
   if (!haveTikz && !haveMer) return;
 
   // ---------- Mermaid ----------
+  function _ankiDiagramFallback(el, kind, msg) {
+    try {
+      const body = (el.textContent || '').trim();
+      const wrap = document.createElement('div');
+      wrap.className = 'diagram-error';
+      wrap.style.cssText =
+        'border:1px solid #b91c1c;background:#fef2f2;color:#7f1d1d;' +
+        'padding:8px 12px;border-radius:6px;font-family:menlo,monospace;' +
+        'font-size:12px;white-space:pre-wrap;';
+      wrap.innerHTML =
+        '<strong>' + kind + ' render failed:</strong> ' +
+        (msg || '(no message)') +
+        '\n\n<small style="opacity:.85">Source:</small>\n' +
+        body.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      if (el.parentNode) el.parentNode.replaceChild(wrap, el);
+    } catch (_) { /* swallow — fallback must never throw */ }
+  }
   if (haveMer) {
     if (window._ankiMermaid) {
       try {
-        window._ankiMermaid.run({
+        const result = window._ankiMermaid.run({
           querySelector: 'div.mermaid:not([data-processed])',
           suppressErrors: true,
         });
-      } catch (e) { console.warn('mermaid.run failed:', e); }
+        if (result && typeof result.catch === 'function') {
+          result.catch(function (e) {
+            document.querySelectorAll('div.mermaid:not([data-processed])').forEach(function (el) {
+              _ankiDiagramFallback(el, 'Mermaid', e && e.message || String(e));
+            });
+          });
+        }
+      } catch (e) {
+        console.warn('mermaid.run failed:', e);
+        document.querySelectorAll('div.mermaid:not([data-processed])').forEach(function (el) {
+          _ankiDiagramFallback(el, 'Mermaid', e && e.message || String(e));
+        });
+      }
     } else if (!window._ankiMermaidLoading) {
       window._ankiMermaidLoading = true;
       const m = document.createElement('script');
