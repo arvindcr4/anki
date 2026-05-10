@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import html
+import re
+import urllib.parse
 from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import datetime
@@ -84,6 +86,20 @@ DAY_SECS = 86_400
 HALF_DAY_SECS = 43_200
 DAY_MS = DAY_SECS * 1000
 RECENT_DAYS = 7
+
+
+def encode_intake_payload(items: list[str]) -> str:
+    """Encode dropped/pasted source strings for the pycmd bridge."""
+    return "|".join(urllib.parse.quote(item, safe="") for item in items)
+
+
+def decode_intake_payload(payload: str) -> list[str]:
+    """Decode a pycmd bridge payload into individual source strings."""
+    return [
+        urllib.parse.unquote(item.strip())
+        for item in payload.split("|")
+        if item.strip()
+    ]
 
 
 def _format_rollover_hour(hour: int) -> str:
@@ -238,6 +254,8 @@ class DeckBrowser:
             self._study_deck_now(DeckId(int(arg)))
         elif cmd == "intake":
             self._handle_intake_drop(arg)
+        elif cmd == "intake_paste":
+            self._prompt_intake_url()
         elif cmd == "opts":
             self._showOptions(arg)
         elif cmd == "shared":
@@ -293,9 +311,22 @@ class DeckBrowser:
 
     def _handle_intake_drop(self, payload: str) -> None:
         """Process URLs / PDF file paths dropped on the deck-browser drop zone."""
+        import traceback
         import urllib.parse as _urlparse
 
-        raw_items = [s.strip() for s in payload.split("|") if s.strip()]
+        try:
+            return self._handle_intake_drop_inner(payload, _urlparse)
+        except Exception as exc:
+            tb = traceback.format_exc()
+            from aqt.utils import showWarning
+
+            showWarning(
+                f"Intake failed: {exc}\n\nTraceback:\n{tb[:1500]}",
+                parent=self.mw,
+            )
+
+    def _handle_intake_drop_inner(self, payload: str, _urlparse) -> None:
+        raw_items = decode_intake_payload(payload)
         sources: list[str] = []
         rejected: list[str] = []
         for item in raw_items:
@@ -324,12 +355,10 @@ class DeckBrowser:
         if not sources:
             return
 
-        self._set_dropzone_status(
-            f"Generating cards for {len(sources)} item(s)…"
-        )
+        self._set_dropzone_status(f"Generating cards for {len(sources)} item(s)…")
 
-        from aqt.utils import tooltip
         from aqt.llm_intake import ingest_sources
+        from aqt.utils import tooltip
 
         def _on_progress(src: str, status: str) -> None:
             short = (src.rsplit("/", 1)[-1] or src)[:60]
@@ -356,7 +385,9 @@ class DeckBrowser:
                 self._set_dropzone_status(
                     f"Added {total_added} cards across {len(ok)} source(s)."
                 )
-                # Force the deck browser to redraw with the new decks visible
+                # Refresh scheduler/UI caches so the new cards are immediately
+                # visible to Study Now and the deck browser counts.
+                self.mw.reset()
                 self.refresh()
             else:
                 from aqt.utils import showWarning
@@ -373,7 +404,31 @@ class DeckBrowser:
     def _set_dropzone_status(self, msg: str) -> None:
         # Escape for inline JS string literal
         safe = msg.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ")
-        self.web.eval(f"dropzoneSetStatus('{safe}');")
+        self.web.eval(
+            "(function(){var e=document.getElementById('llm-dropzone-status');"
+            f"if(e)e.textContent='{safe}';"
+            "})();"
+        )
+
+    def _prompt_intake_url(self) -> None:
+        """Native Qt input dialog for the Paste URL button (reliable in QtWebEngine)."""
+        from aqt.qt import QInputDialog
+
+        url, ok = QInputDialog.getText(
+            self.mw,
+            "Paste URL — generate flashcards",
+            "Paste a web-page URL. Anki will fetch the page, generate Q&A "
+            "cards via the configured LLM, and put them in a "
+            "<topic>_<today> deck:",
+        )
+        if not ok:
+            return
+        url = url.strip()
+        if not url:
+            return
+        if not re.match(r"^https?://", url, re.IGNORECASE):
+            url = "https://" + url
+        self._handle_intake_drop(encode_intake_payload([url]))
 
     def _daily_group_for(self, days_ago: int) -> DailyCardsGroup | None:
         if 0 <= days_ago < len(self._render_data.daily_groups):
@@ -461,7 +516,6 @@ a.deck-row-study.soft:hover {
   text-align: center;
   font-weight: 600;
   color: #1e3a8a;
-  cursor: pointer;
   transition: background 0.12s, border-color 0.12s;
   user-select: none;
 }
@@ -482,43 +536,13 @@ a.deck-row-study.soft:hover {
 <div id="llm-dropzone"
      ondragover="event.preventDefault(); event.stopPropagation(); this.classList.add('drag-active');"
      ondragleave="this.classList.remove('drag-active');"
-     ondrop="dropzoneHandleDrop(event);"
-     onclick="dropzonePromptUrl();">
+     ondrop="(function(ev){ev.preventDefault();ev.stopPropagation();var dz=document.getElementById('llm-dropzone');if(dz)dz.classList.remove('drag-active');var items=[];if(ev.dataTransfer){var text=ev.dataTransfer.getData('text/uri-list')||ev.dataTransfer.getData('text/plain')||'';text.split(/\r?\n/).forEach(function(l){var t=l.trim();if(t&&!t.startsWith('#'))items.push(t);});}if(!items.length){var s=document.getElementById('llm-dropzone-status');if(s)s.textContent='Nothing dropped.';return;}var s2=document.getElementById('llm-dropzone-status');if(s2)s2.textContent='Sending '+items.length+' item(s) to LLM…';pycmd('intake:'+items.map(encodeURIComponent).join('|'));})(event);">
   ✦ Drop a PDF or URL here to generate flashcards
-  <span class="hint">or click to paste a URL — cards land in a new <code>topic_&lt;today&gt;</code> deck</span>
+  <span class="hint">or use Paste URL — cards land in a new <code>topic_&lt;today&gt;</code> deck</span>
   <button id="llm-dropzone-paste" type="button"
-          onclick="event.stopPropagation(); dropzonePromptUrl();">Paste URL…</button>
+          onclick="pycmd('intake_paste');">Paste URL…</button>
   <span class="status" id="llm-dropzone-status"></span>
 </div>
-<script>
-function dropzonePromptUrl() {
-  const u = window.prompt("Paste a URL to generate flashcards from:");
-  if (u && u.trim()) pycmd("intake:" + u.trim());
-}
-function dropzoneSetStatus(msg) {
-  const s = document.getElementById("llm-dropzone-status");
-  if (s) s.textContent = msg || "";
-}
-function dropzoneHandleDrop(ev) {
-  ev.preventDefault(); ev.stopPropagation();
-  const dz = document.getElementById("llm-dropzone");
-  if (dz) dz.classList.remove("drag-active");
-  const items = [];
-  if (ev.dataTransfer) {
-    // text/uri-list works for both URL drops and Finder file drops
-    // (Finder yields file:///abs/path/to.pdf entries here).
-    const text = ev.dataTransfer.getData("text/uri-list")
-              || ev.dataTransfer.getData("text/plain") || "";
-    for (const line of text.split(/\r?\n/)) {
-      const t = line.trim();
-      if (t && !t.startsWith("#")) items.push(t);
-    }
-  }
-  if (!items.length) { dropzoneSetStatus("Nothing dropped."); return; }
-  dropzoneSetStatus("Sending " + items.length + " item(s) to LLM…");
-  pycmd("intake:" + items.join("|"));
-}
-</script>
 <div class="deck-browser-table-wrap">
 <table cellspacing=0 cellpadding=3>
 %(tree)s

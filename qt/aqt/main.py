@@ -20,12 +20,12 @@ import anki
 import anki.cards
 import anki.sound
 import aqt
+import aqt.diagrams
 import aqt.forms
 import aqt.mediasrv
 import aqt.mpv
 import aqt.operations
 import aqt.progress
-import aqt.diagrams
 import aqt.sound
 import aqt.stats
 import aqt.toolbar
@@ -117,9 +117,32 @@ class MainWebView(AnkiWebView):
     # Importing files via drag & drop
     ##########################################################################
 
+    def _deck_browser_intake_items(
+        self, event: QDragEnterEvent | QDropEvent
+    ) -> list[str]:
+        mime = event.mimeData()
+        items: list[str] = []
+        if mime.hasUrls():
+            for url in mime.urls():
+                if url.isLocalFile():
+                    path = url.toLocalFile()
+                    if path and os.path.isfile(path) and path.lower().endswith(".pdf"):
+                        items.append(QUrl.fromLocalFile(path).toString())
+                elif url.scheme().lower() in ("http", "https"):
+                    items.append(url.toString())
+        if mime.hasText():
+            for line in mime.text().splitlines():
+                text = line.strip()
+                if re.match(r"^https?://", text, re.IGNORECASE):
+                    items.append(text)
+        return items
+
     def dragEnterEvent(self, event: QDragEnterEvent) -> None:
         if self.mw.state != "deckBrowser":
             return super().dragEnterEvent(event)
+        if self._deck_browser_intake_items(event):
+            event.acceptProposedAction()
+            return
         mime = event.mimeData()
         if not mime.hasUrls():
             return
@@ -134,6 +157,12 @@ class MainWebView(AnkiWebView):
 
         if self.mw.state != "deckBrowser":
             return super().dropEvent(event)
+        if items := self._deck_browser_intake_items(event):
+            from aqt.deckbrowser import encode_intake_payload
+
+            self.mw.deckBrowser._handle_intake_drop(encode_intake_payload(items))
+            event.acceptProposedAction()
+            return
         mime = event.mimeData()
         paths = [url.toLocalFile() for url in mime.urls()]
         deck_paths = filter(lambda p: not p.endswith(".colpkg"), paths)

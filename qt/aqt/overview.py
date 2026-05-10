@@ -95,10 +95,32 @@ class Overview:
 
     def _linkHandler(self, url: str) -> bool:
         if url == "study":
-            self.mw.col.startTimebox()
-            self.mw.moveToState("review")
-            if self.mw.state == "overview":
+            # Decouple Study Now from prior navigation by:
+            #   1. force-invalidating the cached scheduler queues — the
+            #      backend only drops them when set_current_deck() is
+            #      called with a *different* deck, so we briefly bounce
+            #      through a sentinel id and back,
+            #   2. explicitly priming the queue with get_queued_cards()
+            #      so the result is known BEFORE the state transition.
+            from anki.decks import DeckId as _DeckId
+
+            col = self.mw.col
+            current_did = col.decks.get_current_id()
+            sentinel = _DeckId(1) if current_did != _DeckId(1) else _DeckId(0)
+            try:
+                col.decks.select(sentinel)
+            except Exception:
+                pass
+            col.decks.select(current_did)
+            col.startTimebox()
+            try:
+                queued = col.sched.get_queued_cards()
+            except Exception:
+                queued = None
+            if not queued or not queued.cards:
                 tooltip(tr.studying_no_cards_are_due_yet())
+                return False
+            self.mw.moveToState("review")
         elif url == "anki":
             print("anki menu")
         elif url == "opts":

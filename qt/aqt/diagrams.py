@@ -30,6 +30,7 @@ from aqt import gui_hooks
 
 _TIKZ_RE = re.compile(r"\[tikz\](.+?)\[/tikz\]", re.DOTALL | re.IGNORECASE)
 _MERMAID_RE = re.compile(r"\[mermaid\](.+?)\[/mermaid\]", re.DOTALL | re.IGNORECASE)
+_FENCE_RE = re.compile(r"^```(?:tikz|latex|tex)?\s*|\s*```$", re.IGNORECASE)
 
 
 # Inline error_html template used when a TikZ/Mermaid block fails to render.
@@ -37,10 +38,10 @@ _MERMAID_RE = re.compile(r"\[mermaid\](.+?)\[/mermaid\]", re.DOTALL | re.IGNOREC
 # a silent failure (or a half-rendered box that leaves the user staring).
 _RENDER_ERROR_HTML = (
     '<div class="diagram-error" style="border:1px solid #b91c1c;'
-    'background:#fef2f2;color:#7f1d1d;padding:8px 12px;border-radius:6px;'
+    "background:#fef2f2;color:#7f1d1d;padding:8px 12px;border-radius:6px;"
     'font-family:menlo,monospace;font-size:12px;white-space:pre-wrap;">'
     "<strong>{kind} render failed:</strong> {msg}\n\n"
-    "<small style=\"opacity:.85\">Source:</small>\n{body}"
+    '<small style="opacity:.85">Source:</small>\n{body}'
     "</div>"
 )
 
@@ -116,16 +117,10 @@ def cache_diagram_svg(
 # makes the cache key stable across Anki launches and lets us bump the bundled
 # copy explicitly.
 VENDORED_TIKZJAX_VERSION = "v1"
-VENDORED_TIKZJAX_URL = (
-    f"https://tikzjax.com/{VENDORED_TIKZJAX_VERSION}/tikzjax.js"
-)
-VENDORED_TIKZJAX_FONTS_URL = (
-    f"https://tikzjax.com/{VENDORED_TIKZJAX_VERSION}/fonts.css"
-)
+VENDORED_TIKZJAX_URL = f"https://tikzjax.com/{VENDORED_TIKZJAX_VERSION}/tikzjax.js"
+VENDORED_TIKZJAX_FONTS_URL = f"https://tikzjax.com/{VENDORED_TIKZJAX_VERSION}/fonts.css"
 VENDORED_TIKZJAX_FILENAME = f"_anki-tikzjax-{VENDORED_TIKZJAX_VERSION}.js"
-VENDORED_TIKZJAX_FONTS_FILENAME = (
-    f"_anki-tikzjax-fonts-{VENDORED_TIKZJAX_VERSION}.css"
-)
+VENDORED_TIKZJAX_FONTS_FILENAME = f"_anki-tikzjax-fonts-{VENDORED_TIKZJAX_VERSION}.css"
 
 
 def install_tikzjax_assets(col: object) -> tuple[bool, str]:
@@ -171,14 +166,42 @@ def install_tikzjax_assets(col: object) -> tuple[bool, str]:
     return True, "installed"
 
 
-def _wrap_tikz(match: re.Match[str]) -> str:
-    body = match.group(1).strip()
+def normalize_tikz_source(source: str) -> str:
+    """Normalize raw LLM/user TikZ into a full TikZJax LaTeX document."""
+    body = _FENCE_RE.sub("", source.strip()).strip()
+    tag_match = _TIKZ_RE.search(body)
+    if tag_match:
+        body = tag_match.group(1).strip()
+
     if r"\begin{tikzpicture}" not in body:
         body = "\\begin{tikzpicture}\n" + body + "\n\\end{tikzpicture}"
     if r"\begin{document}" not in body:
         body = "\\begin{document}\n" + body + "\n\\end{document}"
+    if r"\documentclass" not in body:
+        body = (
+            "\\documentclass[tikz]{standalone}\n"
+            "\\usepackage{tikz}\n"
+            "\\usetikzlibrary{arrows.meta,positioning,calc,shapes,patterns,"
+            "decorations.pathreplacing}\n" + body
+        )
+    return body
+
+
+def tikz_tag(source: str) -> str:
+    """Return a persisted [tikz] tag with normalized LaTeX/TikZ content."""
+    return f"[tikz]{normalize_tikz_source(source)}[/tikz]"
+
+
+def _wrap_tikz(match: re.Match[str]) -> str:
+    body = normalize_tikz_source(match.group(1))
     # TikZJax processes <script type="text/tikz"> blocks.
-    return f'<script type="text/tikz">\n{body}\n</script>'
+    return (
+        '<div class="anki-tikz-canvas" style="display:flex;'
+        "justify-content:center;align-items:center;margin:0.75rem auto;"
+        'max-width:100%;overflow:auto;">'
+        f'<script type="text/tikz">\n{body}\n</script>'
+        "</div>"
+    )
 
 
 def _wrap_mermaid(match: re.Match[str]) -> str:
@@ -258,36 +281,65 @@ _DIAGRAM_RUNNER_JS = r"""
 
   // ---------- TikZJax ----------
   if (haveTikz) {
+    function _ankiSoon(fn) {
+      if (typeof window.requestIdleCallback === 'function') {
+        window.requestIdleCallback(fn, { timeout: 500 });
+      } else {
+        window.setTimeout(fn, 50);
+      }
+    }
+    const tikzFontsUrls = [
+      %r,
+      'https://tikzjax.com/v1/fonts.css',
+    ];
+    const tikzScriptUrls = [
+      %r,
+      'https://tikzjax.com/v1/tikzjax.js',
+    ];
+    function _ankiLoadTikzAsset(index) {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.type = 'text/css';
+      css.href = tikzFontsUrls[index];
+      document.head.appendChild(css);
+
+      const tj = document.createElement('script');
+      tj.src = tikzScriptUrls[index];
+      tj.onload = function () {
+        window._ankiTikzReady = true;
+      };
+      tj.onerror = function () {
+        css.remove();
+        if (index + 1 < tikzScriptUrls.length) {
+          _ankiLoadTikzAsset(index + 1);
+        } else {
+          document.querySelectorAll('script[type="text/tikz"]').forEach(function (el) {
+            _ankiDiagramFallback(el, 'TikZ', 'TikZJax failed to load');
+          });
+        }
+      };
+      document.head.appendChild(tj);
+    }
     if (window._ankiTikzReady) {
       // TikZJax replaces script blocks in-place when its main script loads;
       // for newly-injected blocks we need to dispatch a DOMContentLoaded so
       // its bundled scanner runs again. Fall back to manual scan if exposed.
-      try {
-        if (typeof window.process_tikz === 'function') {
-          window.process_tikz();
-        } else {
-          document.dispatchEvent(new Event('DOMContentLoaded'));
-        }
-      } catch (e) { console.warn('tikz reprocess failed:', e); }
+      _ankiSoon(function () {
+        try {
+          if (typeof window.process_tikz === 'function') {
+            window.process_tikz();
+          } else {
+            document.dispatchEvent(new Event('DOMContentLoaded'));
+          }
+        } catch (e) { console.warn('tikz reprocess failed:', e); }
+      });
     } else if (!window._ankiTikzLoading) {
       window._ankiTikzLoading = true;
-      const css = document.createElement('link');
-      css.rel = 'stylesheet';
-      css.type = 'text/css';
-      css.href = 'https://tikzjax.com/v1/fonts.css';
-      document.head.appendChild(css);
-      const tj = document.createElement('script');
-      tj.src = 'https://tikzjax.com/v1/tikzjax.js';
-      tj.onload = function () {
-        window._ankiTikzReady = true;
-        // TikZJax auto-scans on load; nothing more to do for the first card.
-      };
-      tj.onerror = function () { console.warn('TikZJax failed to load'); };
-      document.head.appendChild(tj);
+      _ankiSoon(function () { _ankiLoadTikzAsset(0); });
     }
   }
 })();
-"""
+""" % (f"/{VENDORED_TIKZJAX_FONTS_FILENAME}", f"/{VENDORED_TIKZJAX_FILENAME}")
 
 
 def _run_in_reviewer(_card: Card | None = None) -> None:

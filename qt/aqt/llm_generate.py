@@ -22,7 +22,7 @@ import os
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 ActionType = Literal["qa", "cloze", "summarize"]
 
@@ -75,11 +75,11 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
         "OUTPUT\n"
         "Return ONLY a JSON array of objects with 'front' and 'back' keys "
         "— no markdown fences, no commentary. Strings must be valid JSON "
-        "(escape backslashes as \\\\ and quotes as \\\"). Example:\n"
+        '(escape backslashes as \\\\ and quotes as \\"). Example:\n'
         '[{"front":"Pythagorean theorem?","back":"For a right triangle '
-        'with legs a, b and hypotenuse c: a² + b² = c². '
-        '[tikz]\\\\draw (0,0)--(3,0)--(3,4)--cycle; '
-        '\\\\node[below] at (1.5,0) {a}; \\\\node[right] at (3,2) {b}; '
+        "with legs a, b and hypotenuse c: a² + b² = c². "
+        "[tikz]\\\\draw (0,0)--(3,0)--(3,4)--cycle; "
+        "\\\\node[below] at (1.5,0) {a}; \\\\node[right] at (3,2) {b}; "
         '\\\\node[above left] at (1.5,2) {c};[/tikz]"}, '
         '{"front":"Year of the French Revolution?","back":"1789"}]'
     ),
@@ -422,8 +422,18 @@ def _call_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
         raise LLMError(f"Unexpected API response format: {data}") from e
 
 
-def _call_gemini_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
-    """Call Google's Gemini generateContent API."""
+def _call_gemini_api(
+    api_key: str,
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    json_response: bool = True,
+) -> str:
+    """Call Google's Gemini generateContent API.
+
+    ``json_response=True`` asks Gemini to return strict JSON (used by the
+    URL→cards flow); set False when the prompt expects raw text.
+    """
     import urllib.parse
 
     model = get_model()
@@ -432,15 +442,18 @@ def _call_gemini_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
         f"{urllib.parse.quote(model)}:generateContent?key={urllib.parse.quote(api_key)}"
     )
 
+    gen_config: dict[str, Any] = {
+        "temperature": 0.4,
+        "maxOutputTokens": 4096,
+    }
+    if json_response:
+        gen_config["responseMimeType"] = "application/json"
+
     payload = json.dumps(
         {
             "systemInstruction": {"parts": [{"text": system_prompt}]},
             "contents": [{"role": "user", "parts": [{"text": user_prompt}]}],
-            "generationConfig": {
-                "temperature": 0.4,
-                "maxOutputTokens": 4096,
-                "responseMimeType": "application/json",
-            },
+            "generationConfig": gen_config,
         }
     ).encode("utf-8")
 
@@ -537,9 +550,11 @@ def _parse_response(
     try:
         parsed = json.loads(text)
     except json.JSONDecodeError as e:
-        raise LLMError(
-            f"Failed to parse LLM response as JSON: {e}\nResponse: {text[:500]}"
-        ) from e
+        parsed = _recover_json_items(text, action)
+        if parsed is None:
+            raise LLMError(
+                f"Failed to parse LLM response as JSON: {e}\nResponse: {text[:500]}"
+            ) from e
 
     cards: list[GeneratedCard] = []
     clozes: list[GeneratedCloze] = []
@@ -581,6 +596,68 @@ def _parse_response(
         action=action,
         model_used=model,
     )
+
+
+def _recover_json_items(text: str, action: ActionType) -> list[dict[str, Any]] | None:
+    """Recover complete objects from a malformed JSON array response.
+
+    LLMs occasionally emit a valid prefix followed by a truncated object, most
+    commonly from an unterminated string. For list-producing actions, keep any
+    complete objects with the required keys instead of discarding the whole
+    generation.
+    """
+    if action not in {"qa", "cloze"}:
+        return None
+
+    required = ("front", "back") if action == "qa" else ("text",)
+    items: list[dict[str, Any]] = []
+    decoder = json.JSONDecoder()
+    for candidate in _complete_json_object_strings(text):
+        try:
+            item, end = decoder.raw_decode(candidate)
+        except json.JSONDecodeError:
+            continue
+        if (
+            end == len(candidate)
+            and isinstance(item, dict)
+            and all(key in item for key in required)
+        ):
+            items.append(item)
+
+    return items or None
+
+
+def _complete_json_object_strings(text: str) -> list[str]:
+    """Return balanced top-level JSON object substrings from text."""
+    objects: list[str] = []
+    depth = 0
+    start: int | None = None
+    in_string = False
+    escaped = False
+
+    for idx, char in enumerate(text):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            if depth == 0:
+                start = idx
+            depth += 1
+        elif char == "}" and depth:
+            depth -= 1
+            if depth == 0 and start is not None:
+                objects.append(text[start : idx + 1])
+                start = None
+
+    return objects
 
 
 class LLMError(Exception):

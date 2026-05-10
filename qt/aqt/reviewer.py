@@ -169,6 +169,9 @@ class Reviewer:
         self._show_question_timer: QTimer | None = None
         self._show_answer_timer: QTimer | None = None
         self.auto_advance_enabled = False
+        self._auto_diagram_attempted_note_ids: set[int] = set()
+        self._auto_diagram_in_flight_note_ids: set[int] = set()
+        self._auto_diagram_no_backend_notified = False
         gui_hooks.av_player_did_end_playing.append(self._on_av_player_did_end_playing)
 
     def show(self) -> None:
@@ -404,6 +407,7 @@ class Reviewer:
         self.mw.web.setFocus()
         # user hook
         gui_hooks.reviewer_did_show_question(c)
+        self._maybe_generate_missing_tikz()
         self._auto_advance_to_answer_if_enabled()
 
     def _auto_advance_to_answer_if_enabled(self) -> None:
@@ -815,7 +819,7 @@ class Reviewer:
 <tr>
 <td align=start valign=top class=stat>
 <button title="%(editkey)s" onclick="pycmd('edit');">%(edit)s</button>
-<button id="ankiDiagramBtn" title="Generate a TikZ/Mermaid diagram for this card with the configured LLM"
+<button id="ankiDiagramBtn" title="Generate a TikZ diagram for this card with the configured LLM"
         onclick="pycmd('diagram');">%(diagram)s</button>
 </td>
 <td align=center valign=top id=middle>
@@ -1053,48 +1057,84 @@ timerStopped = false;
         ]
         return opts
 
-    # On-demand LLM diagram generation
+    # On-demand / automatic LLM diagram generation
     ##########################################################################
 
     _DIAGRAM_SYSTEM_PROMPT = (
-        "You are an expert at producing minimal pedagogical diagrams. "
-        "Given the front and back of a flashcard, produce ONE diagram that "
-        "would help a learner remember it. Pick the better of:\n"
-        "  • TikZ — for geometry, vectors, simple graphs, structural diagrams. "
-        "Restrict to TikZ core: arrows, positioning, calc, shapes, "
-        "decorations.pathreplacing, patterns. No pgfplots, no shell-escape, "
-        "no \\input.\n"
-        "  • Mermaid — for flowcharts, sequence diagrams, state machines, "
-        "ER diagrams, simple class diagrams.\n\n"
-        "Respond with EXACTLY one of these forms (no surrounding prose, "
-        "no markdown fences):\n"
-        "  [tikz]<tikz body>[/tikz]\n"
-        "  [mermaid]<mermaid body>[/mermaid]\n\n"
-        "If the card content does not benefit from a visual, respond with "
-        "the literal string SKIP and nothing else."
+        "You are an expert at producing minimal pedagogical TikZ diagrams. "
+        "Given the front and back of a flashcard, produce exactly ONE TikZ "
+        "diagram that helps a learner remember the card. Generate a diagram "
+        "for every card, even when the concept is abstract; use a compact "
+        "relationship map, process flow, contrast table, timeline, or labeled "
+        "structure when there is no obvious geometry. Restrict to TikZ core: "
+        "arrows, positioning, calc, shapes, decorations.pathreplacing, and "
+        "patterns. No pgfplots, pgfplotsset, shell-escape, externalization, "
+        "or \\input. Keep it small enough for a study card and use plain ASCII "
+        "inside the TikZ body.\n\n"
+        "Respond with EXACTLY this form (no surrounding prose, no markdown "
+        "fences, no Mermaid, no SKIP):\n"
+        "  [tikz]<tikz body>[/tikz]"
     )
 
-    def _on_generate_diagram(self) -> None:
-        """Ask the LLM for a [tikz]/[mermaid] block and append it to the card's back."""
+    def _note_has_tikz(self, note: Any) -> bool:
+        return any("[tikz]" in field.lower() for field in note.fields)
+
+    def _maybe_generate_missing_tikz(self) -> None:
+        if self.card is None:
+            return
+        note = self.card.note()
+        if note is None or self._note_has_tikz(note):
+            return
+        note_id = int(note.id)
+        if (
+            note_id in self._auto_diagram_attempted_note_ids
+            or note_id in self._auto_diagram_in_flight_note_ids
+        ):
+            return
+        self._auto_diagram_attempted_note_ids.add(note_id)
+        self._auto_diagram_in_flight_note_ids.add(note_id)
+        self._on_generate_diagram(auto=True)
+
+    def _on_generate_diagram(self, *, auto: bool = False) -> None:
+        """Ask the LLM for a [tikz] block and append it to the card's back."""
         from concurrent.futures import Future
 
-        from aqt.llm_generate import LLMError, get_api_key, is_local_available
         from anki.utils import html_to_text_line
+        from aqt.llm_generate import LLMError, get_api_key, is_local_available
 
         if self.card is None:
             return
         note = self.card.note()
+        note_id = int(note.id) if note is not None else 0
+
+        def finish_auto_attempt() -> None:
+            if auto and note_id:
+                self._auto_diagram_in_flight_note_ids.discard(note_id)
+
         if note is None or len(note.fields) < 2:
-            tooltip("Card has no separate back field to attach a diagram to.")
+            finish_auto_attempt()
+            if not auto:
+                tooltip("Card has no separate back field to attach a diagram to.")
             return
-        if "[tikz]" in note.fields[1] or "[mermaid]" in note.fields[1]:
-            tooltip("This card already has a diagram.")
+        if self._note_has_tikz(note):
+            finish_auto_attempt()
+            if not auto:
+                tooltip("This card already has a TikZ diagram.")
             return
         if not get_api_key() and not is_local_available():
-            tooltip(
-                "No LLM configured. Open Add/Capture → LLM setup to set a key.",
-                period=3500,
-            )
+            finish_auto_attempt()
+            if auto:
+                if not self._auto_diagram_no_backend_notified:
+                    self._auto_diagram_no_backend_notified = True
+                    tooltip(
+                        "No LLM configured for automatic TikZ generation.",
+                        period=3500,
+                    )
+            else:
+                tooltip(
+                    "No LLM configured. Open Add/Capture → LLM setup to set a key.",
+                    period=3500,
+                )
             return
 
         front = html_to_text_line(note.fields[0]) or note.fields[0]
@@ -1106,58 +1146,154 @@ timerStopped = false;
                 _call_anthropic_api,
                 _call_api,
                 _call_gemini_api,
-                get_api_key as _gak,
+                _get_local_model,
                 get_provider,
+            )
+            from aqt.llm_generate import (
+                get_api_key as _gak,
             )
 
             api_key = _gak()
-            assert api_key is not None
             user_prompt = (
                 f"Front: {front}\n\nBack: {back}\n\n"
-                "Produce a diagram per the rules above (or SKIP)."
+                "Produce the required TikZ diagram per the rules above."
             )
+            if api_key is None:
+                import mlx_lm  # type: ignore[import-not-found]
+
+                model, tokenizer = _get_local_model()
+                messages = [
+                    {"role": "system", "content": self._DIAGRAM_SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
+                ]
+                prompt = tokenizer.apply_chat_template(
+                    messages, add_generation_prompt=True, tokenize=False
+                )
+                return mlx_lm.generate(
+                    model, tokenizer, prompt=prompt, max_tokens=1200, verbose=False
+                )
+
             provider = get_provider()
             if provider == "claude":
-                return _call_anthropic_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
+                return _call_anthropic_api(
+                    api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt
+                )
             if provider == "gemini":
-                return _call_gemini_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
+                # raw text output — JSON mode would wrap our [tikz]/[mermaid] block.
+                return _call_gemini_api(
+                    api_key,
+                    self._DIAGRAM_SYSTEM_PROMPT,
+                    user_prompt,
+                    json_response=False,
+                )
             return _call_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
 
-        tooltip("Generating diagram…", period=2000)
+        tooltip(
+            "Generating TikZ diagram…" if auto else "Generating diagram…",
+            period=2000,
+        )
 
         def on_done(future: Future) -> None:
+            from aqt.diagrams import tikz_tag
+
             try:
                 raw = future.result()
             except LLMError as exc:
-                show_warning(f"LLM error generating diagram:\n{exc}", parent=self.mw)
+                finish_auto_attempt()
+                if auto:
+                    tooltip(f"Automatic TikZ generation failed: {exc}", period=3500)
+                else:
+                    show_warning(
+                        f"LLM error generating diagram:\n{exc}", parent=self.mw
+                    )
                 return
             except Exception as exc:
-                show_warning(f"Diagram generation failed:\n{exc}", parent=self.mw)
+                finish_auto_attempt()
+                if auto:
+                    tooltip(f"Automatic TikZ generation failed: {exc}", period=3500)
+                else:
+                    show_warning(f"Diagram generation failed:\n{exc}", parent=self.mw)
                 return
             text = (raw or "").strip()
             # Strip any markdown fences the model might have added anyway.
             if text.startswith("```"):
                 text = re.sub(r"^```[a-zA-Z]*\n?", "", text)
                 text = re.sub(r"\n?```\s*$", "", text).strip()
-            if text.upper() == "SKIP" or not text:
-                tooltip("LLM said this card doesn't need a diagram.", period=2500)
-                return
-            if not (
-                ("[tikz]" in text and "[/tikz]" in text)
-                or ("[mermaid]" in text and "[/mermaid]" in text)
-            ):
-                show_warning(
-                    "LLM didn't return a recognised diagram block. "
-                    f"Raw response (first 500 chars):\n\n{text[:500]}",
-                    parent=self.mw,
+            # If the model returned JSON, try to pluck a diagram string out of it.
+            if text.startswith("{") or text.startswith("["):
+                try:
+                    import json as _json
+
+                    parsed = _json.loads(text)
+                    candidates: list[str] = []
+                    if isinstance(parsed, dict):
+                        for v in parsed.values():
+                            if isinstance(v, str):
+                                candidates.append(v)
+                    elif isinstance(parsed, list):
+                        for item in parsed:
+                            if isinstance(item, str):
+                                candidates.append(item)
+                            elif isinstance(item, dict):
+                                for v in item.values():
+                                    if isinstance(v, str):
+                                        candidates.append(v)
+                    for c in candidates:
+                        if "[tikz]" in c.lower():
+                            text = c
+                            break
+                except Exception:
+                    pass
+            # Extract just the diagram block if there's surrounding prose.
+            block_match = re.search(
+                r"\[tikz\].+?\[/tikz\]",
+                text,
+                re.DOTALL | re.IGNORECASE,
+            )
+            if block_match:
+                text = block_match.group(0)
+            if not ("[tikz]" in text.lower() and "[/tikz]" in text.lower()):
+                tikz_like = any(
+                    marker in text
+                    for marker in (
+                        r"\begin{tikzpicture}",
+                        r"\draw",
+                        r"\node",
+                        r"\path",
+                        r"\matrix",
+                    )
                 )
+                if tikz_like:
+                    text = tikz_tag(text)
+
+            if not ("[tikz]" in text.lower() and "[/tikz]" in text.lower()):
+                finish_auto_attempt()
+                msg = (
+                    "LLM didn't return a recognised TikZ block. "
+                    f"Raw response (first 500 chars):\n\n{(raw or '')[:500]}"
+                )
+                if auto:
+                    tooltip(
+                        "Automatic TikZ generation returned no TikZ block.", period=3500
+                    )
+                else:
+                    show_warning(msg, parent=self.mw)
                 return
 
-            # Persist the diagram on the note's back field.
-            note.fields[1] = note.fields[1].rstrip() + "<br><br>" + text
+            text = tikz_tag(text)
+
+            # Persist automatic diagrams on the front so they are visible as
+            # soon as the card loads. Manual generation keeps the older
+            # back-field behavior for users explicitly adding a hint/answer aid.
+            target_field = 0 if auto else 1
+            note.fields[target_field] = (
+                note.fields[target_field].rstrip() + "<br><br>" + text
+            )
             self.mw.col.update_note(note)
-            tooltip("Diagram added — refreshing card.", period=1800)
-            # Re-render the current side so the new diagram appears.
+            if self.card is not None:
+                self.card.load()
+            finish_auto_attempt()
+            tooltip("TikZ diagram added.", period=1800)
             if self.state == "answer":
                 self._showAnswer()
             else:

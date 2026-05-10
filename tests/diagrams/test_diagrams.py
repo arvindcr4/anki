@@ -34,11 +34,13 @@ def diagrams():
 
 # ---------- Transformer correctness ----------
 
+
 class TestTransform:
     def test_tikz_block_rewritten(self, diagrams):
         out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
         assert '<script type="text/tikz">' in out
-        assert "[tikz]" not in out
+        assert 'class="anki-tikz-canvas"' in out
+        assert "[/tikz]" not in out
 
     def test_mermaid_block_rewritten(self, diagrams):
         out = diagrams.transform_card_html("[mermaid]graph TD; A-->B;[/mermaid]")
@@ -62,6 +64,17 @@ class TestTransform:
     def test_tikz_auto_wraps_document(self, diagrams):
         out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
         assert r"\begin{document}" in out
+        assert r"\documentclass[tikz]{standalone}" in out
+        assert r"\usepackage{tikz}" in out
+
+    def test_tikz_tag_normalizes_raw_tikz_body(self, diagrams):
+        tag = diagrams.tikz_tag(r"\draw (0,0)--(1,1);")
+        assert tag.startswith("[tikz]")
+        assert tag.endswith("[/tikz]")
+        assert r"\documentclass[tikz]{standalone}" in tag
+        assert r"\begin{document}" in tag
+        assert r"\begin{tikzpicture}" in tag
+        assert r"\draw (0,0)--(1,1);" in tag
 
     def test_multiple_tikz_blocks(self, diagrams):
         html = r"[tikz]\draw (0,0);[/tikz] mid [tikz]\draw (1,1);[/tikz]"
@@ -80,6 +93,7 @@ class TestTransform:
 
 # ---------- Robustness ----------
 
+
 class TestRobustness:
     @pytest.mark.parametrize(
         "bad",
@@ -87,7 +101,7 @@ class TestRobustness:
             "",
             "[tikz][/tikz]",
             r"[tikz]\bad{} [",
-            "[tikz]​[/tikz]",
+            "[tikz]\u200b[/tikz]",
             "<p>plain</p>",
             r"[tikz]\draw[/tikz]" * 50,
         ],
@@ -101,11 +115,11 @@ class TestRobustness:
 
 # ---------- Caching API (offline + cached rendering goal) ----------
 
+
 class TestCachingApi:
     def test_cache_helper_exists(self, diagrams):
-        assert (
-            hasattr(diagrams, "cache_diagram_svg")
-            or hasattr(diagrams, "_cache_to_media")
+        assert hasattr(diagrams, "cache_diagram_svg") or hasattr(
+            diagrams, "_cache_to_media"
         ), "expected cache_diagram_svg or _cache_to_media for first-class caching"
 
     def test_cache_uses_content_hash(self, diagrams):
@@ -127,6 +141,7 @@ class TestCachingApi:
 
 # ---------- Offline / vendored loader ----------
 
+
 class TestOfflineAssets:
     def test_offline_loader_marker(self, diagrams):
         # First-class offline rendering means we don't *only* depend on CDN.
@@ -141,13 +156,23 @@ class TestOfflineAssets:
         ]
         src = DIAGRAMS_PY.read_text()
         assert any(m in src for m in markers), (
-            "expected one of "
-            + ", ".join(markers)
-            + " for offline rendering support"
+            "expected one of " + ", ".join(markers) + " for offline rendering support"
         )
+
+    def test_tikz_runner_prefers_local_assets_before_cdn(self, diagrams):
+        js = diagrams._DIAGRAM_RUNNER_JS
+        assert f"/{diagrams.VENDORED_TIKZJAX_FILENAME}" in js
+        assert f"/{diagrams.VENDORED_TIKZJAX_FONTS_FILENAME}" in js
+        assert "https://tikzjax.com/v1/tikzjax.js" in js
+        assert js.index(f"/{diagrams.VENDORED_TIKZJAX_FILENAME}") < js.index(
+            "https://tikzjax.com/v1/tikzjax.js"
+        )
+        assert "_ankiLoadTikzAsset(index + 1)" in js
+        assert "requestIdleCallback" in js
 
 
 # ---------- Error fallback ----------
+
 
 class TestErrorFallback:
     def test_module_has_error_fallback(self, diagrams):
@@ -162,6 +187,7 @@ class TestErrorFallback:
 
 
 # ---------- Hook plumbing ----------
+
 
 class TestHookPlumbing:
     def test_setup_hook_registers_card_will_show(self, diagrams):

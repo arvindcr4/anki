@@ -125,9 +125,23 @@ def _add_qa_cards(
 ) -> int:
     """Insert generated cards into the deck. Source link is appended to the back."""
     basic = col.models.by_name("Basic") or col.models.current()
+    if basic is None:
+        # Last-ditch fallback: pick the first registered model. col.new_note
+        # raises if given None, so we must surface this clearly.
+        all_models = (
+            col.models.all_names_and_ids() if hasattr(col.models, "all_names_and_ids") else []
+        )
+        if all_models:
+            basic = col.models.get(all_models[0].id)
+    if basic is None:
+        raise RuntimeError(
+            "No note type available — Basic is missing and no fallback model registered."
+        )
     added = 0
     for card in cards:
         note = col.new_note(basic)
+        if note is None:
+            continue
         if len(note.fields) >= 1:
             note.fields[0] = card.front
         if len(note.fields) >= 2:
@@ -204,14 +218,21 @@ def ingest_one(mw: Any, source: str) -> dict[str, Any]:
     if not result.cards:
         return {"ok": False, "error": "LLM returned no usable cards.", "source": source}
 
-    deck_id, deck_name = _target_deck_id(mw.col, label or source)
-    added = _add_qa_cards(
-        mw.col,
-        result.cards,
-        deck_id,
-        source_label=label or source,
-        source_link=source_link,
-    )
+    try:
+        deck_id, deck_name = _target_deck_id(mw.col, label or source)
+        added = _add_qa_cards(
+            mw.col,
+            result.cards,
+            deck_id,
+            source_label=label or source,
+            source_link=source_link,
+        )
+    except Exception as exc:
+        return {
+            "ok": False,
+            "error": f"Could not add cards to deck: {exc}",
+            "source": source,
+        }
     return {
         "ok": True,
         "added": added,
