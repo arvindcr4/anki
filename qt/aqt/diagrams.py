@@ -61,6 +61,54 @@ def render_error_html(kind: str, body: str, msg: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Render cache — keyed by content hash, persisted in collection.media so
+# rendered SVGs survive across launches and sync to AnkiMobile.
+# ---------------------------------------------------------------------------
+
+
+def _diagram_cache_filename(kind: str, body: str) -> str:
+    """Stable filename for a (kind, body) pair, content-addressed via SHA1."""
+    import hashlib
+
+    digest = hashlib.sha1(body.strip().encode("utf-8")).hexdigest()[:16]
+    safe_kind = "".join(c for c in kind.lower() if c.isalnum()) or "diag"
+    return f"_anki-{safe_kind}-{digest}.svg"
+
+
+def cache_diagram_svg(
+    col: object,
+    kind: str,
+    body: str,
+    svg: bytes | None = None,
+) -> str:
+    """Return the cache filename for a (kind, body) pair, writing svg if given.
+
+    The filename is derived from the content hash, so two callers presenting
+    the same TikZ/Mermaid source map to the same media file. ``svg`` may be
+    ``None`` when the caller is only checking whether the cache already has
+    a render (use ``media.have(filename)`` afterwards). When ``svg`` is
+    provided and the file isn't already cached, it's written into
+    ``collection.media`` so the next card that shows the same source skips
+    re-rendering entirely (and the file syncs to AnkiMobile alongside other
+    media).
+    """
+    fname = _diagram_cache_filename(kind, body)
+    media = getattr(col, "media", None)
+    if media is None:
+        return fname
+    have = getattr(media, "have", None)
+    write_data = getattr(media, "write_data", None)
+    try:
+        if svg is not None and callable(have) and callable(write_data):
+            if not have(fname):
+                write_data(fname, svg)
+    except Exception:  # pragma: no cover — write paths depend on backend
+        # Cache-miss is a soft failure; the diagram will still render via JS.
+        pass
+    return fname
+
+
+# ---------------------------------------------------------------------------
 # Offline / vendored loader
 # ---------------------------------------------------------------------------
 
