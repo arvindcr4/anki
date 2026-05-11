@@ -182,13 +182,49 @@ def get_api_base() -> str:
 
 
 def get_model() -> str:
-    """Get the model to use, with provider-aware defaults."""
-    explicit = os.environ.get("ANKI_LLM_MODEL")
-    if explicit:
-        return explicit
+    """Get the model to use, with provider-aware defaults.
+
+    ``ANKI_LLM_MODEL`` overrides the default, but only when it matches the
+    active provider. A stale local-model name (e.g. ``Qwen3-4B-4bit``) left
+    in the environment after switching to an API provider would otherwise
+    be sent to Gemini/Anthropic/OpenAI and rejected (400 "unexpected model
+    name format").
+    """
+    explicit = os.environ.get("ANKI_LLM_MODEL", "").strip()
     if get_backend() == "local":
-        return DEFAULT_LOCAL_MODEL
-    return DEFAULT_API_MODEL.get(get_provider(), DEFAULT_LOCAL_MODEL)
+        return explicit or DEFAULT_LOCAL_MODEL
+    provider = get_provider()
+    if explicit and _model_matches_provider(explicit, provider):
+        return explicit
+    return DEFAULT_API_MODEL.get(provider, DEFAULT_LOCAL_MODEL)
+
+
+def _model_matches_provider(model: str, provider: str) -> bool:
+    """Return True if ``model`` looks like a valid id for ``provider``."""
+    m = model.strip().strip("/").lower()
+    if provider == "gemini":
+        return m.startswith("gemini-") or m.startswith("models/gemini-")
+    if provider == "claude":
+        return m.startswith("claude-")
+    if provider == "openai":
+        # Reject names that clearly belong to another provider; otherwise
+        # accept (OpenAI-compatible endpoints use diverse naming schemes).
+        return not (m.startswith("gemini-") or m.startswith("claude-"))
+    return True
+
+
+def _gemini_model_resource_path(model: str) -> str:
+    """Return the URL path segment Gemini expects for generateContent."""
+    import urllib.parse
+
+    normalized = model.strip().strip("/")
+    if normalized.endswith(":generateContent"):
+        normalized = normalized[: -len(":generateContent")]
+    if not normalized.startswith("models/"):
+        normalized = f"models/{normalized}"
+    return "/".join(
+        urllib.parse.quote(segment, safe="") for segment in normalized.split("/")
+    )
 
 
 def is_local_available() -> bool:
@@ -466,10 +502,10 @@ def _call_gemini_api(
     """
     import urllib.parse
 
-    model = get_model()
+    model = _gemini_model_resource_path(get_model())
     url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{urllib.parse.quote(model)}:generateContent?key={urllib.parse.quote(api_key)}"
+        "https://generativelanguage.googleapis.com/v1beta/"
+        f"{model}:generateContent?key={urllib.parse.quote(api_key, safe='')}"
     )
 
     gen_config: dict[str, Any] = {

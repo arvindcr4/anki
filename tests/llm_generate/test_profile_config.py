@@ -41,3 +41,58 @@ def test_apply_profile_llm_config_sets_reviewer_visible_env(monkeypatch) -> None
     assert os.environ["ANKI_LLM_MODEL"] == "gemini-test-model"
     assert os.environ["GEMINI_API_KEY"] == "secret"
     assert llm_generate.get_api_key() == "secret"
+
+
+def test_gemini_model_resource_accepts_bare_or_prefixed_model() -> None:
+    llm_generate = _load_llm_generate()
+
+    assert (
+        llm_generate._gemini_model_resource_path("gemini-3-flash-preview")
+        == "models/gemini-3-flash-preview"
+    )
+    assert (
+        llm_generate._gemini_model_resource_path("models/gemini-3-flash-preview")
+        == "models/gemini-3-flash-preview"
+    )
+
+
+def test_gemini_api_url_does_not_double_prefix_models(monkeypatch) -> None:
+    llm_generate = _load_llm_generate()
+    monkeypatch.setenv("ANKI_LLM_BACKEND", "api")
+    monkeypatch.setenv("ANKI_LLM_PROVIDER", "gemini")
+    monkeypatch.setenv("ANKI_LLM_MODEL", "models/gemini-3-flash-preview")
+
+    captured: dict[str, str] = {}
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args) -> None:
+            pass
+
+        def read(self) -> bytes:
+            return (
+                b'{"candidates":[{"content":{"parts":[{"text":"[tikz]x[/tikz]"}]}}]}'
+            )
+
+    def fake_urlopen(req, timeout):
+        captured["url"] = req.full_url
+        return FakeResponse()
+
+    monkeypatch.setattr(llm_generate.urllib.request, "urlopen", fake_urlopen)
+
+    assert (
+        llm_generate._call_gemini_api(
+            "key/with/slash",
+            "system",
+            "user",
+            json_response=False,
+        )
+        == "[tikz]x[/tikz]"
+    )
+    assert (
+        captured["url"]
+        == "https://generativelanguage.googleapis.com/v1beta/"
+        "models/gemini-3-flash-preview:generateContent?key=key%2Fwith%2Fslash"
+    )

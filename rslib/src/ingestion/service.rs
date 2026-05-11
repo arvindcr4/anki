@@ -59,7 +59,7 @@ impl IngestionService {
             None => return IngestionResult::failure("Gemini API key not configured"),
         };
 
-        match client.extract_url_context(url, "gemini-2.0-flash").await {
+        match client.extract_url_context(url, "gemini-3-flash-preview").await {
             Ok(response) => {
                 let content = Content::from_url(response.text, url);
                 IngestionResult::success(content)
@@ -93,7 +93,7 @@ impl IngestionService {
                 let transcription_prompt = "Transcribe this audio file exactly. Include all spoken words. If there are multiple speakers, indicate speaker changes if possible.";
 
                 match client
-                    .generate_content_with_file("gemini-2.0-flash", &file_uri, transcription_prompt)
+                    .generate_content_with_file("gemini-3-flash-preview", &file_uri, transcription_prompt)
                     .await
                 {
                     Ok(response) => {
@@ -147,7 +147,7 @@ impl IngestionService {
                     "Transcribe this video's audio exactly. Include all spoken words.";
 
                 match client
-                    .generate_content_with_file("gemini-2.0-flash", &file_uri, transcription_prompt)
+                    .generate_content_with_file("gemini-3-flash-preview", &file_uri, transcription_prompt)
                     .await
                 {
                     Ok(response) => {
