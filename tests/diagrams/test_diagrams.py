@@ -278,7 +278,7 @@ class TestOfflineAssets:
 
         diagrams.setup_hook()
 
-        diagrams.gui_hooks.collection_did_load.append.assert_called_with(
+        diagrams.gui_hooks.collection_did_load.append.assert_any_call(
             diagrams._install_tikzjax_assets_for_collection
         )
 

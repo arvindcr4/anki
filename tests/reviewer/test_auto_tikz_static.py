@@ -18,6 +18,15 @@ def test_reviewer_auto_generates_missing_tikz_on_question_load() -> None:
     assert "_auto_diagram_in_flight_note_ids" in src
 
 
+def test_reviewer_prefetches_tikz_for_five_upcoming_cards() -> None:
+    src = _source()
+    assert "_AUTO_DIAGRAM_LOOKAHEAD = 5" in src
+    assert "def _upcoming_auto_diagram_cards" in src
+    assert "fetch_limit=self._AUTO_DIAGRAM_LOOKAHEAD + 1" in src
+    assert "refresh_current=False" in src
+    assert "show_status=False" in src
+
+
 def test_reviewer_applies_saved_llm_config_before_auto_generation() -> None:
     src = _source()
     assert "apply_profile_llm_config(self.mw.pm.profile)" in src
@@ -56,6 +65,23 @@ def test_auto_generation_removes_broken_tikz_before_saving_new_one() -> None:
     assert "if auto:" in on_done
     assert "re.sub(" in on_done
     assert r"\[tikz\].*?\[/tikz\]" in on_done
+
+
+def test_auto_generation_retries_failed_tikz_attempts() -> None:
+    src = _source()
+    on_done_start = src.index("        def on_done")
+    on_done = src[on_done_start : src.index("        self.mw.taskman", on_done_start)]
+    assert "finish_auto_attempt(retry=auto)" in on_done
+    assert "self._auto_diagram_attempted_note_ids.discard(note_id)" in src
+
+
+def test_auto_generation_rejects_non_drawing_tikz_blocks() -> None:
+    src = _source()
+    assert "def _looks_like_tikz_drawing" in src
+    assert r"\draw" in src
+    on_done_start = src.index("        def on_done")
+    on_done = src[on_done_start : src.index("        self.mw.taskman", on_done_start)]
+    assert "not self._looks_like_tikz_drawing(text)" in on_done
 
 
 def test_auto_generation_stores_on_front_and_refreshes_question() -> None:

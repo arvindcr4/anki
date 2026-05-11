@@ -1112,6 +1112,7 @@ timerStopped = false;
         "fences, no Mermaid, no SKIP):\n"
         "  [tikz]<tikz body>[/tikz]"
     )
+    _AUTO_DIAGRAM_LOOKAHEAD = 5
 
     def _note_has_tikz(self, note: Any) -> bool:
         return any(
@@ -1126,21 +1127,70 @@ timerStopped = false;
     def _maybe_generate_missing_tikz(self) -> None:
         if self.card is None:
             return
-        note = self.card.note()
-        if note is None or self._note_has_tikz(note):
-            return
-        note_id = int(note.id)
-        if (
-            note_id in self._auto_diagram_attempted_note_ids
-            or note_id in self._auto_diagram_in_flight_note_ids
-        ):
-            return
-        self._auto_diagram_attempted_note_ids.add(note_id)
-        self._auto_diagram_in_flight_note_ids.add(note_id)
-        self._on_generate_diagram(auto=True)
+        self._on_generate_diagram(
+            auto=True,
+            target_card=self.card,
+            refresh_current=True,
+            show_status=True,
+        )
+        for target_card in self._upcoming_auto_diagram_cards():
+            self._on_generate_diagram(
+                auto=True,
+                target_card=target_card,
+                refresh_current=False,
+                show_status=False,
+            )
 
-    def _on_generate_diagram(self, *, auto: bool = False) -> None:
-        """Ask the LLM for a [tikz] block and append it to the card's back."""
+    def _upcoming_auto_diagram_cards(self) -> list[Card]:
+        sched = getattr(self.mw.col, "sched", None)
+        if sched is None or not hasattr(sched, "get_queued_cards"):
+            return []
+        try:
+            info = sched.get_queued_cards(fetch_limit=self._AUTO_DIAGRAM_LOOKAHEAD + 1)
+        except Exception:
+            return []
+
+        current_card_id = int(self.card.id) if self.card is not None else 0
+        targets: list[Card] = []
+        seen_card_ids = {current_card_id}
+        for queued in list(getattr(info, "cards", []) or []):
+            if len(targets) >= self._AUTO_DIAGRAM_LOOKAHEAD:
+                break
+            try:
+                card = Card(self.mw.col)
+                card._load_from_backend_card(queued.card)
+                card_id = int(card.id)
+            except Exception:
+                continue
+            if card_id in seen_card_ids:
+                continue
+            seen_card_ids.add(card_id)
+            targets.append(card)
+        return targets
+
+    def _looks_like_tikz_drawing(self, text: str) -> bool:
+        return any(
+            marker in text
+            for marker in (
+                r"\draw",
+                r"\node",
+                r"\path",
+                r"\matrix",
+                r"\coordinate",
+                r"\fill",
+                r"\foreach",
+            )
+        )
+
+    def _on_generate_diagram(
+        self,
+        *,
+        auto: bool = False,
+        target_card: Card | None = None,
+        refresh_current: bool = True,
+        show_status: bool = True,
+    ) -> None:
+        """Ask the LLM for a [tikz] block and append it to a card note."""
         from concurrent.futures import Future
 
         from anki.utils import html_to_text_line
@@ -1153,23 +1203,37 @@ timerStopped = false;
 
         apply_profile_llm_config(self.mw.pm.profile)
 
-        if self.card is None:
+        card = target_card or self.card
+        if card is None:
             return
-        note = self.card.note()
-        note_id = int(note.id) if note is not None else 0
+        note = card.note()
+        card_id = int(card.id)
+        if note is None or self._note_has_tikz(note):
+            return
+        note_id = int(note.id)
+        if auto:
+            if (
+                note_id in self._auto_diagram_attempted_note_ids
+                or note_id in self._auto_diagram_in_flight_note_ids
+            ):
+                return
+            self._auto_diagram_attempted_note_ids.add(note_id)
+            self._auto_diagram_in_flight_note_ids.add(note_id)
 
-        def finish_auto_attempt() -> None:
+        def finish_auto_attempt(*, retry: bool = False) -> None:
             if auto and note_id:
                 self._auto_diagram_in_flight_note_ids.discard(note_id)
+                if retry:
+                    self._auto_diagram_attempted_note_ids.discard(note_id)
 
         if note is None or len(note.fields) < 2:
             finish_auto_attempt()
-            if not auto:
+            if not auto and show_status:
                 tooltip("Card has no separate back field to attach a diagram to.")
             return
         if self._note_has_tikz(note):
             finish_auto_attempt()
-            if not auto:
+            if not auto and show_status:
                 tooltip("This card already has a TikZ diagram.")
             return
         if not get_api_key() and not is_local_available():
@@ -1177,13 +1241,13 @@ timerStopped = false;
             if auto:
                 if note_id:
                     self._auto_diagram_attempted_note_ids.discard(note_id)
-                if not self._auto_diagram_no_backend_notified:
+                if show_status and not self._auto_diagram_no_backend_notified:
                     self._auto_diagram_no_backend_notified = True
                     tooltip(
                         "No LLM configured for automatic TikZ generation.",
                         period=3500,
                     )
-            else:
+            elif show_status:
                 tooltip(
                     "No LLM configured. Open Add/Capture → LLM setup to set a key.",
                     period=3500,
@@ -1241,10 +1305,11 @@ timerStopped = false;
                 )
             return _call_api(api_key, self._DIAGRAM_SYSTEM_PROMPT, user_prompt)
 
-        tooltip(
-            "Generating TikZ diagram…" if auto else "Generating diagram…",
-            period=2000,
-        )
+        if show_status:
+            tooltip(
+                "Generating TikZ diagram…" if auto else "Generating diagram…",
+                period=2000,
+            )
 
         def on_done(future: Future) -> None:
             from aqt.diagrams import tikz_tag
@@ -1252,19 +1317,19 @@ timerStopped = false;
             try:
                 raw = future.result()
             except LLMError as exc:
-                finish_auto_attempt()
-                if auto:
+                finish_auto_attempt(retry=auto)
+                if auto and show_status:
                     tooltip(f"Automatic TikZ generation failed: {exc}", period=3500)
-                else:
+                elif not auto and show_status:
                     show_warning(
                         f"LLM error generating diagram:\n{exc}", parent=self.mw
                     )
                 return
             except Exception as exc:
-                finish_auto_attempt()
-                if auto:
+                finish_auto_attempt(retry=auto)
+                if auto and show_status:
                     tooltip(f"Automatic TikZ generation failed: {exc}", period=3500)
-                else:
+                elif not auto and show_status:
                     show_warning(f"Diagram generation failed:\n{exc}", parent=self.mw)
                 return
             text = (raw or "").strip()
@@ -1320,20 +1385,34 @@ timerStopped = false;
                     text = tikz_tag(text)
 
             if not ("[tikz]" in text.lower() and "[/tikz]" in text.lower()):
-                finish_auto_attempt()
+                finish_auto_attempt(retry=auto)
                 msg = (
                     "LLM didn't return a recognised TikZ block. "
                     f"Raw response (first 500 chars):\n\n{(raw or '')[:500]}"
                 )
-                if auto:
+                if auto and show_status:
                     tooltip(
                         "Automatic TikZ generation returned no TikZ block.", period=3500
                     )
-                else:
+                elif not auto and show_status:
                     show_warning(msg, parent=self.mw)
                 return
 
             text = tikz_tag(text)
+            if not self._looks_like_tikz_drawing(text):
+                finish_auto_attempt(retry=auto)
+                msg = (
+                    "LLM returned a TikZ block without any drawing commands. "
+                    f"Raw response (first 500 chars):\n\n{(raw or '')[:500]}"
+                )
+                if auto and show_status:
+                    tooltip(
+                        "Automatic TikZ generation returned no drawing commands.",
+                        period=3500,
+                    )
+                elif not auto and show_status:
+                    show_warning(msg, parent=self.mw)
+                return
 
             # Persist automatic diagrams on the front so they are visible as
             # soon as the card loads. Manual generation keeps the older
@@ -1353,14 +1432,21 @@ timerStopped = false;
                 note.fields[target_field].rstrip() + "<br><br>" + text
             )
             self.mw.col.update_note(note)
-            if self.card is not None:
+            should_refresh = (
+                refresh_current
+                and self.card is not None
+                and int(self.card.id) == card_id
+            )
+            if should_refresh:
                 self.card.load()
             finish_auto_attempt()
-            tooltip("TikZ diagram added.", period=1800)
-            if self.state == "answer":
-                self._showAnswer()
-            else:
-                self._showQuestion()
+            if show_status:
+                tooltip("TikZ diagram added.", period=1800)
+            if should_refresh:
+                if self.state == "answer":
+                    self._showAnswer()
+                else:
+                    self._showQuestion()
 
         self.mw.taskman.run_in_background(task, on_done)
 

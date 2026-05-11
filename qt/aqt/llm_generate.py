@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass
@@ -75,6 +76,8 @@ _SYSTEM_PROMPTS: dict[ActionType, str] = {
         "OUTPUT\n"
         "Return ONLY a JSON array of objects with 'front' and 'back' keys "
         "— no markdown fences, no commentary. Strings must be valid JSON "
+        "and must not end mid-sentence or mid-word. If the token budget is "
+        "tight, return fewer complete cards rather than any partial card. "
         '(escape backslashes as \\\\ and quotes as \\"). Example:\n'
         '[{"front":"Pythagorean theorem?","back":"For a right triangle '
         "with legs a, b and hypotenuse c: a² + b² = c². "
@@ -391,7 +394,7 @@ def _generate_local(
     )
 
     response_text = mlx_lm.generate(
-        model, tokenizer, prompt=prompt, max_tokens=2000, verbose=False
+        model, tokenizer, prompt=prompt, max_tokens=4096, verbose=False
     )
 
     return _parse_response(response_text, action, get_model())
@@ -434,11 +437,13 @@ def _build_user_prompt(
         parts.append(f"\nContext: {context}")
     if action == "qa":
         parts.append(
-            f"\nGenerate exactly {num_cards} question-answer pairs as a JSON array."
+            f"\nGenerate up to {num_cards} complete question-answer pairs as a JSON array. "
+            "Never include a partial question or answer."
         )
     elif action == "cloze":
         parts.append(
-            f"\nGenerate exactly {num_cards} cloze deletion cards as a JSON array."
+            f"\nGenerate up to {num_cards} complete cloze deletion cards as a JSON array. "
+            "Never include a partial sentence."
         )
     else:
         parts.append("\nGenerate a concise study summary as a JSON object.")
@@ -460,7 +465,7 @@ def _call_api(api_key: str, system_prompt: str, user_prompt: str) -> str:
                 {"role": "user", "content": user_prompt},
             ],
             "temperature": 0.7,
-            "max_tokens": 2000,
+            "max_tokens": 4096,
         }
     ).encode("utf-8")
 
@@ -602,8 +607,6 @@ def _parse_response(
 
     # Strip thinking tags from reasoning models (e.g., Qwen3, DeepSeek)
     if "<think>" in text:
-        import re
-
         text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
 
     # Strip markdown code fences if present
@@ -631,24 +634,32 @@ def _parse_response(
             parsed = [parsed]
         for item in parsed:
             if isinstance(item, dict) and "front" in item and "back" in item:
-                cards.append(
-                    GeneratedCard(
-                        front=str(item["front"]),
-                        back=str(item["back"]),
-                        tags=["ai-generated", "qa"],
+                front = str(item["front"])
+                back = str(item["back"])
+                if (
+                    not _looks_like_truncated_card_text(front)
+                    and not _looks_like_truncated_card_text(back)
+                ):
+                    cards.append(
+                        GeneratedCard(
+                            front=front,
+                            back=back,
+                            tags=["ai-generated", "qa"],
+                        )
                     )
-                )
     elif action == "cloze":
         if not isinstance(parsed, list):
             parsed = [parsed]
         for item in parsed:
             if isinstance(item, dict) and "text" in item:
-                clozes.append(
-                    GeneratedCloze(
-                        text=str(item["text"]),
-                        tags=["ai-generated", "cloze"],
+                text = str(item["text"])
+                if not _looks_like_truncated_card_text(text):
+                    clozes.append(
+                        GeneratedCloze(
+                            text=text,
+                            tags=["ai-generated", "cloze"],
+                        )
                     )
-                )
     elif action == "summarize":
         if isinstance(parsed, dict) and "summary" in parsed:
             summary = str(parsed["summary"])
@@ -662,6 +673,59 @@ def _parse_response(
         action=action,
         model_used=model,
     )
+
+
+_INCOMPLETE_TRAILING_WORDS = {
+    "a",
+    "an",
+    "and",
+    "are",
+    "as",
+    "at",
+    "be",
+    "because",
+    "between",
+    "but",
+    "by",
+    "due",
+    "for",
+    "from",
+    "if",
+    "in",
+    "into",
+    "is",
+    "of",
+    "on",
+    "or",
+    "than",
+    "that",
+    "the",
+    "then",
+    "to",
+    "while",
+    "with",
+}
+
+
+def _looks_like_truncated_card_text(value: str) -> bool:
+    """Heuristic guard against saving valid JSON that ends mid-answer."""
+    text = re.sub(r"\s+", " ", value).strip()
+    lowered = text.lower()
+    if lowered.endswith(("[/tikz]", "[/mermaid]")):
+        return False
+    if re.search(r'(?:[.!?。！？)\]\}"\']|\d|</[a-z][^>]*>)$', text):
+        return False
+    if text.endswith((",", "-", "–", "—")):
+        return True
+    words = re.findall(r"[A-Za-z]+", text)
+    if not words or not text[-1].isalpha():
+        return False
+    last_word = words[-1].lower()
+    if len(text) < 24:
+        return len(words) >= 3 and (
+            last_word in _INCOMPLETE_TRAILING_WORDS or len(last_word) <= 2
+        )
+    return last_word in _INCOMPLETE_TRAILING_WORDS or len(last_word) <= 3
 
 
 def _recover_json_items(text: str, action: ActionType) -> list[dict[str, Any]] | None:

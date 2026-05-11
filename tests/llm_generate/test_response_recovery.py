@@ -55,6 +55,31 @@ def test_qa_parser_recovers_reported_attention_response() -> None:
     )
 
 
+def test_qa_parser_drops_complete_json_card_with_broken_answer_tail() -> None:
+    llm_generate = _load_llm_generate()
+    response = """[
+{"front": "What is attention?", "back": "Attention assigns soft weights to tokens."},
+{"front": "How do hard weights differ?", "back": "Hard weights ar"}
+]"""
+
+    result = llm_generate._parse_response(response, "qa", "test-model")
+
+    assert len(result.cards) == 1
+    assert result.cards[0].back == "Attention assigns soft weights to tokens."
+
+
+def test_qa_parser_keeps_short_standalone_answers_without_punctuation() -> None:
+    llm_generate = _load_llm_generate()
+    response = """[
+{"front": "Year of the French Revolution?", "back": "1789"},
+{"front": "What is the capital of France?", "back": "Paris"}
+]"""
+
+    result = llm_generate._parse_response(response, "qa", "test-model")
+
+    assert [card.back for card in result.cards] == ["1789", "Paris"]
+
+
 def test_cloze_parser_recovers_complete_items_before_truncated_tail() -> None:
     llm_generate = _load_llm_generate()
     response = """[
