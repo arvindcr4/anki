@@ -114,6 +114,36 @@ def get_backend() -> str:
     return os.environ.get("ANKI_LLM_BACKEND", "auto")
 
 
+def apply_llm_config(cfg: dict[str, str]) -> None:
+    """Apply a saved profile LLM config to environment variables."""
+    provider = cfg.get("provider", "claude")
+    if provider == "local":
+        os.environ["ANKI_LLM_BACKEND"] = "local"
+    else:
+        os.environ["ANKI_LLM_BACKEND"] = "api"
+        os.environ["ANKI_LLM_PROVIDER"] = provider
+    if cfg.get("model"):
+        os.environ["ANKI_LLM_MODEL"] = cfg["model"]
+    elif "ANKI_LLM_MODEL" in os.environ:
+        del os.environ["ANKI_LLM_MODEL"]
+    if cfg.get("anthropic_api_key"):
+        os.environ["ANTHROPIC_API_KEY"] = cfg["anthropic_api_key"]
+    if cfg.get("openai_api_key"):
+        os.environ["OPENAI_API_KEY"] = cfg["openai_api_key"]
+    if cfg.get("gemini_api_key"):
+        os.environ["GEMINI_API_KEY"] = cfg["gemini_api_key"]
+
+
+def apply_profile_llm_config(profile: object) -> None:
+    """Apply llm_config from an Anki profile object if present."""
+    getter = getattr(profile, "get", None)
+    if not callable(getter):
+        return
+    cfg = getter("llm_config")
+    if isinstance(cfg, dict):
+        apply_llm_config(cfg)
+
+
 def get_provider() -> str:
     """Return the API provider: 'claude', 'openai', or 'gemini'.
 

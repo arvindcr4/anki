@@ -366,22 +366,9 @@ QPushButton#quickIntakeGhostAction:disabled {
 
 def _apply_llm_env(cfg: dict[str, str]) -> None:
     """Apply a saved LLM config to environment variables consumed by llm_generate."""
-    provider = cfg.get("provider", "claude")
-    if provider == "local":
-        os.environ["ANKI_LLM_BACKEND"] = "local"
-    else:
-        os.environ["ANKI_LLM_BACKEND"] = "api"
-        os.environ["ANKI_LLM_PROVIDER"] = provider
-    if cfg.get("model"):
-        os.environ["ANKI_LLM_MODEL"] = cfg["model"]
-    elif "ANKI_LLM_MODEL" in os.environ:
-        del os.environ["ANKI_LLM_MODEL"]
-    if cfg.get("anthropic_api_key"):
-        os.environ["ANTHROPIC_API_KEY"] = cfg["anthropic_api_key"]
-    if cfg.get("openai_api_key"):
-        os.environ["OPENAI_API_KEY"] = cfg["openai_api_key"]
-    if cfg.get("gemini_api_key"):
-        os.environ["GEMINI_API_KEY"] = cfg["gemini_api_key"]
+    from aqt.llm_generate import apply_llm_config
+
+    apply_llm_config(cfg)
 
 
 class AddCards(QMainWindow):
@@ -736,11 +723,10 @@ class AddCards(QMainWindow):
             title, content = self._fetch_source_url(url)
             if not content.strip():
                 return {"error": "No textual content extracted from that URL."}
-            requested_n = (
-                self._optimal_card_count(content) if auto_count else num_cards
-            )
+            requested_n = self._optimal_card_count(content) if auto_count else num_cards
             self.mw.taskman.run_on_main(
-                lambda label=title or url, n=requested_n: self.intake_frame.set_llm_status(
+                lambda label=title or url,
+                n=requested_n: self.intake_frame.set_llm_status(
                     f"LLM status: generating {n} cards from {label}…"
                 )
             )
@@ -795,20 +781,14 @@ class AddCards(QMainWindow):
             )
             label = title or url
             requested = int(payload.get("requested_n", added) or added)
-            count_note = (
-                f" (auto-sized to {requested})"
-                if auto_count
-                else ""
-            )
+            count_note = f" (auto-sized to {requested})" if auto_count else ""
             self.intake_frame.set_status(
                 f"Added {added} cards from {label} → deck “{deck_name}”{count_note}"
             )
             self.intake_frame.set_llm_status(
                 f"LLM status: added {added}/{len(result.cards)} cards with {result.model_used} → {deck_name}{count_note}"
             )
-            tooltip(
-                f"Added {added} cards to {deck_name}{count_note}", period=3000
-            )
+            tooltip(f"Added {added} cards to {deck_name}{count_note}", period=3000)
 
         self.mw.taskman.run_in_background(task, on_done)
 
@@ -956,14 +936,18 @@ class AddCards(QMainWindow):
                 if source_url:
                     label = source_title or source_url
                     back = (
-                        f'{back}<br><br>'
+                        f"{back}<br><br>"
                         f'<i>Source: <a href="{source_url}">{label}</a></i>'
                     )
                 note.fields[1] = back
-            note.tags = list(card.tags) if getattr(card, "tags", None) else [
-                "llm-generated",
-                "from-url",
-            ]
+            note.tags = (
+                list(card.tags)
+                if getattr(card, "tags", None)
+                else [
+                    "llm-generated",
+                    "from-url",
+                ]
+            )
             try:
                 col.add_note(note, deck_id)
                 added += 1
