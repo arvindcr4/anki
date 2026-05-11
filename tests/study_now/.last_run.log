@@ -1,0 +1,19 @@
+== Buggy implementation (no bounce) ==
+[buggy] studynow_after_deckclick: queued=1 pass=True
+[buggy] studynow_after_studytoday: queued=1 pass=True
+[buggy] studynow_repeated_click: queued=1 pass=True
+[buggy] only_default_deck_selected: queued=1 pass=True
+[buggy] no_due_cards_returns_zero: queued=0 pass=True
+[buggy] stale_empty_queue_after_reselect: queued=1 pass=True
+
+== Fixed implementation (sentinel bounce) ==
+[fixed] studynow_after_deckclick: queued=1 pass=True
+[fixed] studynow_after_studytoday: queued=1 pass=True
+[fixed] studynow_repeated_click: queued=1 pass=True
+[fixed] only_default_deck_selected: queued=1 pass=True
+[fixed] no_due_cards_returns_zero: queued=0 pass=True
+[fixed] stale_empty_queue_after_reselect: queued=1 pass=True
+
+buggy passed 6/6
+fixed passed 6/6
+WARN: buggy implementation matched fixed — scenarios don't actually reproduce the bug

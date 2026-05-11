@@ -57,18 +57,75 @@ class Overview:
         self.bottom = BottomBar(mw, mw.bottomWeb)
         self._refresh_needed = False
 
+        def _log_state_change(new_state, old_state):
+            try:
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write(f"[state_change] {old_state} -> {new_state}\n")
+            except Exception:
+                pass
+
+        gui_hooks.state_did_change.append(_log_state_change)
+
     def show(self) -> None:
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(
+                    f"[overview.show] current_did={self.mw.col.decks.get_current_id()} "
+                    f"finished={self.mw.col.sched._is_finished()}\n"
+                )
+        except Exception:
+            pass
         av_player.stop_and_clear_queue()
         self.web.set_bridge_command(self._linkHandler, self)
         self.mw.setStateShortcuts(self._shortcutKeys())
         self.refresh()
 
     def refresh(self) -> None:
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(
+                    f"[overview.refresh] state={self.mw.state}\n"
+                )
+        except Exception:
+            pass
+
         def success(_counts: tuple) -> None:
+            # The QueryOp dispatches refresh() in the background; by the time
+            # this success callback runs on the main thread, the user may
+            # have already moved to a different state (e.g. clicked a per-deck
+            # Study pill that fires moveToState("overview") then immediately
+            # moveToState("review")). If we render overview HTML into mw.web
+            # while state is no longer "overview", the visible page no longer
+            # matches mw.state — and worse, the bridge command for mw.web has
+            # been rebound by reviewer.show() to the reviewer's handler, so
+            # subsequent pycmd("study") clicks go to the wrong screen and
+            # silently no-op. Bail out of the render in that case.
+            if self.mw.state != "overview":
+                try:
+                    with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                        _f.write(
+                            f"[overview.refresh.success] SKIP — state={self.mw.state}\n"
+                        )
+                except Exception:
+                    pass
+                return
             self._refresh_needed = False
+            # Always rebind the bridge command before re-rendering: this
+            # ensures pycmd() messages from the new HTML reach overview's
+            # _linkHandler, even if reviewer.show() (or another screen) had
+            # rebound it earlier in this event loop tick.
+            self.web.set_bridge_command(self._linkHandler, self)
             self._renderPage()
             self._renderBottom()
             self.mw.web.setFocus()
+            try:
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write(
+                        f"[overview.refresh.success] state={self.mw.state} "
+                        f"onBridgeCmd={self.web.onBridgeCmd!r}\n"
+                    )
+            except Exception:
+                pass
             gui_hooks.overview_did_refresh(self)
 
         QueryOp(
@@ -94,33 +151,74 @@ class Overview:
     ############################################################
 
     def _linkHandler(self, url: str) -> bool:
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(f"[overview._linkHandler] url={url!r}\n")
+        except Exception:
+            pass
         if url == "study":
-            # Decouple Study Now from prior navigation by:
-            #   1. force-invalidating the cached scheduler queues — the
-            #      backend only drops them when set_current_deck() is
-            #      called with a *different* deck, so we briefly bounce
-            #      through a sentinel id and back,
-            #   2. explicitly priming the queue with get_queued_cards()
-            #      so the result is known BEFORE the state transition.
+            # Force queue invalidation by bouncing through a sentinel deck id,
+            # because the Rust backend only drops cached card_queues when the
+            # current_deck config value actually changes (see
+            # rslib/src/decks/current.rs::set_current_deck_inner). Then mirror
+            # the deck-browser's working "study now" pattern: overview→review.
             from anki.decks import DeckId as _DeckId
 
             col = self.mw.col
             current_did = col.decks.get_current_id()
             sentinel = _DeckId(1) if current_did != _DeckId(1) else _DeckId(0)
             try:
-                col.decks.select(sentinel)
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write(
+                        f"[studynow] click current_did={current_did} sentinel={sentinel}\n"
+                    )
             except Exception:
                 pass
-            col.decks.select(current_did)
+            try:
+                col.decks.set_current(sentinel)
+                col.decks.set_current(current_did)
+            except Exception as exc:
+                try:
+                    with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                        _f.write(f"[studynow] bounce failed: {exc!r}\n")
+                except Exception:
+                    pass
             col.startTimebox()
             try:
                 queued = col.sched.get_queued_cards()
-            except Exception:
+                n_cards = len(queued.cards) if queued else 0
+            except Exception as exc:
                 queued = None
+                n_cards = -1
+                try:
+                    with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                        _f.write(f"[studynow] get_queued_cards raised: {exc!r}\n")
+                except Exception:
+                    pass
+            try:
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write(f"[studynow] queued.cards={n_cards}\n")
+            except Exception:
+                pass
             if not queued or not queued.cards:
                 tooltip(tr.studying_no_cards_are_due_yet())
                 return False
+            try:
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write(
+                        f"[studynow] before moveToState state={self.mw.state}\n"
+                    )
+            except Exception:
+                pass
             self.mw.moveToState("review")
+            try:
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write(
+                        f"[studynow] after moveToState state={self.mw.state} "
+                        f"reviewer.card={getattr(self.mw.reviewer, 'card', None)}\n"
+                    )
+            except Exception:
+                pass
         elif url == "anki":
             print("anki menu")
         elif url == "opts":
@@ -209,6 +307,14 @@ class Overview:
             shareLink = '<a class=smallLink href="review">Reviews and Updates</a>'
         else:
             shareLink = ""
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(
+                    f"[_renderPage] deck={deck['name']} dyn={deck.get('dyn')} "
+                    f"finished={self.mw.col.sched._is_finished()}\n"
+                )
+        except Exception:
+            pass
         if self.mw.col.sched._is_finished():
             self._show_finished_screen()
             return

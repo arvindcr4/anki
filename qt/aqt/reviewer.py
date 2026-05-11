@@ -175,7 +175,20 @@ class Reviewer:
         gui_hooks.av_player_did_end_playing.append(self._on_av_player_did_end_playing)
 
     def show(self) -> None:
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(
+                    f"[reviewer.show] sched_ver={self.mw.col.sched_ver()} "
+                    f"v3={self.mw.col.v3_scheduler()}\n"
+                )
+        except Exception:
+            pass
         if self.mw.col.sched_ver() == 1 or not self.mw.col.v3_scheduler():
+            try:
+                with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                    _f.write("[reviewer.show] NOT v3 — bounce to deckBrowser\n")
+            except Exception:
+                pass
             self.mw.moveToState("deckBrowser")
             show_warning(tr.scheduling_update_required().replace("V2", "v3"))
             return
@@ -186,6 +199,14 @@ class Reviewer:
         self._reps = None
         self._refresh_needed = RefreshNeeded.QUEUES
         self.refresh_if_needed()
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(
+                    f"[reviewer.show] post-refresh card={self.card} "
+                    f"state={self.mw.state}\n"
+                )
+        except Exception:
+            pass
 
     # this is only used by add-ons
     def lastCard(self) -> Card | None:
@@ -268,6 +289,14 @@ class Reviewer:
     def _get_next_v3_card(self) -> None:
         assert isinstance(self.mw.col.sched, V3Scheduler)
         output = self.mw.col.sched.get_queued_cards()
+        try:
+            with open("/tmp/anki-studynow-debug.log", "a") as _f:
+                _f.write(
+                    f"[_get_next_v3_card] cards={len(output.cards)} "
+                    f"current_did={self.mw.col.decks.get_current_id()}\n"
+                )
+        except Exception:
+            pass
         if not output.cards:
             return
         self._v3 = V3CardInfo.from_queue(output)
@@ -358,6 +387,14 @@ class Reviewer:
         # block default drag & drop behavior while allowing drop events to be received by JS handlers
         self.web.allow_drops = True
         self.web.eval("_blockDefaultDragDropBehavior();")
+        # Start fetching the TikZJax engine in the background so the first
+        # [tikz] card doesn't pay the ~10MB wasm/gz download + warmup. Also
+        # hydrate the in-page cache from the persistent on-disk store, so
+        # any TikZ we've ever rendered before resolves instantly.
+        from aqt.diagrams import prewarm_diagram_engines, push_persistent_cache_to_web
+
+        prewarm_diagram_engines(self.web)
+        push_persistent_cache_to_web(self.web)
         # show answer / ease buttons
         self.bottom.web.stdHtml(
             self._bottomHTML(),
@@ -1077,7 +1114,14 @@ timerStopped = false;
     )
 
     def _note_has_tikz(self, note: Any) -> bool:
-        return any("[tikz]" in field.lower() for field in note.fields)
+        return any(
+            re.search(
+                r"\[tikz\].*?\\begin\{tikzpicture\}.*?\\end\{tikzpicture\}.*?\[/tikz\]",
+                field,
+                re.DOTALL | re.IGNORECASE,
+            )
+            for field in note.fields
+        )
 
     def _maybe_generate_missing_tikz(self) -> None:
         if self.card is None:
@@ -1100,7 +1144,14 @@ timerStopped = false;
         from concurrent.futures import Future
 
         from anki.utils import html_to_text_line
-        from aqt.llm_generate import LLMError, get_api_key, is_local_available
+        from aqt.llm_generate import (
+            LLMError,
+            apply_profile_llm_config,
+            get_api_key,
+            is_local_available,
+        )
+
+        apply_profile_llm_config(self.mw.pm.profile)
 
         if self.card is None:
             return
@@ -1124,6 +1175,8 @@ timerStopped = false;
         if not get_api_key() and not is_local_available():
             finish_auto_attempt()
             if auto:
+                if note_id:
+                    self._auto_diagram_attempted_note_ids.discard(note_id)
                 if not self._auto_diagram_no_backend_notified:
                     self._auto_diagram_no_backend_notified = True
                     tooltip(
@@ -1286,6 +1339,16 @@ timerStopped = false;
             # soon as the card loads. Manual generation keeps the older
             # back-field behavior for users explicitly adding a hint/answer aid.
             target_field = 0 if auto else 1
+            if auto:
+                note.fields = [
+                    re.sub(
+                        r"(?:<br\s*/?>\s*)*\[tikz\].*?\[/tikz\]\s*",
+                        "",
+                        field,
+                        flags=re.DOTALL | re.IGNORECASE,
+                    ).rstrip()
+                    for field in note.fields
+                ]
             note.fields[target_field] = (
                 note.fields[target_field].rstrip() + "<br><br>" + text
             )
