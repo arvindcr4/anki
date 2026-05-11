@@ -38,8 +38,14 @@ def diagrams():
 class TestTransform:
     def test_tikz_block_rewritten(self, diagrams):
         out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
+        assert '<figure class="anki-tikz-canvas"' in out
+        assert 'data-anki-tikz-state="loading"' in out
+        assert 'data-anki-tikz-mode="fit"' in out
+        assert 'class="anki-tikz-toolbar"' in out
+        assert 'class="anki-tikz-stage"' in out
+        assert 'class="anki-tikz-source-data"' in out
+        assert 'class="anki-tikz-source" hidden' in out
         assert '<script type="text/tikz">' in out
-        assert 'class="anki-tikz-canvas"' in out
         assert "[/tikz]" not in out
 
     def test_mermaid_block_rewritten(self, diagrams):
@@ -59,13 +65,43 @@ class TestTransform:
     def test_tikz_preserves_existing_tikzpicture(self, diagrams):
         body = r"\begin{tikzpicture}\draw (0,0)--(1,1);\end{tikzpicture}"
         out = diagrams.transform_card_html(f"[tikz]{body}[/tikz]")
-        assert out.count(r"\begin{tikzpicture}") == 1
+        render_script = out.split('<script type="text/tikz">', 1)[1].split(
+            "</script>", 1
+        )[0]
+        assert render_script.count(r"\begin{tikzpicture}") == 1
 
     def test_tikz_auto_wraps_document(self, diagrams):
         out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
         assert r"\begin{document}" in out
         assert r"\documentclass[tikz]{standalone}" in out
         assert r"\usepackage{tikz}" in out
+
+    def test_tikzjax_script_omits_terminal_end_document(self, diagrams):
+        out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
+        render_script = out.split('<script type="text/tikz">', 1)[1].split(
+            "</script>", 1
+        )[0]
+        source_template = out.split('<template class="anki-tikz-source-data">', 1)[
+            1
+        ].split("</template>", 1)[0]
+        assert r"\begin{document}" not in render_script
+        assert r"\end{document}" not in render_script
+        assert r"\begin{document}" in source_template
+        assert r"\end{document}" in source_template
+
+    def test_tikzjax_script_omits_standalone_preamble(self, diagrams):
+        out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
+        render_script = out.split('<script type="text/tikz">', 1)[1].split(
+            "</script>", 1
+        )[0]
+        source_template = out.split('<template class="anki-tikz-source-data">', 1)[
+            1
+        ].split("</template>", 1)[0]
+        assert r"\documentclass" not in render_script
+        assert r"\usepackage" not in render_script
+        assert r"\usetikzlibrary" not in render_script
+        assert r"\begin{tikzpicture}" in render_script
+        assert r"\documentclass" in source_template
 
     def test_tikz_tag_normalizes_raw_tikz_body(self, diagrams):
         tag = diagrams.tikz_tag(r"\draw (0,0)--(1,1);")
@@ -75,6 +111,50 @@ class TestTransform:
         assert r"\begin{document}" in tag
         assert r"\begin{tikzpicture}" in tag
         assert r"\draw (0,0)--(1,1);" in tag
+
+    def test_tikz_normalization_strips_nested_markers(self, diagrams):
+        out = diagrams.transform_card_html(
+            r"[tikz]\begin{document}[tikz]\begin{tikzpicture}\draw (0,0);[/tikz]"
+        )
+        render_script = out.split('<script type="text/tikz">', 1)[1].split(
+            "</script>", 1
+        )[0]
+        assert "[tikz]" not in render_script
+        assert "[/tikz]" not in render_script
+        assert r"\draw (0,0);" in render_script
+
+    def test_tikz_normalization_preserves_documentclass_option(self, diagrams):
+        body = (
+            r"\documentclass[tikz]{standalone}"
+            "\n"
+            r"\begin{document}"
+            "\n"
+            r"\begin{tikzpicture}\draw (0,0);\end{tikzpicture}"
+            "\n"
+            r"\end{document}"
+        )
+        normalized = diagrams.normalize_tikz_source(body)
+        assert r"\documentclass[tikz]{standalone}" in normalized
+
+    def test_tikz_normalization_closes_truncated_picture(self, diagrams):
+        out = diagrams.transform_card_html(
+            "[tikz]"
+            r"\begin{tikzpicture}"
+            "\n"
+            r"\draw (0,0) -- (1,1);"
+            "\n"
+            r"\node at (3.5,"
+            "\n"
+            r"\end{document}"
+            "[/tikz]"
+        )
+        render_script = out.split('<script type="text/tikz">', 1)[1].split(
+            "</script>", 1
+        )[0]
+        assert r"\node at (3.5," not in render_script
+        assert r"\end{document}" not in render_script
+        assert r"\draw (0,0) -- (1,1);" in render_script
+        assert render_script.count(r"\end{tikzpicture}") == 1
 
     def test_multiple_tikz_blocks(self, diagrams):
         html = r"[tikz]\draw (0,0);[/tikz] mid [tikz]\draw (1,1);[/tikz]"
@@ -170,6 +250,79 @@ class TestOfflineAssets:
         assert "_ankiLoadTikzAsset(index + 1)" in js
         assert "requestIdleCallback" in js
 
+    def test_tikz_font_css_rewrite_makes_fonts_absolute(self, diagrams):
+        css = b"@font-face { src: url('../bakoma/ttf/cmr10.ttf'); }"
+        out = diagrams._rewrite_tikzjax_font_urls(css).decode("utf-8")
+        assert "../bakoma" not in out
+        assert "https://tikzjax.com/bakoma/ttf/cmr10.ttf" in out
+
+    def test_tikz_js_rewrite_makes_engine_same_origin(self, diagrams):
+        js = (
+            b'var s="https://s3.us-east-2.amazonaws.com/tikzjax.com";fetch(s+"/x.wasm")'
+        )
+        out = diagrams._rewrite_tikzjax_engine_urls(js).decode("utf-8")
+        assert "https://s3.us-east-2.amazonaws.com/tikzjax.com" not in out
+        assert "var s=window.location.origin" in out
+
+    def test_tikz_asset_installer_includes_engine_payloads(self, diagrams):
+        src = DIAGRAMS_PY.read_text()
+        assert diagrams.VENDORED_TIKZJAX_WASM_FILENAME in src
+        assert diagrams.VENDORED_TIKZJAX_DATA_FILENAME in src
+
+    def test_setup_hook_installs_assets_on_collection_load(self, diagrams):
+        diagrams.gui_hooks = MagicMock()
+        diagrams.gui_hooks.card_will_show._hooks = []
+        diagrams.gui_hooks.collection_did_load._hooks = []
+        diagrams.gui_hooks.reviewer_did_show_question._hooks = []
+        diagrams.gui_hooks.reviewer_did_show_answer._hooks = []
+
+        diagrams.setup_hook()
+
+        diagrams.gui_hooks.collection_did_load.append.assert_called_with(
+            diagrams._install_tikzjax_assets_for_collection
+        )
+
+    def test_tikz_runner_tracks_canvas_state(self, diagrams):
+        js = diagrams._DIAGRAM_RUNNER_JS
+        assert "_ankiRefreshTikzCanvases" in js
+        assert "data-anki-tikz-state" in js
+        assert "closest('.anki-tikz-canvas')" in js
+        assert "canvas.querySelector('svg')" in js
+        assert "TikZJax did not finish rendering" in js
+
+    def test_tikz_runner_invokes_late_loaded_tikzjax(self, diagrams):
+        js = diagrams._DIAGRAM_RUNNER_JS
+        assert "_ankiRunTikzjaxScanner" in js
+        assert "window.onload(new Event('load'))" in js
+        assert "_ankiRunTikzjaxScanner();" in js
+
+    def test_tikz_runner_installs_canvas_controls(self, diagrams):
+        js = diagrams._DIAGRAM_RUNNER_JS
+        assert "_ankiInstallTikzCanvasControls" in js
+        assert "data-anki-tikz-action" in js
+        assert "navigator.clipboard.writeText" in js
+        assert "XMLSerializer().serializeToString(svg)" in js
+        assert "data-anki-tikz-mode" in js
+
+    def test_runner_is_queued_after_reviewer_dom_update(self, diagrams):
+        js = diagrams._QUEUED_DIAGRAM_RUNNER_JS
+        assert "window._queueAction(runDiagrams)" in js
+        assert "window.setTimeout(runDiagrams, 0)" in js
+        assert diagrams._DIAGRAM_RUNNER_JS in js
+
+    def test_reviewer_styles_tikz_canvas(self):
+        css = (
+            DIAGRAMS_PY.parent.parent.parent / "ts" / "reviewer" / "reviewer.scss"
+        ).read_text()
+        assert ".anki-tikz-canvas" in css
+        assert ".anki-tikz-toolbar" in css
+        assert ".anki-tikz-tool" in css
+        assert ".anki-tikz-stage" in css
+        assert ".anki-tikz-source" in css
+        assert 'data-anki-tikz-state="loading"' in css
+        assert 'data-anki-tikz-mode="actual"' in css
+        assert ".nightMode" in css
+
 
 # ---------- Error fallback ----------
 
@@ -193,6 +346,7 @@ class TestHookPlumbing:
     def test_setup_hook_registers_card_will_show(self, diagrams):
         diagrams.gui_hooks = MagicMock()
         diagrams.gui_hooks.card_will_show._hooks = []
+        diagrams.gui_hooks.collection_did_load._hooks = []
         diagrams.gui_hooks.reviewer_did_show_question._hooks = []
         diagrams.gui_hooks.reviewer_did_show_answer._hooks = []
         diagrams.setup_hook()

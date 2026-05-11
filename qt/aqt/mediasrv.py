@@ -457,12 +457,37 @@ def _extract_request(
         return internal
     elif addon := _extract_addon_request(path):
         return addon
+    elif tikz := _extract_tikz_cache_request(path):
+        return tikz
 
     if not aqt.mw.col:
         return NotFound(message=f"collection not open, ignore request for {path}")
 
     path = hooks.media_file_filter(path)
     return LocalFileRequest(root=aqt.mw.col.media.dir(), path=path)
+
+
+def _extract_tikz_cache_request(path: str) -> LocalFileRequest | None:
+    """Serve persisted TikZ SVG renders from ``<profile>/tikz-cache/``.
+
+    Files there are produced by the bulk renderer in ``aqt.tikz_cache`` and
+    by the reviewer's live capture path; they are not part of
+    ``collection.media`` because they are derived data and should never be
+    uploaded by AnkiSync.
+    """
+    prefix = "_tikz_cache/"
+    if not path.startswith(prefix):
+        return None
+    rel = path[len(prefix) :]
+    # Defend against path traversal — only bare ``<hash>.svg`` allowed.
+    if "/" in rel or ".." in rel or not rel.endswith(".svg"):
+        return None
+    try:
+        profile_folder = aqt.mw.pm.profileFolder()
+    except Exception:
+        return None
+    root = os.path.join(profile_folder, "tikz-cache")
+    return LocalFileRequest(root=root, path=rel)
 
 
 def congrats_info() -> bytes:
