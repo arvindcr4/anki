@@ -579,7 +579,7 @@ _DIAGRAM_RUNNER_JS = r"""
         document.querySelectorAll('.anki-tikz-canvas script[type="text/tikz"]').forEach(function (el) {
           _ankiDiagramFallback(el, 'TikZ', 'TikZJax did not finish rendering');
         });
-      }, 60000);
+      }, 180000);
     }
     function _ankiRunTikzjaxScanner() {
       try {
@@ -743,7 +743,19 @@ _TIKZJAX_PREWARM_JS = r"""
       });
       if (added > 0) {
         function kick() {
-          if (typeof window.process_tikz === 'function') {
+          // TikZJax v1's bundle does not expose window.process_tikz; it only
+          // installs an async window.onload handler that iterates every
+          // script[type="text/tikz"] in the document and compiles each one.
+          // Invoke it directly when the engine bundle is loaded so the
+          // hidden-stage prewarm scripts actually render into the SVG cache.
+          if (window._ankiTikzReady && typeof window.onload === 'function') {
+            try {
+              const p = window.onload(new Event('load'));
+              if (p && typeof p.catch === 'function') {
+                p.catch(function () { /* swallow — surfaces in DOM cache */ });
+              }
+            } catch (e) { /* swallow */ }
+          } else if (typeof window.process_tikz === 'function') {
             try { window.process_tikz(); } catch (e) { /* swallow */ }
           } else {
             window.setTimeout(kick, 250);
