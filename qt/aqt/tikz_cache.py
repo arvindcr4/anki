@@ -18,9 +18,8 @@ Three pieces:
    disturbed; bails on individual renders that hang past the timeout.
 
 The cache is purely an optimisation: when ``_wrap_tikz`` sees a hash whose
-SVG file already exists, it emits ``<img src="/_tikz_cache/HASH.svg">``
-directly so the card renders instantly. A live TikZJax compile still
-happens on miss.
+SVG file already exists, it inlines the SVG into the card so it renders
+instantly. A live TikZJax compile still happens on miss.
 """
 
 from __future__ import annotations
@@ -103,6 +102,27 @@ class TikzImageCache:
                 self._known.add(key)
             return True
         return False
+
+    def get(self, key: str) -> str | None:
+        """Return a cached SVG string, or ``None`` when unavailable.
+
+        Cache hits are embedded directly into the reviewer HTML instead of
+        fetched as ``<img>`` resources. That avoids broken image placeholders
+        when a webview is on a transient media-server origin or an image load
+        races with cache creation.
+        """
+        if not self.has(key):
+            return None
+        try:
+            with open(self.path_for(key), encoding="utf-8") as f:
+                svg = f.read()
+        except OSError:
+            with self._lock:
+                self._known.discard(key)
+            return None
+        if "<svg" not in svg:
+            return None
+        return svg
 
     def add(self, key: str, svg: str) -> bool:
         if not key or not svg or "<svg" not in svg:

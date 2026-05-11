@@ -325,15 +325,13 @@ def _wrap_tikz(match: re.Match[str]) -> str:
     render_body = tikzjax_script_source(body)
     escaped_body = html.escape(body)
     cache_key = _tikz_cache_key(render_body)
-    cached_img_url = _cached_image_url(cache_key)
-    if cached_img_url is not None:
-        # Cache hit — the renderer already produced this SVG. Emit a plain
-        # <img> so the browser fetches it from the media server's cache
-        # route instantly; no TikZJax pass needed for this card.
-        stage_html = (
-            f'<img src="{html.escape(cached_img_url, quote=True)}" '
-            'class="anki-tikz-img" alt="TikZ diagram" loading="lazy">'
-        )
+    cached_svg = _cached_svg(cache_key)
+    if cached_svg is not None:
+        # Cache hit — the renderer already produced this SVG. Inline it
+        # instead of emitting an <img>, so cached diagrams use the same DOM
+        # path as freshly-rendered diagrams and do not depend on an extra
+        # webview image fetch.
+        stage_html = cached_svg
         canvas_state = "ready"
     else:
         # Cache miss — fall back to live TikZJax compile; the bulk renderer
@@ -929,11 +927,11 @@ def _persistent_cache_for(mw: Any) -> Any:
     return _persistent_cache
 
 
-def _cached_image_url(cache_key: str) -> str | None:
-    """Return the served URL for ``cache_key`` if its SVG is on disk.
+def _cached_svg(cache_key: str) -> str | None:
+    """Return cached SVG markup for ``cache_key`` if it is on disk.
 
     ``_wrap_tikz`` calls this on every card render. The cache is built
-    lazily — if it doesn't exist yet (e.g. profile not yet open), no
+    lazily. If it doesn't exist yet (e.g. profile not yet open), no
     cache hits, fall back to live render.
     """
     mw = aqt.mw
@@ -943,11 +941,10 @@ def _cached_image_url(cache_key: str) -> str | None:
     if cache is None:
         return None
     try:
-        if not cache.has(cache_key):
-            return None
-        from aqt.tikz_cache import cache_url_for
-
-        return cache_url_for(cache_key)
+        get = getattr(cache, "get", None)
+        if callable(get):
+            return get(cache_key)
+        return None
     except Exception:
         return None
 

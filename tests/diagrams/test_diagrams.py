@@ -218,6 +218,22 @@ class TestCachingApi:
         f3 = helper(col, "tikz", r"\draw (0,0)--(2,2);", b"<svg/>")
         assert f1 != f3, "different content should map to different filenames"
 
+    def test_cached_tikz_inlines_svg_instead_of_img(self, diagrams):
+        old_cache = getattr(diagrams, "_persistent_cache", None)
+        try:
+            diagrams._persistent_cache = MagicMock()
+            diagrams._persistent_cache.get.return_value = (
+                '<svg viewBox="0 0 10 10"><path d="M0 0"/></svg>'
+            )
+            out = diagrams.transform_card_html(r"[tikz]\draw (0,0)--(1,1);[/tikz]")
+        finally:
+            diagrams._persistent_cache = old_cache
+
+        assert 'data-anki-tikz-state="ready"' in out
+        assert "<svg " in out
+        assert "<img " not in out
+        assert '<script type="text/tikz">' not in out
+
 
 # ---------- Offline / vendored loader ----------
 
