@@ -339,6 +339,15 @@ class TestOfflineAssets:
         assert 'data-anki-tikz-mode="actual"' in css
         assert ".nightMode" in css
 
+    def test_reviewer_tikz_canvas_reserves_toolbar_space(self):
+        css = (
+            DIAGRAMS_PY.parent.parent.parent / "ts" / "reviewer" / "reviewer.scss"
+        ).read_text()
+        assert "position: static;" in css
+        assert "width: max-content;" in css
+        assert "overflow: visible;" in css
+        assert "position: static !important;" in css
+
 
 # ---------- Error fallback ----------
 
