@@ -1509,7 +1509,10 @@ title="{}" {}>{}</button>""".format(
         m.actionFullScreen.setShortcutContext(Qt.ShortcutContext.ApplicationShortcut)
 
     def updateTitleBar(self) -> None:
-        self.setWindowTitle("Anki")
+        from aqt.titlebar import apply_native_chrome, install_dynamic_title
+
+        apply_native_chrome(self)
+        install_dynamic_title(self)
 
     # View
     ##########################################################################
