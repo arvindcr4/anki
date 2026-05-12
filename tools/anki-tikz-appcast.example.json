@@ -1,0 +1,18 @@
+{
+  "updates": [
+    {
+      "artifact": {
+        "sha256": "replace-with-zip-sha256",
+        "signature": "optional-base64-openssl-dgst-sha256-signature",
+        "size": 123456789,
+        "url": "https://github.com/arvindcr4/anki/releases/download/anki-tikz-2026.05.12.1/Anki%20TikZ-2026.05.12.1.zip"
+      },
+      "build": "2026.05.12.1",
+      "channel": "stable",
+      "minimum_system_version": "12.0",
+      "platform": "macos-universal",
+      "published_at": "2026-05-12T00:00:00Z",
+      "version": "2026.05.12.1"
+    }
+  ]
+}

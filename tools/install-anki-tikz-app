@@ -1,0 +1,273 @@
+#!/bin/zsh
+set -euo pipefail
+
+APP_PATH="/Applications/Anki TikZ.app"
+INSTALL_AGENT=1
+EMBED_SOURCE=0
+MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://github.com/arvindcr4/anki/releases/latest/download/anki-tikz-appcast.json}"
+UPDATE_CHANNEL="${ANKI_TIKZ_UPDATE_CHANNEL:-stable}"
+VERSION="${ANKI_TIKZ_VERSION:-25.09.2-tikz}"
+PUBLIC_KEY="${ANKI_TIKZ_UPDATE_PUBLIC_KEY:-}"
+REQUIRE_SIGNATURE=0
+
+usage() {
+  cat <<USAGE
+Usage: tools/install-anki-tikz-app [APP_PATH] [options]
+
+Options:
+  --app-path PATH        Install path. Defaults to /Applications/Anki TikZ.app.
+  --manifest-url URL    Appcast JSON URL used by the background updater.
+  --channel NAME        Update channel. Defaults to stable.
+  --version VERSION     Bundle version written to Info.plist.
+  --public-key PATH     PEM public key for update signature verification.
+  --require-signature   Reject updates that are missing a valid signature.
+  --embed-source        Copy this checkout into the app bundle for release builds.
+  --no-launch-agent     Do not register the per-user background updater now.
+USAGE
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --app-path)
+      APP_PATH="$2"
+      shift 2
+      ;;
+    --manifest-url)
+      MANIFEST_URL="$2"
+      shift 2
+      ;;
+    --channel)
+      UPDATE_CHANNEL="$2"
+      shift 2
+      ;;
+    --version)
+      VERSION="$2"
+      shift 2
+      ;;
+    --public-key)
+      PUBLIC_KEY="$2"
+      REQUIRE_SIGNATURE=1
+      shift 2
+      ;;
+    --require-signature)
+      REQUIRE_SIGNATURE=1
+      shift
+      ;;
+    --embed-source)
+      EMBED_SOURCE=1
+      shift
+      ;;
+    --no-launch-agent)
+      INSTALL_AGENT=0
+      shift
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 2
+      ;;
+    *)
+      APP_PATH="$1"
+      shift
+      ;;
+  esac
+done
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+APP_NAME="$(basename "$APP_PATH" .app)"
+LAUNCHER="$APP_PATH/Contents/MacOS/AnkiTikZ"
+RESOURCES="$APP_PATH/Contents/Resources"
+BUNDLED_UPDATER="$RESOURCES/anki_tikz_updater.py"
+BUNDLED_PUBLIC_KEY="$RESOURCES/update-public-key.pem"
+
+mkdir -p "$APP_PATH/Contents/MacOS" "$RESOURCES"
+
+/usr/bin/python3 - "$APP_PATH/Contents/Info.plist" "$APP_NAME" "$VERSION" <<'PY'
+from pathlib import Path
+import plistlib
+import sys
+
+path = Path(sys.argv[1])
+app_name = sys.argv[2]
+version = sys.argv[3]
+info = {
+    "CFBundleDevelopmentRegion": "en",
+    "CFBundleDisplayName": app_name,
+    "CFBundleExecutable": "AnkiTikZ",
+    "CFBundleIdentifier": "net.ankiweb.dtop.tikz.local",
+    "CFBundleInfoDictionaryVersion": "6.0",
+    "CFBundleName": app_name,
+    "CFBundlePackageType": "APPL",
+    "CFBundleShortVersionString": version,
+    "CFBundleVersion": version,
+    "LSApplicationCategoryType": "public.app-category.education",
+    "LSMinimumSystemVersion": "12.0",
+    "NSHighResolutionCapable": True,
+}
+path.write_bytes(plistlib.dumps(info))
+PY
+
+cp "$SCRIPT_DIR/anki_tikz_updater.py" "$BUNDLED_UPDATER"
+chmod +x "$BUNDLED_UPDATER"
+
+if [[ -n "$PUBLIC_KEY" ]]; then
+  cp "$PUBLIC_KEY" "$BUNDLED_PUBLIC_KEY"
+fi
+
+cat > "$LAUNCHER" <<'LAUNCHER'
+#!/bin/zsh
+set -e
+
+APP_SOURCE_DIR=__ANKI_TIKZ_SOURCE_DIR__
+MANIFEST_URL=__ANKI_TIKZ_MANIFEST_URL__
+UPDATE_CHANNEL=__ANKI_TIKZ_UPDATE_CHANNEL__
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_BUNDLE="$(cd "$SCRIPT_DIR/../.." && pwd)"
+EMBEDDED_SOURCE="$APP_BUNDLE/Contents/Resources/source"
+SUPPORT_DIR="$HOME/Library/Application Support/AnkiTikZ"
+CONFIG_FILE="$SUPPORT_DIR/updater.json"
+LOG_DIR="$HOME/Library/Logs"
+LOG_FILE="$LOG_DIR/AnkiTikZUpdater.log"
+BUNDLED_UPDATER="$APP_BUNDLE/Contents/Resources/anki_tikz_updater.py"
+SUPPORT_UPDATER="$SUPPORT_DIR/anki_tikz_updater.py"
+BUNDLED_PUBLIC_KEY="$APP_BUNDLE/Contents/Resources/update-public-key.pem"
+RUN_PID_FILE="$SUPPORT_DIR/run.pid"
+
+mkdir -p "$SUPPORT_DIR" "$LOG_DIR"
+
+log() {
+  print -r -- "[$(date '+%Y-%m-%d %H:%M:%S')] $*" >> "$LOG_FILE"
+}
+
+notify() {
+  /usr/bin/osascript -e "display notification \"$1\" with title \"Anki TikZ\"" >/dev/null 2>&1 || true
+}
+
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+if [[ -f "$HOME/.zshrc" ]]; then
+  source "$HOME/.zshrc"
+fi
+
+if [[ -f "$BUNDLED_UPDATER" ]]; then
+  public_key_args=()
+  if [[ -f "$BUNDLED_PUBLIC_KEY" ]]; then
+    public_key_args=(--public-key "$BUNDLED_PUBLIC_KEY" --require-signature)
+  fi
+  /usr/bin/python3 "$BUNDLED_UPDATER" install-agent \
+    --app-path "$APP_BUNDLE" \
+    --manifest-url "$MANIFEST_URL" \
+    --channel "$UPDATE_CHANNEL" \
+    --source-updater "$BUNDLED_UPDATER" \
+    --config "$CONFIG_FILE" \
+    "${public_key_args[@]}" >> "$LOG_FILE" 2>&1 || true
+fi
+
+UPDATER="$SUPPORT_UPDATER"
+if [[ ! -f "$UPDATER" ]]; then
+  UPDATER="$BUNDLED_UPDATER"
+fi
+
+if [[ -f "$UPDATER" ]]; then
+  set +e
+  /usr/bin/python3 "$UPDATER" install-staged \
+    --app-path "$APP_BUNDLE" \
+    --config "$CONFIG_FILE" >> "$LOG_FILE" 2>&1
+  install_status=$?
+  set -e
+  if [[ "$install_status" == "20" ]]; then
+    /usr/bin/open -n "$APP_BUNDLE" --args "$@"
+    exit 0
+  fi
+fi
+
+if [[ -d "$EMBEDDED_SOURCE" && -f "$EMBEDDED_SOURCE/tools/run.py" ]]; then
+  APP_SOURCE_DIR="$EMBEDDED_SOURCE"
+fi
+
+if [[ ! -f "$APP_SOURCE_DIR/tools/run.py" ]]; then
+  log "launch failed: missing tools/run.py in $APP_SOURCE_DIR"
+  notify "Could not find the Anki TikZ runtime."
+  exit 1
+fi
+
+print -r -- "$$" > "$RUN_PID_FILE"
+
+if [[ -f "$UPDATER" ]]; then
+  /usr/bin/python3 "$UPDATER" check \
+    --config "$CONFIG_FILE" \
+    --install-if-idle \
+    --max-frequency 3600 >> "$LOG_FILE" 2>&1 &
+fi
+
+cd "$APP_SOURCE_DIR"
+
+export PYTHONWARNINGS="${PYTHONWARNINGS:-default}"
+export PYTHONPYCACHEPREFIX="${PYTHONPYCACHEPREFIX:-out/pycache}"
+export PYENV="${PYENV:-out/pyenv}"
+export QTWEBENGINE_REMOTE_DEBUGGING="${QTWEBENGINE_REMOTE_DEBUGGING:-8080}"
+export QTWEBENGINE_CHROMIUM_FLAGS="${QTWEBENGINE_CHROMIUM_FLAGS:---remote-allow-origins=http://localhost:$QTWEBENGINE_REMOTE_DEBUGGING}"
+export ANKI_API_PORT="${ANKI_API_PORT:-40000}"
+export ANKI_API_HOST="${ANKI_API_HOST:-127.0.0.1}"
+
+exec "$PYENV/bin/python" tools/run.py "$@"
+LAUNCHER
+
+/usr/bin/python3 - "$LAUNCHER" "$REPO_ROOT" "$MANIFEST_URL" "$UPDATE_CHANNEL" <<'PY'
+from pathlib import Path
+import shlex
+import sys
+
+launcher = Path(sys.argv[1])
+source_dir = shlex.quote(sys.argv[2])
+manifest_url = shlex.quote(sys.argv[3])
+channel = shlex.quote(sys.argv[4])
+text = launcher.read_text()
+text = text.replace("__ANKI_TIKZ_SOURCE_DIR__", source_dir)
+text = text.replace("__ANKI_TIKZ_MANIFEST_URL__", manifest_url)
+text = text.replace("__ANKI_TIKZ_UPDATE_CHANNEL__", channel)
+launcher.write_text(text)
+PY
+
+chmod +x "$LAUNCHER"
+
+if [[ "$EMBED_SOURCE" == "1" ]]; then
+  SOURCE_DEST="$RESOURCES/source"
+  mkdir -p "$SOURCE_DEST"
+  rsync -a --delete \
+    --exclude='.git/' \
+    --exclude='.mypy_cache/' \
+    --exclude='.ruff_cache/' \
+    --exclude='anki_tikz_backups/' \
+    --exclude='extra/' \
+    --exclude='out/pycache/' \
+    --exclude='out/tmp/' \
+    --exclude='out/bazel/' \
+    "$REPO_ROOT/" "$SOURCE_DEST/"
+fi
+
+if [[ "$INSTALL_AGENT" == "1" ]]; then
+  agent_args=()
+  if [[ -n "$PUBLIC_KEY" ]]; then
+    agent_args=(--public-key "$BUNDLED_PUBLIC_KEY")
+  fi
+  if [[ "$REQUIRE_SIGNATURE" == "1" ]]; then
+    agent_args=("${agent_args[@]}" --require-signature)
+  fi
+  /usr/bin/python3 "$BUNDLED_UPDATER" install-agent \
+    --app-path "$APP_PATH" \
+    --manifest-url "$MANIFEST_URL" \
+    --channel "$UPDATE_CHANNEL" \
+    --source-updater "$BUNDLED_UPDATER" \
+    "${agent_args[@]}" || true
+fi
+
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP_PATH" >/dev/null 2>&1 || true
+
+echo "Installed $APP_NAME at $APP_PATH"
+echo "Update service: $MANIFEST_URL ($UPDATE_CHANNEL)"
