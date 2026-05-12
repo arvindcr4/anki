@@ -4,7 +4,7 @@ set -euo pipefail
 APP_PATH="/Applications/Anki TikZ.app"
 INSTALL_AGENT=1
 EMBED_SOURCE=0
-MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://github.com/arvindcr4/anki/releases/latest/download/anki-tikz-appcast.xml}"
+MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://arvindcr4.github.io/anki/anki-tikz-updates/anki-tikz-appcast.xml}"
 UPDATE_CHANNEL="${ANKI_TIKZ_UPDATE_CHANNEL:-stable}"
 VERSION="${ANKI_TIKZ_VERSION:-25.09.2-tikz}"
 SPARKLE_PUBLIC_ED_KEY="${ANKI_TIKZ_SPARKLE_PUBLIC_ED_KEY:-}"
