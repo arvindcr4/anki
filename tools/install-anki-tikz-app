@@ -4,11 +4,12 @@ set -euo pipefail
 APP_PATH="/Applications/Anki TikZ.app"
 INSTALL_AGENT=1
 EMBED_SOURCE=0
-MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://github.com/arvindcr4/anki/releases/latest/download/anki-tikz-appcast.json}"
+MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://github.com/arvindcr4/anki/releases/latest/download/anki-tikz-appcast.xml}"
 UPDATE_CHANNEL="${ANKI_TIKZ_UPDATE_CHANNEL:-stable}"
 VERSION="${ANKI_TIKZ_VERSION:-25.09.2-tikz}"
-PUBLIC_KEY="${ANKI_TIKZ_UPDATE_PUBLIC_KEY:-}"
-REQUIRE_SIGNATURE=0
+SPARKLE_PUBLIC_ED_KEY="${ANKI_TIKZ_SPARKLE_PUBLIC_ED_KEY:-}"
+SPARKLE_PRIVATE_KEY_FILE="${ANKI_TIKZ_SPARKLE_PRIVATE_KEY_FILE:-$HOME/Library/Application Support/AnkiTikZ/sparkle_private_ed_key}"
+SPARKLE_ROOT="${ANKI_TIKZ_SPARKLE_ROOT:-}"
 
 usage() {
   cat <<USAGE
@@ -16,11 +17,14 @@ Usage: tools/install-anki-tikz-app [APP_PATH] [options]
 
 Options:
   --app-path PATH        Install path. Defaults to /Applications/Anki TikZ.app.
-  --manifest-url URL    Appcast JSON URL used by the background updater.
+  --manifest-url URL    Sparkle appcast XML URL used by the updater.
   --channel NAME        Update channel. Defaults to stable.
   --version VERSION     Bundle version written to Info.plist.
-  --public-key PATH     PEM public key for update signature verification.
-  --require-signature   Reject updates that are missing a valid signature.
+  --sparkle-public-ed-key KEY
+                         Base64 EdDSA public key for Sparkle update verification.
+  --sparkle-private-key-file PATH
+                         Base64 EdDSA private seed used to derive the public key.
+  --sparkle-root PATH    Existing Sparkle distribution root. Defaults to out/sparkle.
   --embed-source        Copy this checkout into the app bundle for release builds.
   --no-launch-agent     Do not register the per-user background updater now.
 USAGE
@@ -44,14 +48,17 @@ while [[ $# -gt 0 ]]; do
       VERSION="$2"
       shift 2
       ;;
-    --public-key)
-      PUBLIC_KEY="$2"
-      REQUIRE_SIGNATURE=1
+    --sparkle-public-ed-key)
+      SPARKLE_PUBLIC_ED_KEY="$2"
       shift 2
       ;;
-    --require-signature)
-      REQUIRE_SIGNATURE=1
-      shift
+    --sparkle-private-key-file)
+      SPARKLE_PRIVATE_KEY_FILE="$2"
+      shift 2
+      ;;
+    --sparkle-root)
+      SPARKLE_ROOT="$2"
+      shift 2
       ;;
     --embed-source)
       EMBED_SOURCE=1
@@ -82,12 +89,76 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 APP_NAME="$(basename "$APP_PATH" .app)"
 LAUNCHER="$APP_PATH/Contents/MacOS/AnkiTikZ"
 RESOURCES="$APP_PATH/Contents/Resources"
-BUNDLED_UPDATER="$RESOURCES/anki_tikz_updater.py"
-BUNDLED_PUBLIC_KEY="$RESOURCES/update-public-key.pem"
+SPARKLE_DEST="$APP_PATH/Contents/Library/Sparkle"
+SPARKLE_CLI="$SPARKLE_DEST/sparkle.app/Contents/MacOS/sparkle"
+SPARKLE_RUNNER="$SPARKLE_DEST/run-sparkle-update"
 
-mkdir -p "$APP_PATH/Contents/MacOS" "$RESOURCES"
+mkdir -p "$APP_PATH/Contents/MacOS" "$RESOURCES" "$SPARKLE_DEST"
 
-/usr/bin/python3 - "$APP_PATH/Contents/Info.plist" "$APP_NAME" "$VERSION" <<'PY'
+if [[ -z "$SPARKLE_PUBLIC_ED_KEY" ]]; then
+  SPARKLE_PUBLIC_ED_KEY="$("$SCRIPT_DIR/sparkle-keygen" --private-key-file "$SPARKLE_PRIVATE_KEY_FILE" --print-public-key)"
+fi
+
+if [[ -z "$SPARKLE_ROOT" ]]; then
+  SPARKLE_ROOT="$("$SCRIPT_DIR/fetch-sparkle")"
+fi
+
+if [[ ! -x "$SPARKLE_ROOT/sparkle.app/Contents/MacOS/sparkle" ]]; then
+  echo "Sparkle CLI not found in $SPARKLE_ROOT" >&2
+  exit 1
+fi
+
+rm -rf "$SPARKLE_DEST/sparkle.app"
+/usr/bin/ditto "$SPARKLE_ROOT/sparkle.app" "$SPARKLE_DEST/sparkle.app"
+
+cat > "$SPARKLE_RUNNER" <<'RUNNER'
+#!/bin/zsh
+set +e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+APP_BUNDLE="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+SPARKLE_CLI="$SCRIPT_DIR/sparkle.app/Contents/MacOS/sparkle"
+MANIFEST_URL=__ANKI_TIKZ_SPARKLE_FEED_URL__
+UPDATE_CHANNEL=__ANKI_TIKZ_SPARKLE_CHANNEL__
+
+channel_args=()
+if [[ -n "$UPDATE_CHANNEL" && "$UPDATE_CHANNEL" != "stable" ]]; then
+  channel_args=(--channels "$UPDATE_CHANNEL")
+fi
+
+"$SPARKLE_CLI" "$APP_BUNDLE" \
+  --application "$APP_BUNDLE" \
+  --feed-url "$MANIFEST_URL" \
+  --grant-automatic-checks \
+  --defer-install \
+  --user-agent-name "Anki TikZ" \
+  "${channel_args[@]}"
+
+sparkle_status=$?
+case "$sparkle_status" in
+  0|1|2|6)
+    exit 0
+    ;;
+  *)
+    exit "$sparkle_status"
+    ;;
+esac
+RUNNER
+
+/usr/bin/python3 - "$SPARKLE_RUNNER" "$MANIFEST_URL" "$UPDATE_CHANNEL" <<'PY'
+from pathlib import Path
+import shlex
+import sys
+
+runner = Path(sys.argv[1])
+text = runner.read_text()
+text = text.replace("__ANKI_TIKZ_SPARKLE_FEED_URL__", shlex.quote(sys.argv[2]))
+text = text.replace("__ANKI_TIKZ_SPARKLE_CHANNEL__", shlex.quote(sys.argv[3]))
+runner.write_text(text)
+PY
+chmod +x "$SPARKLE_RUNNER"
+
+/usr/bin/python3 - "$APP_PATH/Contents/Info.plist" "$APP_NAME" "$VERSION" "$MANIFEST_URL" "$SPARKLE_PUBLIC_ED_KEY" <<'PY'
 from pathlib import Path
 import plistlib
 import sys
@@ -95,6 +166,8 @@ import sys
 path = Path(sys.argv[1])
 app_name = sys.argv[2]
 version = sys.argv[3]
+manifest_url = sys.argv[4]
+public_ed_key = sys.argv[5]
 info = {
     "CFBundleDevelopmentRegion": "en",
     "CFBundleDisplayName": app_name,
@@ -108,34 +181,29 @@ info = {
     "LSApplicationCategoryType": "public.app-category.education",
     "LSMinimumSystemVersion": "12.0",
     "NSHighResolutionCapable": True,
+    "SUAllowsAutomaticUpdates": True,
+    "SUAutomaticallyUpdate": True,
+    "SUEnableAutomaticChecks": True,
+    "SUEnableInstallerLauncherService": True,
+    "SUFeedURL": manifest_url,
+    "SUPublicEDKey": public_ed_key,
+    "SUScheduledCheckInterval": 14400,
+    "SUVerifyUpdateBeforeExtraction": True,
 }
 path.write_bytes(plistlib.dumps(info))
 PY
-
-cp "$SCRIPT_DIR/anki_tikz_updater.py" "$BUNDLED_UPDATER"
-chmod +x "$BUNDLED_UPDATER"
-
-if [[ -n "$PUBLIC_KEY" ]]; then
-  cp "$PUBLIC_KEY" "$BUNDLED_PUBLIC_KEY"
-fi
 
 cat > "$LAUNCHER" <<'LAUNCHER'
 #!/bin/zsh
 set -e
 
 APP_SOURCE_DIR=__ANKI_TIKZ_SOURCE_DIR__
-MANIFEST_URL=__ANKI_TIKZ_MANIFEST_URL__
-UPDATE_CHANNEL=__ANKI_TIKZ_UPDATE_CHANNEL__
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 APP_BUNDLE="$(cd "$SCRIPT_DIR/../.." && pwd)"
 EMBEDDED_SOURCE="$APP_BUNDLE/Contents/Resources/source"
 SUPPORT_DIR="$HOME/Library/Application Support/AnkiTikZ"
-CONFIG_FILE="$SUPPORT_DIR/updater.json"
 LOG_DIR="$HOME/Library/Logs"
-LOG_FILE="$LOG_DIR/AnkiTikZUpdater.log"
-BUNDLED_UPDATER="$APP_BUNDLE/Contents/Resources/anki_tikz_updater.py"
-SUPPORT_UPDATER="$SUPPORT_DIR/anki_tikz_updater.py"
-BUNDLED_PUBLIC_KEY="$APP_BUNDLE/Contents/Resources/update-public-key.pem"
+LOG_FILE="$LOG_DIR/AnkiTikZSparkle.log"
 RUN_PID_FILE="$SUPPORT_DIR/run.pid"
 
 mkdir -p "$SUPPORT_DIR" "$LOG_DIR"
@@ -154,38 +222,6 @@ if [[ -f "$HOME/.zshrc" ]]; then
   source "$HOME/.zshrc"
 fi
 
-if [[ -f "$BUNDLED_UPDATER" ]]; then
-  public_key_args=()
-  if [[ -f "$BUNDLED_PUBLIC_KEY" ]]; then
-    public_key_args=(--public-key "$BUNDLED_PUBLIC_KEY" --require-signature)
-  fi
-  /usr/bin/python3 "$BUNDLED_UPDATER" install-agent \
-    --app-path "$APP_BUNDLE" \
-    --manifest-url "$MANIFEST_URL" \
-    --channel "$UPDATE_CHANNEL" \
-    --source-updater "$BUNDLED_UPDATER" \
-    --config "$CONFIG_FILE" \
-    "${public_key_args[@]}" >> "$LOG_FILE" 2>&1 || true
-fi
-
-UPDATER="$SUPPORT_UPDATER"
-if [[ ! -f "$UPDATER" ]]; then
-  UPDATER="$BUNDLED_UPDATER"
-fi
-
-if [[ -f "$UPDATER" ]]; then
-  set +e
-  /usr/bin/python3 "$UPDATER" install-staged \
-    --app-path "$APP_BUNDLE" \
-    --config "$CONFIG_FILE" >> "$LOG_FILE" 2>&1
-  install_status=$?
-  set -e
-  if [[ "$install_status" == "20" ]]; then
-    /usr/bin/open -n "$APP_BUNDLE" --args "$@"
-    exit 0
-  fi
-fi
-
 if [[ -d "$EMBEDDED_SOURCE" && -f "$EMBEDDED_SOURCE/tools/run.py" ]]; then
   APP_SOURCE_DIR="$EMBEDDED_SOURCE"
 fi
@@ -197,13 +233,6 @@ if [[ ! -f "$APP_SOURCE_DIR/tools/run.py" ]]; then
 fi
 
 print -r -- "$$" > "$RUN_PID_FILE"
-
-if [[ -f "$UPDATER" ]]; then
-  /usr/bin/python3 "$UPDATER" check \
-    --config "$CONFIG_FILE" \
-    --install-if-idle \
-    --max-frequency 3600 >> "$LOG_FILE" 2>&1 &
-fi
 
 cd "$APP_SOURCE_DIR"
 
@@ -218,19 +247,15 @@ export ANKI_API_HOST="${ANKI_API_HOST:-127.0.0.1}"
 exec "$PYENV/bin/python" tools/run.py "$@"
 LAUNCHER
 
-/usr/bin/python3 - "$LAUNCHER" "$REPO_ROOT" "$MANIFEST_URL" "$UPDATE_CHANNEL" <<'PY'
+/usr/bin/python3 - "$LAUNCHER" "$REPO_ROOT" <<'PY'
 from pathlib import Path
 import shlex
 import sys
 
 launcher = Path(sys.argv[1])
 source_dir = shlex.quote(sys.argv[2])
-manifest_url = shlex.quote(sys.argv[3])
-channel = shlex.quote(sys.argv[4])
 text = launcher.read_text()
 text = text.replace("__ANKI_TIKZ_SOURCE_DIR__", source_dir)
-text = text.replace("__ANKI_TIKZ_MANIFEST_URL__", manifest_url)
-text = text.replace("__ANKI_TIKZ_UPDATE_CHANNEL__", channel)
 launcher.write_text(text)
 PY
 
@@ -245,6 +270,8 @@ if [[ "$EMBED_SOURCE" == "1" ]]; then
     --exclude='.ruff_cache/' \
     --exclude='anki_tikz_backups/' \
     --exclude='extra/' \
+    --exclude='out/anki-tikz-release/' \
+    --exclude='out/sparkle/' \
     --exclude='out/pycache/' \
     --exclude='out/tmp/' \
     --exclude='out/bazel/' \
@@ -252,22 +279,47 @@ if [[ "$EMBED_SOURCE" == "1" ]]; then
 fi
 
 if [[ "$INSTALL_AGENT" == "1" ]]; then
-  agent_args=()
-  if [[ -n "$PUBLIC_KEY" ]]; then
-    agent_args=(--public-key "$BUNDLED_PUBLIC_KEY")
-  fi
-  if [[ "$REQUIRE_SIGNATURE" == "1" ]]; then
-    agent_args=("${agent_args[@]}" --require-signature)
-  fi
-  /usr/bin/python3 "$BUNDLED_UPDATER" install-agent \
-    --app-path "$APP_PATH" \
-    --manifest-url "$MANIFEST_URL" \
-    --channel "$UPDATE_CHANNEL" \
-    --source-updater "$BUNDLED_UPDATER" \
-    "${agent_args[@]}" || true
+  OLD_LABEL="net.ankiweb.tikz.updater"
+  OLD_PLIST="$HOME/Library/LaunchAgents/$OLD_LABEL.plist"
+  NEW_LABEL="net.ankiweb.tikz.sparkle-updater"
+  NEW_PLIST="$HOME/Library/LaunchAgents/$NEW_LABEL.plist"
+  UID_VALUE="$(id -u)"
+  DOMAIN="gui/$UID_VALUE"
+  LOG_FILE="$HOME/Library/Logs/AnkiTikZSparkle.log"
+
+  /bin/launchctl bootout "$DOMAIN" "$OLD_PLIST" >/dev/null 2>&1 || true
+  rm -f "$OLD_PLIST"
+
+  mkdir -p "$HOME/Library/LaunchAgents" "$(dirname "$LOG_FILE")"
+  /usr/bin/python3 - "$NEW_PLIST" "$NEW_LABEL" "$SPARKLE_RUNNER" "$LOG_FILE" <<'PY'
+from pathlib import Path
+import plistlib
+import sys
+
+plist_path = Path(sys.argv[1])
+label = sys.argv[2]
+sparkle_runner = sys.argv[3]
+log_file = sys.argv[4]
+plist = {
+    "Label": label,
+    "ProgramArguments": [
+        sparkle_runner,
+    ],
+    "RunAtLoad": True,
+    "StartInterval": 14400,
+    "ProcessType": "Background",
+    "StandardOutPath": log_file,
+    "StandardErrorPath": log_file,
+}
+plist_path.write_bytes(plistlib.dumps(plist))
+PY
+
+  /bin/launchctl bootout "$DOMAIN" "$NEW_PLIST" >/dev/null 2>&1 || true
+  /bin/launchctl bootstrap "$DOMAIN" "$NEW_PLIST" >/dev/null 2>&1 || true
+  /bin/launchctl kickstart -k "$DOMAIN/$NEW_LABEL" >/dev/null 2>&1 || true
 fi
 
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP_PATH" >/dev/null 2>&1 || true
 
 echo "Installed $APP_NAME at $APP_PATH"
-echo "Update service: $MANIFEST_URL ($UPDATE_CHANNEL)"
+echo "Sparkle updater: $MANIFEST_URL"

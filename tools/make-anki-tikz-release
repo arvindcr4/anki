@@ -5,41 +5,57 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 VERSION="${1:-$(date '+%Y.%m.%d.%H%M')}"
 OUT_DIR="${2:-$REPO_ROOT/out/anki-tikz-release}"
-MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://github.com/arvindcr4/anki/releases/latest/download/anki-tikz-appcast.json}"
+MANIFEST_URL="${ANKI_TIKZ_UPDATE_MANIFEST_URL:-https://github.com/arvindcr4/anki/releases/latest/download/anki-tikz-appcast.xml}"
 ARTIFACT_URL="${ANKI_TIKZ_ARTIFACT_URL:-https://github.com/arvindcr4/anki/releases/download/anki-tikz-$VERSION/Anki%20TikZ-$VERSION.zip}"
-PUBLIC_KEY="${ANKI_TIKZ_UPDATE_PUBLIC_KEY:-}"
-SIGNING_KEY="${ANKI_TIKZ_SIGNING_KEY:-}"
+SPARKLE_PRIVATE_KEY_FILE="${ANKI_TIKZ_SPARKLE_PRIVATE_KEY_FILE:-$HOME/Library/Application Support/AnkiTikZ/sparkle_private_ed_key}"
+SPARKLE_PUBLIC_ED_KEY="${ANKI_TIKZ_SPARKLE_PUBLIC_ED_KEY:-}"
+SPARKLE_ROOT="${ANKI_TIKZ_SPARKLE_ROOT:-}"
 CODESIGN_IDENTITY="${ANKI_TIKZ_CODESIGN_IDENTITY:-}"
 NOTARIZE="${ANKI_TIKZ_NOTARIZE:-0}"
 
 BUILD_ROOT="$OUT_DIR/build"
 APP_PATH="$BUILD_ROOT/Anki TikZ.app"
 ZIP_PATH="$OUT_DIR/Anki TikZ-$VERSION.zip"
-MANIFEST_PATH="$OUT_DIR/anki-tikz-appcast.json"
+MANIFEST_PATH="$OUT_DIR/anki-tikz-appcast.xml"
 
 rm -rf "$BUILD_ROOT"
 mkdir -p "$BUILD_ROOT" "$OUT_DIR"
+
+if [[ -z "$SPARKLE_PUBLIC_ED_KEY" ]]; then
+  SPARKLE_PUBLIC_ED_KEY="$("$SCRIPT_DIR/sparkle-keygen" --private-key-file "$SPARKLE_PRIVATE_KEY_FILE" --print-public-key)"
+fi
+
+if [[ -z "$SPARKLE_ROOT" ]]; then
+  SPARKLE_ROOT="$("$SCRIPT_DIR/fetch-sparkle")"
+fi
 
 install_args=(
   "$APP_PATH"
   --version "$VERSION"
   --manifest-url "$MANIFEST_URL"
+  --sparkle-public-ed-key "$SPARKLE_PUBLIC_ED_KEY"
+  --sparkle-root "$SPARKLE_ROOT"
   --embed-source
   --no-launch-agent
 )
 
-if [[ -n "$PUBLIC_KEY" ]]; then
-  install_args=("${install_args[@]}" --public-key "$PUBLIC_KEY" --require-signature)
-fi
-
 ANKI_TIKZ_VERSION="$VERSION" "$SCRIPT_DIR/install-anki-tikz-app" "${install_args[@]}"
 
 if [[ -n "$CODESIGN_IDENTITY" ]]; then
+  SPARKLE_FRAMEWORK="$APP_PATH/Contents/Library/Sparkle/sparkle.app/Contents/Frameworks/Sparkle.framework"
+  if [[ -d "$SPARKLE_FRAMEWORK" ]]; then
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Installer.xpc"
+    /usr/bin/codesign --force --timestamp --options runtime --preserve-metadata=entitlements --sign "$CODESIGN_IDENTITY" "$SPARKLE_FRAMEWORK/Versions/B/XPCServices/Downloader.xpc"
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$SPARKLE_FRAMEWORK/Versions/B/Autoupdate"
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$SPARKLE_FRAMEWORK/Versions/B/Updater.app"
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$SPARKLE_FRAMEWORK"
+    /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$APP_PATH/Contents/Library/Sparkle/sparkle.app"
+  fi
   find "$APP_PATH/Contents" -type f \( -perm -0100 -o -perm -0010 -o -perm -0001 \) -print0 | while IFS= read -r -d '' executable; do
     /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$executable" || true
   done
-  /usr/bin/codesign --force --deep --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$APP_PATH"
-  /usr/bin/codesign --verify --deep --strict "$APP_PATH"
+  /usr/bin/codesign --force --timestamp --options runtime --sign "$CODESIGN_IDENTITY" "$APP_PATH"
+  /usr/bin/codesign --verify --strict "$APP_PATH"
 fi
 
 rm -f "$ZIP_PATH"
@@ -54,52 +70,45 @@ fi
 
 SHA256="$(/sbin/shasum -a 256 "$ZIP_PATH" | awk '{print $1}')"
 SIZE="$(stat -f '%z' "$ZIP_PATH")"
-SIGNATURE=""
+SIGNATURE="$("$SPARKLE_ROOT/bin/sign_update" --ed-key-file "$SPARKLE_PRIVATE_KEY_FILE" -p "$ZIP_PATH")"
 
-if [[ -n "$SIGNING_KEY" ]]; then
-  /usr/bin/openssl dgst -sha256 -sign "$SIGNING_KEY" -out "$ZIP_PATH.sig" "$ZIP_PATH"
-  SIGNATURE="$(base64 < "$ZIP_PATH.sig" | tr -d '\n')"
-fi
-
-/usr/bin/python3 - "$MANIFEST_PATH" "$VERSION" "$ARTIFACT_URL" "$SHA256" "$SIZE" "$SIGNATURE" <<'PY'
+/usr/bin/python3 - "$MANIFEST_PATH" "$VERSION" "$ARTIFACT_URL" "$SIZE" "$SIGNATURE" <<'PY'
 from pathlib import Path
 import datetime as dt
-import json
+import email.utils
 import sys
+import xml.sax.saxutils as saxutils
 
 manifest_path = Path(sys.argv[1])
 version = sys.argv[2]
 artifact_url = sys.argv[3]
-sha256 = sys.argv[4]
-size = int(sys.argv[5])
-signature = sys.argv[6]
-
-artifact = {
-    "url": artifact_url,
-    "sha256": sha256,
-    "size": size,
-}
-if signature:
-    artifact["signature"] = signature
-
-manifest = {
-    "updates": [
-        {
-            "version": version,
-            "build": version,
-            "channel": "stable",
-            "platform": "macos-universal",
-            "minimum_system_version": "12.0",
-            "published_at": dt.datetime.now(dt.timezone.utc).isoformat(),
-            "artifact": artifact,
-        }
-    ]
-}
-
-manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+size = int(sys.argv[4])
+signature = sys.argv[5]
+pub_date = email.utils.format_datetime(dt.datetime.now(dt.timezone.utc))
+manifest = f'''<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Anki TikZ Updates</title>
+    <item>
+      <title>Version {saxutils.escape(version)}</title>
+      <sparkle:version>{saxutils.escape(version)}</sparkle:version>
+      <sparkle:shortVersionString>{saxutils.escape(version)}</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
+      <pubDate>{pub_date}</pubDate>
+      <enclosure
+        url="{saxutils.escape(artifact_url)}"
+        sparkle:edSignature="{saxutils.escape(signature)}"
+        length="{size}"
+        type="application/octet-stream" />
+    </item>
+  </channel>
+</rss>
+'''
+manifest_path.write_text(manifest, encoding="utf-8")
 PY
 
 echo "Release app: $APP_PATH"
 echo "Archive: $ZIP_PATH"
 echo "Manifest: $MANIFEST_PATH"
 echo "SHA-256: $SHA256"
+echo "Sparkle public EdDSA key: $SPARKLE_PUBLIC_ED_KEY"

@@ -1,0 +1,42 @@
+#!/bin/zsh
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SPARKLE_VERSION="${ANKI_TIKZ_SPARKLE_VERSION:-2.8.1}"
+SPARKLE_SHA256="${ANKI_TIKZ_SPARKLE_SHA256:-}"
+SPARKLE_URL="${ANKI_TIKZ_SPARKLE_URL:-https://github.com/sparkle-project/Sparkle/releases/download/$SPARKLE_VERSION/Sparkle-$SPARKLE_VERSION.tar.xz}"
+SPARKLE_ROOT="${ANKI_TIKZ_SPARKLE_ROOT:-$REPO_ROOT/out/sparkle/Sparkle-$SPARKLE_VERSION}"
+ARCHIVE="$REPO_ROOT/out/sparkle/Sparkle-$SPARKLE_VERSION.tar.xz"
+
+if [[ -z "$SPARKLE_SHA256" && "$SPARKLE_VERSION" == "2.8.1" ]]; then
+  SPARKLE_SHA256="5cddb7695674ef7704268f38eccaee80e3accbf19e61c1689efff5b6116d85be"
+fi
+
+if [[ -x "$SPARKLE_ROOT/sparkle.app/Contents/MacOS/sparkle" ]]; then
+  print -r -- "$SPARKLE_ROOT"
+  exit 0
+fi
+
+mkdir -p "$(dirname "$ARCHIVE")" "$SPARKLE_ROOT"
+
+if [[ ! -f "$ARCHIVE" ]]; then
+  curl -L --fail --show-error -o "$ARCHIVE" "$SPARKLE_URL"
+fi
+
+actual_sha="$(/sbin/shasum -a 256 "$ARCHIVE" | awk '{print $1}')"
+if [[ -n "$SPARKLE_SHA256" && "$actual_sha" != "$SPARKLE_SHA256" ]]; then
+  echo "Sparkle archive checksum mismatch: expected $SPARKLE_SHA256, got $actual_sha" >&2
+  exit 1
+fi
+
+rm -rf "$SPARKLE_ROOT"
+mkdir -p "$SPARKLE_ROOT"
+tar -xJf "$ARCHIVE" -C "$SPARKLE_ROOT"
+
+if [[ ! -x "$SPARKLE_ROOT/sparkle.app/Contents/MacOS/sparkle" ]]; then
+  echo "Sparkle CLI was not found in $SPARKLE_ROOT" >&2
+  exit 1
+fi
+
+print -r -- "$SPARKLE_ROOT"
