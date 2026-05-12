@@ -68,7 +68,7 @@ if [[ "$NOTARIZE" == "1" ]]; then
   (cd "$BUILD_ROOT" && /usr/bin/ditto -ck --sequesterRsrc --keepParent "Anki TikZ.app" "$ZIP_PATH")
 fi
 
-SHA256="$(/sbin/shasum -a 256 "$ZIP_PATH" | awk '{print $1}')"
+SHA256="$(/usr/bin/shasum -a 256 "$ZIP_PATH" | awk '{print $1}')"
 SIZE="$(stat -f '%z' "$ZIP_PATH")"
 SIGNATURE="$("$SPARKLE_ROOT/bin/sign_update" --ed-key-file "$SPARKLE_PRIVATE_KEY_FILE" -p "$ZIP_PATH")"
 
