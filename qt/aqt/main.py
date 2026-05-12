@@ -1388,6 +1388,12 @@ title="{}" {}>{}</button>""".format(
     def onDocumentation(self) -> None:
         openHelp(HelpPage.INDEX)
 
+    def onCheckForUpdates(self) -> None:
+        from aqt.update import check_for_tikz_update, check_for_update
+
+        if not check_for_tikz_update():
+            check_for_update()
+
     # legacy
 
     def onDeckConf(self, deck: DeckDict | None = None) -> None:
@@ -1471,6 +1477,9 @@ title="{}" {}>{}</button>""".format(
 
         # Help
         qconnect(m.actionDocumentation.triggered, self.onDocumentation)
+        self.actionCheckForUpdates = QAction("Check for Updates...", self)
+        qconnect(self.actionCheckForUpdates.triggered, self.onCheckForUpdates)
+        m.menuHelp.insertAction(m.actionDonate, self.actionCheckForUpdates)
         qconnect(m.actionDonate.triggered, self.onDonate)
         qconnect(m.actionAbout.triggered, self.onAbout)
         m.actionAbout.setText(tr.qt_accel_about_mac())

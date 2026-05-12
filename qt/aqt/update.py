@@ -3,6 +3,11 @@
 
 from __future__ import annotations
 
+import os
+import subprocess
+from pathlib import Path
+from typing import Any
+
 import aqt
 from anki.buildinfo import buildhash
 from anki.collection import CheckForUpdateResponse, Collection
@@ -15,7 +20,65 @@ from aqt.package import (
     update_and_restart as _update_and_restart,
 )
 from aqt.qt import *
-from aqt.utils import openLink, show_warning, showText, tr
+from aqt.utils import openLink, show_warning, showText, tooltip, tr
+
+
+def sparkle_update_runner() -> str | None:
+    if runner := os.environ.get("ANKI_TIKZ_SPARKLE_RUNNER"):
+        if Path(runner).is_file():
+            return runner
+
+    if bundle := os.environ.get("ANKI_TIKZ_APP_BUNDLE"):
+        runner_path = Path(bundle) / "Contents/Library/Sparkle/run-sparkle-update"
+        if runner_path.is_file():
+            return str(runner_path)
+
+    runner_path = Path(
+        "/Applications/Anki TikZ.app/Contents/Library/Sparkle/run-sparkle-update"
+    )
+    if runner_path.is_file():
+        return str(runner_path)
+
+    return None
+
+
+def check_for_tikz_update() -> bool:
+    runner = sparkle_update_runner()
+    if not runner:
+        return False
+
+    from aqt import mw
+
+    tooltip("Checking for Anki TikZ updates...")
+
+    def run_check() -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [runner, "--check-immediately", "--interactive"],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+
+    def on_done(future: Any) -> None:
+        try:
+            result = future.result()
+        except Exception as exc:
+            show_warning(
+                f"Could not start the Anki TikZ update checker:\n\n{exc}",
+                parent=mw,
+            )
+            return
+
+        if result.returncode:
+            detail = result.stdout.strip()
+            msg = "Anki TikZ update check failed."
+            if detail:
+                msg += f"\n\n{detail}"
+            show_warning(msg, parent=mw)
+
+    mw.taskman.run_in_background(run_check, on_done, uses_collection=False)
+    return True
 
 
 def check_for_update() -> None:
