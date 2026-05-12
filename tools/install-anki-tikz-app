@@ -127,8 +127,14 @@ if [[ -n "$UPDATE_CHANNEL" && "$UPDATE_CHANNEL" != "stable" ]]; then
 fi
 
 extra_args=()
+manual_check=0
 for arg in "$@"; do
   extra_args+=("$arg")
+  case "$arg" in
+    --check-immediately|--interactive|--allow-major-upgrades)
+      manual_check=1
+      ;;
+  esac
 done
 
 "$SPARKLE_CLI" "$APP_BUNDLE" \
@@ -142,7 +148,13 @@ done
 
 sparkle_status=$?
 case "$sparkle_status" in
-  0|1|2|6)
+  0)
+    exit 0
+    ;;
+  1|2|6)
+    if [[ "$manual_check" == "1" ]]; then
+      exit "$sparkle_status"
+    fi
     exit 0
     ;;
   *)
@@ -224,6 +236,7 @@ notify() {
 
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 export ANKI_TIKZ_APP_BUNDLE="$APP_BUNDLE"
+export ANKI_TIKZ_SPARKLE_FEED_URL=__ANKI_TIKZ_SPARKLE_FEED_URL__
 export ANKI_TIKZ_SPARKLE_CLI="$APP_BUNDLE/Contents/Library/Sparkle/sparkle.app/Contents/MacOS/sparkle"
 export ANKI_TIKZ_SPARKLE_RUNNER="$APP_BUNDLE/Contents/Library/Sparkle/run-sparkle-update"
 
@@ -256,15 +269,17 @@ export ANKI_API_HOST="${ANKI_API_HOST:-127.0.0.1}"
 exec "$PYENV/bin/python" tools/run.py "$@"
 LAUNCHER
 
-/usr/bin/python3 - "$LAUNCHER" "$REPO_ROOT" <<'PY'
+/usr/bin/python3 - "$LAUNCHER" "$REPO_ROOT" "$MANIFEST_URL" <<'PY'
 from pathlib import Path
 import shlex
 import sys
 
 launcher = Path(sys.argv[1])
 source_dir = shlex.quote(sys.argv[2])
+feed_url = shlex.quote(sys.argv[3])
 text = launcher.read_text()
 text = text.replace("__ANKI_TIKZ_SOURCE_DIR__", source_dir)
+text = text.replace("__ANKI_TIKZ_SPARKLE_FEED_URL__", feed_url)
 launcher.write_text(text)
 PY
 
